@@ -11,7 +11,7 @@ import (
 
 // GenKey creates the private key for the claimer
 func GenKey(this js.Value, inputs []js.Value) ([]interface{}, error) {
-	claimer, err := credentials.NewUser(SysParams)
+	claimer, err := credentials.NewClaimer(SysParams)
 	if err != nil {
 		return nil, err
 	}

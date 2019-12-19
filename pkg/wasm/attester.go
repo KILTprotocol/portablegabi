@@ -42,7 +42,7 @@ func StartAttestationSession(this js.Value, inputs []js.Value) ([]interface{}, e
 		return nil, err
 	}
 
-	session, msg, err := issuer.StartSigningSession()
+	session, msg, err := issuer.InitiateAttestation()
 	if err != nil {
 		return nil, err
 	}

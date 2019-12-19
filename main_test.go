@@ -33,7 +33,7 @@ func TestCredential(t *testing.T) {
 	issuer, err := credentials.NewAttester(sysParams, 6, OneYear)
 	assert.NoError(t, err, "Error in attester key generation")
 
-	user, err := credentials.NewUser(sysParams)
+	user, err := credentials.NewClaimer(sysParams)
 	assert.NoError(t, err, "Error in user key generation")
 
 	claim := &credentials.Claim{
@@ -50,7 +50,7 @@ func TestCredential(t *testing.T) {
 	assert.Equal(t, len(attributes), 5, "Expected 6 attributes")
 	assert.Equal(t, len(values), 5, "Expected 6 attributes")
 
-	issuerSession, startSignMsg, err := issuer.StartSigningSession()
+	issuerSession, startSignMsg, err := issuer.InitiateAttestation()
 	assert.NoError(t, err, "Could not start signing session")
 
 	userSession, reqAttestMsg, err := user.RequestSignatureForClaim(issuer.PublicKey, startSignMsg, claim)
@@ -85,7 +85,7 @@ func TestBigCredential(t *testing.T) {
 	issuer, err := credentials.NewAttester(sysParams, 6, OneYear)
 	assert.NoError(t, err, "Error in attester key generation")
 
-	user, err := credentials.NewUser(sysParams)
+	user, err := credentials.NewClaimer(sysParams)
 	assert.NoError(t, err, "Error in user key generation")
 
 	claim := &credentials.Claim{
@@ -101,7 +101,7 @@ func TestBigCredential(t *testing.T) {
 	attributes, _ := claim.ToAttributes()
 	assert.Equal(t, len(attributes), 5, "Expected 6 attributes")
 
-	issuerSession, startSignMsg, err := issuer.StartSigningSession()
+	issuerSession, startSignMsg, err := issuer.InitiateAttestation()
 	assert.NoError(t, err, "Could not start signing session")
 
 	userSession, reqAttestMsg, err := user.RequestSignatureForClaim(issuer.PublicKey, startSignMsg, claim)

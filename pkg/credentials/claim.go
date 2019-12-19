@@ -11,11 +11,16 @@ import (
 	"github.com/privacybydesign/gabi/big"
 )
 
+// Claim contains the attributes the claimer claims to possess. Contents should
+// be structures according to the specified CType.
 type Claim struct {
 	CType    string                 `json:"cType"`
 	Contents map[string]interface{} `json:"contents"`
 }
 
+// Attribute describes an attribute. It specifies the name and the type of the
+// attribute. It should not contain the specific value of the attribute since
+// this struct will be send to the verifier.
 type Attribute struct {
 	Name     string `json:"name"`
 	Typename string `json:"typename"`
@@ -106,6 +111,8 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 	return attributes, values
 }
 
+// AttestedClaim contains the Claim and the gabi.Credential. It can be used to
+// disclose specific attributes to the verifier.
 type AttestedClaim struct {
 	Credential *gabi.Credential `json:"credential"`
 	Claim      *Claim           `json:"claim"`

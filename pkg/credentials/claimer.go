@@ -9,25 +9,20 @@ import (
 	"github.com/privacybydesign/gabi/big"
 )
 
-func Find(slice []interface{}, val interface{}) (int, bool) {
-	for i, item := range slice {
-		if item == val {
-			return i, true
-		}
-	}
-	return -1, false
-}
-
+// UserIssuanceSession stores information which are used only by the user during
+// the attestation of claims
 type UserIssuanceSession struct {
 	Cb    *gabi.CredentialBuilder `json:"cb"`
 	Claim *Claim                  `json:"claim"`
 }
 
+// Claimer contains information about the claimer.
 type Claimer struct {
 	MasterSecret *big.Int `json:"MasterSecret"`
 }
 
-func NewUser(sysParams *gabi.SystemParameters) (*Claimer, error) {
+// NewClaimer generates a new secret and returns a Claimer
+func NewClaimer(sysParams *gabi.SystemParameters) (*Claimer, error) {
 	masterSecret, err := gabi.RandomBigInt(sysParams.Lm)
 	if err != nil {
 		return nil, err
@@ -35,6 +30,8 @@ func NewUser(sysParams *gabi.SystemParameters) (*Claimer, error) {
 	return &Claimer{masterSecret}, nil
 }
 
+// RequestSignatureForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
+// The request should be send to the attester.
 func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
 	_, values := claim.ToAttributes()
 
@@ -54,6 +51,8 @@ func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startM
 		}, nil
 }
 
+// BuildAttestedClaim uses the signature provided by the attester to build a
+// new credential.
 func (user *Claimer) BuildAttestedClaim(signature *gabi.IssueSignatureMessage, session *UserIssuanceSession) (*AttestedClaim, error) {
 	_, values := session.Claim.ToAttributes()
 
@@ -65,6 +64,7 @@ func (user *Claimer) BuildAttestedClaim(signature *gabi.IssueSignatureMessage, s
 	return &AttestedClaim{cred, session.Claim}, nil
 }
 
+// RevealAttributes reveals the attributes which are requested by the verifier.
 func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *RequestDiscloseAttributes) (*DiscloseAttributes, error) {
 	attestedClaim.Credential.Pk = pk
 	sort.Slice(reqAttributes.DiscloseAttributes[:], func(i, j int) bool {
