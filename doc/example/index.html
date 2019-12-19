@@ -36,6 +36,7 @@
 				console.log("2", claimer, typeof (claimer))
 
 				const [attesterSignSession, startAttestationMsg] = await promiser(startAttestationSession, privKey, pubKey)
+				console.log("3", attesterSignSession, startAttestationMsg)
 
 				const claim = JSON.stringify({
 					"cType": "0x39ffc33202410721743e19082986e650b4e847b85bea7eab77...",

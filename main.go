@@ -1,5 +1,5 @@
 // Package portablegabi is used to wrap the gabi library into a wasm module.
-package portablegabi
+package main
 
 import (
 	"syscall/js"

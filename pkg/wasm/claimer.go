@@ -41,7 +41,7 @@ func RequestAttestation(this js.Value, inputs []js.Value) ([]interface{}, error)
 	if err := json.Unmarshal([]byte(inputs[3].String()), issuerPubKey); err != nil {
 		return nil, err
 	}
-	fmt.Printf("test %+v \n", claim)
+
 	session, msg, err := claimer.RequestSignatureForClaim(issuerPubKey, handshakeMsg, claim)
 	if err != nil {
 		return nil, err
