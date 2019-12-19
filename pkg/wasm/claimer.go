@@ -2,7 +2,6 @@ package wasm
 
 import (
 	"encoding/json"
-	"fmt"
 	"syscall/js"
 
 	"github.com/KILTprotocol/portablegabi/pkg/credentials"

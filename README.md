@@ -8,7 +8,7 @@ Portable Gabi is a wrapper for the gabi library. It does not expose the same API
 export GOOS="js"
 export GOARCH="wasm"
 
-go build -o main.wasm
+go build main.go
 ```
 
 run the demo js code:
@@ -17,7 +17,7 @@ run the demo js code:
 export GOOS="js"
 export GOARCH="wasm"
 
-go build -o doc/example/main.wasm
+go build -o ./doc/example/main.wasm main.go
 
 unset GOOS
 unset GOARCH
