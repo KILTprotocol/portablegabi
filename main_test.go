@@ -10,10 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// KeyLength sets the length of the used keys. Possible values are 1024, 2048, 4096
-const KeyLength = 1024
-
-const OneYear = 365 * 24 * 60 * 60 * 1000 * 1000 * 1000
+const (
+	// KeyLength sets the length of the used keys. Possible values are 1024, 2048, 4096
+	KeyLength = 1024
+	OneYear   = 365 * 24 * 60 * 60 * 1000 * 1000 * 1000
+)
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -45,8 +46,9 @@ func TestCredential(t *testing.T) {
 		},
 	}
 
-	attributes := claim.ToAttributes()
+	attributes, values := claim.ToAttributes()
 	assert.Equal(t, len(attributes), 5, "Expected 6 attributes")
+	assert.Equal(t, len(values), 5, "Expected 6 attributes")
 
 	issuerSession, startSignMsg, err := issuer.StartSigningSession()
 	assert.NoError(t, err, "Could not start signing session")
@@ -96,7 +98,7 @@ func TestBigCredential(t *testing.T) {
 		},
 	}
 
-	attributes := claim.ToAttributes()
+	attributes, _ := claim.ToAttributes()
 	assert.Equal(t, len(attributes), 5, "Expected 6 attributes")
 
 	issuerSession, startSignMsg, err := issuer.StartSigningSession()
@@ -115,7 +117,6 @@ func TestBigCredential(t *testing.T) {
 	verifierSession, reqAttrMsg := credentials.RequestAttributes(sysParams, requestedAttr[:])
 	disclosedAttr, err := user.RevealAttributes(issuer.PublicKey, cred, reqAttrMsg)
 	assert.NoError(t, err, "Could not disclose attributes")
-	// assert.Equal(t, 2, len(disclosedAttr.Attributes)) // one attribute should be missing...
 
 	attr, err := credentials.VerifyPresentation(issuer.PublicKey, disclosedAttr, verifierSession)
 	assert.NoError(t, err, "Could not verify attributes")

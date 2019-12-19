@@ -48,5 +48,5 @@ func (attester *Attester) StartSigningSession() (*AttesterSession, *StartSession
 }
 
 func (attester *Attester) AttestClaim(reqCred *RequestAttestedClaim, session *AttesterSession) (*gabi.IssueSignatureMessage, error) {
-	return session.GabiIssuer.IssueSignature(reqCred.CommitMsg.U, reqCred.Attributes, reqCred.CommitMsg.Nonce2)
+	return session.GabiIssuer.IssueSignature(reqCred.CommitMsg.U, reqCred.Values, reqCred.CommitMsg.Nonce2)
 }

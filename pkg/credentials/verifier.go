@@ -31,8 +31,7 @@ func RequestAttributes(sysParams *gabi.SystemParameters,
 }
 
 // VerifyPresentation verifies the response of a claimer and returns the disclosed attributes.
-func VerifyPresentation(issuerPubK *gabi.PublicKey,
-	signedAttributes *DiscloseAttributes, session *VerifierSession) (map[string]interface{}, error) {
+func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *DiscloseAttributes, session *VerifierSession) (map[string]interface{}, error) {
 	success := signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false)
 	if success {
 		attributes := make(map[string]interface{})

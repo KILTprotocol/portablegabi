@@ -19,8 +19,8 @@ func Find(slice []interface{}, val interface{}) (int, bool) {
 }
 
 type UserIssuanceSession struct {
-	Cb         *gabi.CredentialBuilder `json:"cb"`
-	Attributes []Attribute             `json:"attributes"`
+	Cb    *gabi.CredentialBuilder `json:"cb"`
+	Claim *Claim                  `json:"claim"`
 }
 
 type Claimer struct {
@@ -36,7 +36,7 @@ func NewUser(sysParams *gabi.SystemParameters) (*Claimer, error) {
 }
 
 func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
-	attributes := claim.ToAttributes()
+	_, values := claim.ToAttributes()
 
 	nonce, err := gabi.RandomBigInt(issuerPubK.Params.Lstatzk)
 	if err != nil {
@@ -45,31 +45,24 @@ func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startM
 	cb := gabi.NewCredentialBuilder(issuerPubK, startMsg.Context, user.MasterSecret, nonce)
 	commitMsg := cb.CommitToSecretAndProve(startMsg.Nonce)
 
-	strippedAttrs := make([]*big.Int, len(attributes))
-	for i, v := range attributes {
-		strippedAttrs[i] = v.Value
-	}
-
 	return &UserIssuanceSession{
 			cb,
-			attributes,
+			claim,
 		}, &RequestAttestedClaim{
-			CommitMsg:  commitMsg,
-			Attributes: strippedAttrs,
+			CommitMsg: commitMsg,
+			Values:    values,
 		}, nil
 }
 
 func (user *Claimer) BuildAttestedClaim(signature *gabi.IssueSignatureMessage, session *UserIssuanceSession) (*AttestedClaim, error) {
-	strippedAttrs := make([]*big.Int, len(session.Attributes))
-	for i, v := range session.Attributes {
-		strippedAttrs[i] = v.Value
-	}
-	cred, err := session.Cb.ConstructCredential(signature, strippedAttrs)
+	_, values := session.Claim.ToAttributes()
+
+	cred, err := session.Cb.ConstructCredential(signature, values)
 	if err != nil {
 		return nil, err
 	}
 	// TODO: store things which should be stored!? What should be stored?
-	return &AttestedClaim{cred, session.Attributes}, nil
+	return &AttestedClaim{cred, session.Claim}, nil
 }
 
 func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *RequestDiscloseAttributes) (*DiscloseAttributes, error) {
@@ -77,15 +70,13 @@ func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *Atteste
 	sort.Slice(reqAttributes.DiscloseAttributes[:], func(i, j int) bool {
 		return strings.Compare(reqAttributes.DiscloseAttributes[i], reqAttributes.DiscloseAttributes[j]) < 0
 	})
-	sort.Slice(attestedClaim.Attributes[:], func(i, j int) bool {
-		return strings.Compare(attestedClaim.Attributes[i].Name, attestedClaim.Attributes[j].Name) < 0
-	})
+
 	attrIndexes := make([]int, len(reqAttributes.DiscloseAttributes))
-	attributes := make([]Attribute, len(attestedClaim.Attributes))
+	attributes, _ := attestedClaim.Claim.ToAttributes()
 	i := 0
 
 	// assert: attestedClaim.Attributes and reqAttributes.DiscloseAttributes are sorted!
-	for attrI, v := range attestedClaim.Attributes {
+	for attrI, v := range attributes {
 		if i < len(reqAttributes.DiscloseAttributes) && strings.Compare(reqAttributes.DiscloseAttributes[i], v.Name) == 0 {
 			attrIndexes[i] = attrI + 1
 			i++
