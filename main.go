@@ -1,3 +1,5 @@
+// +build wasm
+
 // Package portablegabi is used to wrap the gabi library into a wasm module.
 package main
 
@@ -12,6 +14,7 @@ func main() {
 	// expose all methods to the js environment. Use callbacker to transform the
 	// return style methods to callback style methods.
 	c := make(chan bool)
+
 	js.Global().Set("genKeypair", js.FuncOf(wasm.Callbacker(wasm.GenKeypair)))
 	js.Global().Set("revokeAttestation", js.FuncOf(wasm.Callbacker(wasm.RevokeAttestation)))
 	js.Global().Set("startAttestationSession", js.FuncOf(wasm.Callbacker(wasm.StartAttestationSession)))

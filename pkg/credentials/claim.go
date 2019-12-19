@@ -12,7 +12,7 @@ import (
 )
 
 type Claim struct {
-	Ctype    string                 `json:"cType"`
+	CType    string                 `json:"cType"`
 	Contents map[string]interface{} `json:"contents"`
 }
 
@@ -33,7 +33,7 @@ func (claim *Claim) ToAttributes() []Attribute {
 
 	// TODO: nested attributes, array might not be a wise choice here (many memcopy ops?)
 	attributes = append(attributes, Attribute{
-		new(big.Int).SetBytes([]byte(claim.Ctype)),
+		new(big.Int).SetBytes([]byte(claim.CType)),
 		"ctype",
 		"string",
 	})
@@ -81,6 +81,8 @@ func (claim *Claim) ToAttributes() []Attribute {
 					name,
 					"bool",
 				})
+			} else {
+				panic("Unknown type")
 			}
 		}
 	}

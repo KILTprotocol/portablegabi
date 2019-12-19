@@ -1,3 +1,4 @@
+// +build wasm
 package wasm
 
 import (
