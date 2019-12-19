@@ -22,6 +22,9 @@ go build -o doc/example/main.wasm
 unset GOOS
 unset GOARCH
 cd doc/example
+# install goexec once
+go get -u github.com/shurcooL/goexec
+
 goexec 'http.ListenAndServe(`:8080`, http.FileServer(http.Dir(`.`)))'
 ```
 
