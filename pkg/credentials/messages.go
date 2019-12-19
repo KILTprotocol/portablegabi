@@ -1,9 +1,6 @@
 package credentials
 
 import (
-	"encoding/json"
-	"io/ioutil"
-
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 )
@@ -25,21 +22,6 @@ type RequestDiscloseAttributes struct {
 }
 
 type DiscloseAttributes struct {
-	Proof *gabi.ProofD `json:"proof"`
-	Names []string     `json:"names"`
-	Types []string     `json:"types"`
-}
-
-func NewDisclosedAttributesFromFile(file string) *DiscloseAttributes {
-	jsonData, err := ioutil.ReadFile(file)
-	if err != nil {
-		panic(err)
-	}
-	disclosedAttr := DiscloseAttributes{}
-
-	err = json.Unmarshal([]byte(jsonData), &disclosedAttr)
-	if err != nil {
-		panic(err)
-	}
-	return &disclosedAttr
+	Proof      *gabi.ProofD `json:"proof"`
+	Attributes []Attribute  `json:"attributes"`
 }

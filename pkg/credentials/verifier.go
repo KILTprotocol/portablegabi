@@ -10,11 +10,15 @@ import (
 	"github.com/privacybydesign/gabi/big"
 )
 
+// VerifierSession stores information which is needed to verify the response of the claimer
 type VerifierSession struct {
 	Context *big.Int `json:"context"`
 	Nonce   *big.Int `json:"nonce"`
 }
 
+// RequestAttributes builds a message which request the specified attributes from a claimer.
+// It returns a VerifierSession which is used to check the claimers response and RequestDiscloseAttributes
+// which represents the message which should be send to the claimer
 func RequestAttributes(sysParams *gabi.SystemParameters,
 	discloseAttributes []string) (*VerifierSession, *RequestDiscloseAttributes) {
 	context, _ := gabi.RandomBigInt(sysParams.Lh)
@@ -26,6 +30,7 @@ func RequestAttributes(sysParams *gabi.SystemParameters,
 	}
 }
 
+// VerifyPresentation verifies the response of a claimer and returns the disclosed attributes.
 func VerifyPresentation(issuerPubK *gabi.PublicKey,
 	signedAttributes *DiscloseAttributes, session *VerifierSession) (map[string]interface{}, error) {
 	success := signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false)
@@ -33,17 +38,17 @@ func VerifyPresentation(issuerPubK *gabi.PublicKey,
 		attributes := make(map[string]interface{})
 		for i, v := range signedAttributes.Proof.ADisclosed {
 			// 0. attribute is private key of user and should never be disclosed
-			readIndex := i - 1
-			switch signedAttributes.Types[readIndex] {
+			attr := signedAttributes.Attributes[i-1]
+			switch attr.Typename {
 			case "string":
-				attributes[signedAttributes.Names[readIndex]] = string(v.Bytes())
+				attributes[attr.Name] = string(v.Bytes())
 			case "float":
 				bits := binary.BigEndian.Uint64(v.Bytes())
-				attributes[signedAttributes.Names[readIndex]] = math.Float64frombits(bits)
+				attributes[attr.Name] = math.Float64frombits(bits)
 			case "bool":
-				attributes[signedAttributes.Names[readIndex]] = v.Int64() == 1
+				attributes[attr.Name] = v.Int64() == 1
 			default:
-				attributes[signedAttributes.Names[readIndex]] = hex.EncodeToString(v.Bytes())
+				attributes[attr.Name] = hex.EncodeToString(v.Bytes())
 			}
 		}
 		return attributes, nil

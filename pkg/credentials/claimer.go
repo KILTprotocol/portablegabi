@@ -81,8 +81,7 @@ func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *Atteste
 		return strings.Compare(attestedClaim.Attributes[i].Name, attestedClaim.Attributes[j].Name) < 0
 	})
 	attrIndexes := make([]int, len(reqAttributes.DiscloseAttributes))
-	names := make([]string, len(attestedClaim.Attributes))
-	types := make([]string, len(attestedClaim.Attributes))
+	attributes := make([]Attribute, len(attestedClaim.Attributes))
 	i := 0
 
 	// assert: attestedClaim.Attributes and reqAttributes.DiscloseAttributes are sorted!
@@ -91,16 +90,14 @@ func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *Atteste
 			attrIndexes[i] = attrI + 1
 			i++
 		}
-		names[attrI] = v.Name
-		types[attrI] = v.Typename
+		attributes[attrI] = v
 	}
 	if i == 0 {
 		return nil, fmt.Errorf("attribute not found")
 	}
 	proof := attestedClaim.Credential.CreateDisclosureProof(attrIndexes, reqAttributes.Context, reqAttributes.Nonce)
 	return &DiscloseAttributes{
-		Proof: proof,
-		Names: names,
-		Types: types,
+		Proof:      proof,
+		Attributes: attributes,
 	}, nil
 }
