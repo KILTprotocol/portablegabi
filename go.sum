@@ -13,6 +13,8 @@ github.com/shurcooL/go-goon v0.0.0-20170922171312-37c2f522c041/go.mod h1:N5mDOms
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+github.com/weichweich/gabi v0.0.0-20191213133337-4b832d9dfe57 h1:QuQ6WOlpqB8OQNCmn3MEQwdLOUdIM8Xt+XJUGHTCvRQ=
+github.com/weichweich/gabi v0.0.0-20191213133337-4b832d9dfe57/go.mod h1:bfhEOvlE29Y8bjSw1B73zeWs4TpmKAu0Q0ol5pi9Hxg=
 github.com/weichweich/gabi v0.0.0-20191218154214-22b4bbf463bc h1:c5CpvrKR7hsjJzxeGwH7jc4HMs/FR8/kKijqtnGQpJ4=
 github.com/weichweich/gabi v0.0.0-20191218154214-22b4bbf463bc/go.mod h1:bfhEOvlE29Y8bjSw1B73zeWs4TpmKAu0Q0ol5pi9Hxg=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=

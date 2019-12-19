@@ -2,7 +2,7 @@ module github.com/KILTprotocol/portablegabi
 
 go 1.13
 
-replace github.com/privacybydesign/gabi => github.com/weichweich/gabi v0.0.0-20191218154214-22b4bbf463bc
+replace github.com/privacybydesign/gabi => github.com/weichweich/gabi v0.0.0-20191213133337-4b832d9dfe57
 
 require (
 	github.com/bwesterb/go-exptable v1.0.0 // indirect

@@ -7,7 +7,6 @@ import (
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	"github.com/privacybydesign/gabi/pkg/common"
 )
 
 func Find(slice []interface{}, val interface{}) (int, bool) {
@@ -29,7 +28,7 @@ type Claimer struct {
 }
 
 func NewUser(sysParams *gabi.SystemParameters) (*Claimer, error) {
-	masterSecret, err := common.RandomBigInt(sysParams.Lm)
+	masterSecret, err := gabi.RandomBigInt(sysParams.Lm)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +38,7 @@ func NewUser(sysParams *gabi.SystemParameters) (*Claimer, error) {
 func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
 	attributes := claim.ToAttributes()
 
-	nonce, err := common.RandomBigInt(issuerPubK.Params.Lstatzk)
+	nonce, err := gabi.RandomBigInt(issuerPubK.Params.Lstatzk)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -8,7 +8,6 @@ import (
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	"github.com/privacybydesign/gabi/pkg/common"
 )
 
 type VerifierSession struct {
@@ -18,8 +17,8 @@ type VerifierSession struct {
 
 func RequestAttributes(sysParams *gabi.SystemParameters,
 	discloseAttributes []string) (*RequestDiscloseAttributes, *VerifierSession) {
-	context, _ := common.RandomBigInt(sysParams.Lh)
-	nonce, _ := common.RandomBigInt(sysParams.Lh)
+	context, _ := gabi.RandomBigInt(sysParams.Lh)
+	nonce, _ := gabi.RandomBigInt(sysParams.Lh)
 	return &RequestDiscloseAttributes{
 		Context:            context,
 		DiscloseAttributes: discloseAttributes,
