@@ -21,7 +21,7 @@ func StartVerificationSession(this js.Value, inputs []js.Value) ([]interface{}, 
 			attrs[i] = v.String()
 		}
 	}
-	msg, session := credentials.RequestAttributes(SysParams, attrs)
+	session, msg := credentials.RequestAttributes(SysParams, attrs)
 
 	return []interface{}{
 		session,

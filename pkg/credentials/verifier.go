@@ -16,14 +16,14 @@ type VerifierSession struct {
 }
 
 func RequestAttributes(sysParams *gabi.SystemParameters,
-	discloseAttributes []string) (*RequestDiscloseAttributes, *VerifierSession) {
+	discloseAttributes []string) (*VerifierSession, *RequestDiscloseAttributes) {
 	context, _ := gabi.RandomBigInt(sysParams.Lh)
 	nonce, _ := gabi.RandomBigInt(sysParams.Lh)
-	return &RequestDiscloseAttributes{
+	return &VerifierSession{context, nonce}, &RequestDiscloseAttributes{
 		Context:            context,
 		DiscloseAttributes: discloseAttributes,
 		Nonce:              nonce,
-	}, &VerifierSession{context, nonce}
+	}
 }
 
 func VerifyPresentation(issuerPubK *gabi.PublicKey,
