@@ -1,4 +1,5 @@
 // +build wasm
+
 package wasm
 
 import (
@@ -13,7 +14,7 @@ import (
 // specific attributes. As input this method takes the names of the requested
 // attributes. This message takes a variable number of inputs. If no error
 // occurres a session object and a message for the claimer is returned.
-func StartVerificationSession(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func StartVerificationSession(this js.Value, inputs []js.Value) (interface{}, error) {
 	// ignore last value
 	attrs := make([]string, len(inputs)-1)
 	for i, v := range inputs {
@@ -23,9 +24,9 @@ func StartVerificationSession(this js.Value, inputs []js.Value) ([]interface{}, 
 	}
 	session, msg := credentials.RequestAttributes(SysParams, attrs)
 
-	return []interface{}{
-		session,
-		msg,
+	return map[string]interface{}{
+		"session": session,
+		"message": msg,
 	}, nil
 }
 
@@ -33,7 +34,7 @@ func StartVerificationSession(this js.Value, inputs []js.Value) ([]interface{}, 
 // this method takes the proof, a session object (created using
 // startVerificationSession) and the public key of the attester which attested
 // the claim
-func VerifyAttributes(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func VerifyAttributes(this js.Value, inputs []js.Value) (interface{}, error) {
 	proof := &credentials.DiscloseAttributes{}
 	session := &credentials.VerifierSession{}
 	issuerPubKey := &gabi.PublicKey{}
@@ -46,9 +47,12 @@ func VerifyAttributes(this js.Value, inputs []js.Value) ([]interface{}, error) {
 	if err := json.Unmarshal([]byte(inputs[2].String()), issuerPubKey); err != nil {
 		return nil, err
 	}
-	attrs, err := credentials.VerifyPresentation(issuerPubKey, proof, session)
+	rebuildClaim, err := credentials.VerifyPresentation(issuerPubKey, proof, session)
 	if err != nil {
 		return nil, err
 	}
-	return []interface{}{attrs}, nil
+	return map[string]interface{}{
+		"claim":    rebuildClaim,
+		"verified": true,
+	}, nil
 }

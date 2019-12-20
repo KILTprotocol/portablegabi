@@ -9,25 +9,20 @@ import (
 	"github.com/privacybydesign/gabi/big"
 )
 
-func Find(slice []interface{}, val interface{}) (int, bool) {
-	for i, item := range slice {
-		if item == val {
-			return i, true
-		}
-	}
-	return -1, false
-}
-
+// UserIssuanceSession stores information which are used only by the user during
+// the attestation of claims
 type UserIssuanceSession struct {
-	Cb         *gabi.CredentialBuilder `json:"cb"`
-	Attributes []Attribute             `json:"attributes"`
+	Cb    *gabi.CredentialBuilder `json:"cb"`
+	Claim *Claim                  `json:"claim"`
 }
 
+// Claimer contains information about the claimer.
 type Claimer struct {
 	MasterSecret *big.Int `json:"MasterSecret"`
 }
 
-func NewUser(sysParams *gabi.SystemParameters) (*Claimer, error) {
+// NewClaimer generates a new secret and returns a Claimer
+func NewClaimer(sysParams *gabi.SystemParameters) (*Claimer, error) {
 	masterSecret, err := gabi.RandomBigInt(sysParams.Lm)
 	if err != nil {
 		return nil, err
@@ -35,8 +30,10 @@ func NewUser(sysParams *gabi.SystemParameters) (*Claimer, error) {
 	return &Claimer{masterSecret}, nil
 }
 
+// RequestSignatureForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
+// The request should be send to the attester.
 func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
-	attributes := claim.ToAttributes()
+	_, values := claim.ToAttributes()
 
 	nonce, err := gabi.RandomBigInt(issuerPubK.Params.Lstatzk)
 	if err != nil {
@@ -45,62 +42,53 @@ func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startM
 	cb := gabi.NewCredentialBuilder(issuerPubK, startMsg.Context, user.MasterSecret, nonce)
 	commitMsg := cb.CommitToSecretAndProve(startMsg.Nonce)
 
-	strippedAttrs := make([]*big.Int, len(attributes))
-	for i, v := range attributes {
-		strippedAttrs[i] = v.Value
-	}
-
 	return &UserIssuanceSession{
 			cb,
-			attributes,
+			claim,
 		}, &RequestAttestedClaim{
-			CommitMsg:  commitMsg,
-			Attributes: strippedAttrs,
+			CommitMsg: commitMsg,
+			Values:    values,
 		}, nil
 }
 
+// BuildAttestedClaim uses the signature provided by the attester to build a
+// new credential.
 func (user *Claimer) BuildAttestedClaim(signature *gabi.IssueSignatureMessage, session *UserIssuanceSession) (*AttestedClaim, error) {
-	strippedAttrs := make([]*big.Int, len(session.Attributes))
-	for i, v := range session.Attributes {
-		strippedAttrs[i] = v.Value
-	}
-	cred, err := session.Cb.ConstructCredential(signature, strippedAttrs)
+	_, values := session.Claim.ToAttributes()
+
+	cred, err := session.Cb.ConstructCredential(signature, values)
 	if err != nil {
 		return nil, err
 	}
 	// TODO: store things which should be stored!? What should be stored?
-	return &AttestedClaim{cred, session.Attributes}, nil
+	return &AttestedClaim{cred, session.Claim}, nil
 }
 
+// RevealAttributes reveals the attributes which are requested by the verifier.
 func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *RequestDiscloseAttributes) (*DiscloseAttributes, error) {
 	attestedClaim.Credential.Pk = pk
 	sort.Slice(reqAttributes.DiscloseAttributes[:], func(i, j int) bool {
 		return strings.Compare(reqAttributes.DiscloseAttributes[i], reqAttributes.DiscloseAttributes[j]) < 0
 	})
-	sort.Slice(attestedClaim.Attributes[:], func(i, j int) bool {
-		return strings.Compare(attestedClaim.Attributes[i].Name, attestedClaim.Attributes[j].Name) < 0
-	})
+
 	attrIndexes := make([]int, len(reqAttributes.DiscloseAttributes))
-	names := make([]string, len(attestedClaim.Attributes))
-	types := make([]string, len(attestedClaim.Attributes))
+	attributes, _ := attestedClaim.Claim.ToAttributes()
 	i := 0
 
 	// assert: attestedClaim.Attributes and reqAttributes.DiscloseAttributes are sorted!
-	for attrI, v := range attestedClaim.Attributes {
+	for attrI, v := range attributes {
 		if i < len(reqAttributes.DiscloseAttributes) && strings.Compare(reqAttributes.DiscloseAttributes[i], v.Name) == 0 {
 			attrIndexes[i] = attrI + 1
 			i++
 		}
-		names[attrI] = v.Name
-		types[attrI] = v.Typename
+		attributes[attrI] = v
 	}
 	if i == 0 {
 		return nil, fmt.Errorf("attribute not found")
 	}
 	proof := attestedClaim.Credential.CreateDisclosureProof(attrIndexes, reqAttributes.Context, reqAttributes.Nonce)
 	return &DiscloseAttributes{
-		Proof: proof,
-		Names: names,
-		Types: types,
+		Proof:      proof,
+		Attributes: attributes,
 	}, nil
 }
