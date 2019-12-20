@@ -21,8 +21,11 @@
   },
   "plugins": ["@typescript-eslint", "prettier", "jsdoc"],
   "rules": {
+    "import/extensions": ["error", "never"], // TODO: Check with someone
+    "no-console": "off", // TODO: remove
+    "import/no-unresolved": "off", // FIXME:
     "prettier/prettier": "error",
-    "semi": ["error", "never"],
+    // "semi": ["error", "never"],
     "lines-between-class-members": [
       "error",
       "always",
