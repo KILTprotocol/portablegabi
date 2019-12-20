@@ -17,8 +17,8 @@ import (
 func GenKeypair(this js.Value, inputs []js.Value) (interface{}, error) {
 	issuer, err := credentials.NewAttester(SysParams, inputs[0].Int(), int64(inputs[1].Int()))
 	return map[string]interface{}{
-		"publicKey":  issuer.PrivateKey,
-		"privateKey": issuer.PublicKey,
+		"privateKey": issuer.PrivateKey,
+		"publicKey":  issuer.PublicKey,
 	}, err
 }
 
