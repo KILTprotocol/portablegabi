@@ -1,0 +1,18 @@
+{
+  "name": "@kiltprotocol/portablegabi-sdk",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD-4-Clause",
+  "devDependencies": {
+    "@types/node": "^12.12.21",
+    "typescript": "^3.7.3"
+  },
+  "dependencies": {
+    "@kiltprotocol/sdk-js": "^0.16.2"
+  }
+}
