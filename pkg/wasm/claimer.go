@@ -1,4 +1,5 @@
 // +build wasm
+
 package wasm
 
 import (
@@ -10,12 +11,12 @@ import (
 )
 
 // GenKey creates the private key for the claimer
-func GenKey(this js.Value, inputs []js.Value) ([]interface{}, error) {
-	claimer, err := credentials.NewUser(SysParams)
+func GenKey(this js.Value, inputs []js.Value) (interface{}, error) {
+	claimer, err := credentials.NewClaimer(SysParams)
 	if err != nil {
 		return nil, err
 	}
-	return []interface{}{claimer}, nil
+	return claimer, nil
 }
 
 // RequestAttestation creates a session object and a message which request the
@@ -23,7 +24,7 @@ func GenKey(this js.Value, inputs []js.Value) ([]interface{}, error) {
 // attester. This method expects as inputs the private key of the claimer, a
 // json encoded string containing the claim which should be attested, the
 // handshake message from the attester and the public key of the attester.
-func RequestAttestation(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 	claimer := &credentials.Claimer{}
 	claim := &credentials.Claim{}
 	handshakeMsg := &credentials.StartSessionMsg{}
@@ -46,9 +47,9 @@ func RequestAttestation(this js.Value, inputs []js.Value) ([]interface{}, error)
 	if err != nil {
 		return nil, err
 	}
-	return []interface{}{
-		session,
-		msg,
+	return map[string]interface{}{
+		"session": session,
+		"message": msg,
 	}, nil
 }
 
@@ -56,7 +57,7 @@ func RequestAttestation(this js.Value, inputs []js.Value) ([]interface{}, error)
 // the claimer posseses certain attributes. This method expects as input the
 // private key of the claimer, the session object created by requestAttestation
 // and the signature message send the attester.
-func BuildCredential(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func BuildCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	claimer := &credentials.Claimer{}
 	session := &credentials.UserIssuanceSession{}
 	signature := &gabi.IssueSignatureMessage{}
@@ -75,7 +76,7 @@ func BuildCredential(this js.Value, inputs []js.Value) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []interface{}{credential}, nil
+	return credential, nil
 }
 
 // RevealAttributes creates a proof that the claimer posseses the requested
@@ -83,7 +84,7 @@ func BuildCredential(this js.Value, inputs []js.Value) ([]interface{}, error) {
 // credential which contains the requested attributes, a json encoded list
 // containing the requested attributes and the public key of the attester.
 // It returns a proof containing the values of the requested attributes.
-func RevealAttributes(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func RevealAttributes(this js.Value, inputs []js.Value) (interface{}, error) {
 	claimer := &credentials.Claimer{}
 	credential := &credentials.AttestedClaim{}
 	request := &credentials.RequestDiscloseAttributes{}
@@ -106,5 +107,5 @@ func RevealAttributes(this js.Value, inputs []js.Value) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []interface{}{disclosedAttr}, nil
+	return disclosedAttr, nil
 }

@@ -1,8 +1,10 @@
 // +build wasm
+
 package wasm
 
 import (
 	"encoding/json"
+	"fmt"
 	"syscall/js"
 
 	"github.com/privacybydesign/gabi"
@@ -15,7 +17,7 @@ const KeyLength = 1024
 var SysParams, _ = gabi.DefaultSystemParameters[KeyLength]
 
 // GoFunction is a function which can be transformit into a JSFunction
-type GoFunction func(js.Value, []js.Value) ([]interface{}, error)
+type GoFunction func(js.Value, []js.Value) (interface{}, error)
 
 // JSFunction is a function which can be used from JS code.
 type JSFunction func(js.Value, []js.Value) interface{}
@@ -24,15 +26,19 @@ type JSFunction func(js.Value, []js.Value) interface{}
 // called. This makes is usable as a js interface function
 func Callbacker(function GoFunction) JSFunction {
 	return func(this js.Value, inputs []js.Value) interface{} {
+		if len(inputs) == 0 {
+			panic("Callback argument is missing")
+		}
 		callback := inputs[len(inputs)-1:][0]
 		output, err := function(this, inputs)
 		if err != nil {
 			callback.Invoke(err.Error(), js.Null())
 			return nil
 		}
-		if len(output) > 1 {
-			retValues := make([]interface{}, len(output))
-			for i, e := range output {
+		switch x := output.(type) {
+		case []interface{}:
+			retValues := make([]interface{}, len(x))
+			for i, e := range x {
 				marshaledV, err := json.Marshal(e)
 				if err != nil {
 					callback.Invoke(err.Error(), js.Null())
@@ -41,8 +47,20 @@ func Callbacker(function GoFunction) JSFunction {
 				retValues[i] = string(marshaledV)
 			}
 			callback.Invoke(js.Null(), js.ValueOf(retValues))
-		} else {
-			marshaledV, err := json.Marshal(output[0])
+		case map[string]interface{}:
+			retValues := make(map[string]interface{})
+			for k, v := range x {
+				marshaledV, err := json.Marshal(v)
+				if err != nil {
+					callback.Invoke(err.Error(), js.Null())
+					return nil
+				}
+				retValues[k] = string(marshaledV)
+			}
+			fmt.Println(retValues)
+			callback.Invoke(js.Null(), js.ValueOf(retValues))
+		default:
+			marshaledV, err := json.Marshal(output)
 			if err != nil {
 				callback.Invoke(err.Error(), js.Null())
 				return nil
