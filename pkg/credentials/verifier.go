@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
@@ -30,6 +31,27 @@ func RequestAttributes(sysParams *gabi.SystemParameters,
 	}
 }
 
+func setNestedValue(m map[string]interface{}, key string, value interface{}) {
+	parts := strings.Split(key, SEPARATOR)
+	if len(parts) == 0 {
+		panic("invalid key")
+	}
+	for _, v := range parts[:len(parts)-1] {
+		if acc, ok := m[v]; ok {
+			if accMap, ok := acc.(map[string]interface{}); ok {
+				m = accMap
+			} else {
+				panic("Value is not a map!")
+			}
+		} else {
+			old := m
+			m = make(map[string]interface{})
+			old[v] = m
+		}
+	}
+	m[parts[len(parts)-1]] = value
+}
+
 // VerifyPresentation verifies the response of a claimer and returns the disclosed attributes.
 func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *DiscloseAttributes, session *VerifierSession) (map[string]interface{}, error) {
 	success := signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false)
@@ -40,14 +62,14 @@ func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *DiscloseAt
 			attr := signedAttributes.Attributes[i-1]
 			switch attr.Typename {
 			case "string":
-				attributes[attr.Name] = string(v.Bytes())
+				setNestedValue(attributes, attr.Name, string(v.Bytes()))
 			case "float":
 				bits := binary.BigEndian.Uint64(v.Bytes())
-				attributes[attr.Name] = math.Float64frombits(bits)
+				setNestedValue(attributes, attr.Name, math.Float64frombits(bits))
 			case "bool":
-				attributes[attr.Name] = v.Int64() == 1
+				setNestedValue(attributes, attr.Name, v.Int64() == 1)
 			default:
-				attributes[attr.Name] = hex.EncodeToString(v.Bytes())
+				setNestedValue(attributes, attr.Name, hex.EncodeToString(v.Bytes()))
 			}
 		}
 		return attributes, nil

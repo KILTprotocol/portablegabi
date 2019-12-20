@@ -21,7 +21,7 @@
 
 			(async () => {
 				const validityDuration = 365 * 24 * 60 * 60 * 1000 * 1000 * 1000; // 365 days in nanoseconds
-				const {"privateKey": privKey, "publicKey": pubKey} = await promiser(genKeypair, 7, validityDuration).then((msg) => {
+				const {"privateKey": privKey, "publicKey": pubKey} = await promiser(genKeypair, 70, validityDuration).then((msg) => {
 					console.log("0", msg)
 					return msg
 				})
@@ -32,7 +32,8 @@
 				console.log("1.1", privKey)
 				console.log("1.2", pubKey)
 
-				const claimer = await promiser(genKey)
+				// const claimer = await promiser(genKey)
+				const claimer = '{"MasterSecret":"i9QwwBaqmuMffM93xoJPu4RNuzmvR4BETaZ7ZWhHGWQ="}'
 				console.log("2", claimer, typeof claimer)
 
 				const { "session": attesterSignSession, "message": startAttestationMsg } = await promiser(startAttestationSession, privKey, pubKey)
@@ -45,7 +46,14 @@
 						"guid": "006ee0f3-7edd-4010-ab21-458df91dc0d5",
 						"balance": 3289.88,
 						"picture": "http://placehold.it/32x32",
-						"eyeColor": true
+						"eyeColor": true,
+						"nested": {
+							"a": 431,
+							"a1": 231414,
+							"a2": 3451,
+							"a3": 343431,
+							"b": "alksjd"
+						}
 					}
 				})
 				const { "session": claimerSignSession, "message": reqSignMsg } = await promiser(requestAttestation, claimer, claim, startAttestationMsg, pubKey)
@@ -58,7 +66,9 @@
 				const credential = await promiser(buildCredential, claimer, claimerSignSession, signature)
 				console.log("6", credential)
 
-				const { "session": verifierSession, "message": reqRevealedAttrMsg } = await promiser(startVerificationSession, "ctype", "contents.eyeColor", "contents.balance", "contents.id")
+				// we use " as a delimiter for JSON keys because JSON keys can
+				// not contain unescaped "
+				const { "session": verifierSession, "message": reqRevealedAttrMsg } = await promiser(startVerificationSession, "ctype", "contents\"eyeColor", "contents\"balance", "contents\"id", "contents\"nested\"a1")
 				console.log("7.1", verifierSession)
 				console.log("7.2", reqRevealedAttrMsg)
 

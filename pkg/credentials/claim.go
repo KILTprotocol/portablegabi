@@ -11,27 +11,45 @@ import (
 	"github.com/privacybydesign/gabi/big"
 )
 
-// Claim contains the attributes the claimer claims to possess. Contents should
-// be structures according to the specified CType.
-type Claim struct {
-	CType    string                 `json:"cType"`
-	Contents map[string]interface{} `json:"contents"`
-}
+// SEPARATOR is used to separate JSON keys from each other.
+const SEPARATOR = "\""
 
-// Attribute describes an attribute. It specifies the name and the type of the
-// attribute. It should not contain the specific value of the attribute since
-// this struct will be send to the verifier.
-type Attribute struct {
-	Name     string `json:"name"`
-	Typename string `json:"typename"`
-}
+type (
+	// Claim contains the attributes the claimer claims to possess. Contents should
+	// be structures according to the specified CType.
+	Claim struct {
+		CType    string                 `json:"cType"`
+		Contents map[string]interface{} `json:"contents"`
+	}
 
-// byName can be used to sort one array based on values of the second array
-// specifically the Values are sorted by the attribute names.
-type byName struct {
-	Attributes []*Attribute
-	Values     []*big.Int
-}
+	// Attribute describes an attribute. It specifies the name and the type of the
+	// attribute. It should not contain the specific value of the attribute since
+	// this struct will be send to the verifier.
+	Attribute struct {
+		Name     string `json:"name"`
+		Typename string `json:"typename"`
+	}
+
+	// AttestedClaim contains the Claim and the gabi.Credential. It can be used to
+	// disclose specific attributes to the verifier.
+	AttestedClaim struct {
+		Credential *gabi.Credential `json:"credential"`
+		Claim      *Claim           `json:"claim"`
+	}
+
+	// nestedObject is used to describe a nested object inside a claim.
+	nestedObject struct {
+		prefix  string
+		content map[string]interface{}
+	}
+
+	// byName can be used to sort one array based on values of the second array
+	// specifically the Values are sorted by the attribute names.
+	byName struct {
+		Attributes []*Attribute
+		Values     []*big.Int
+	}
+)
 
 func (av byName) Len() int { return len(av.Values) }
 func (av byName) Less(i, j int) bool {
@@ -40,11 +58,6 @@ func (av byName) Less(i, j int) bool {
 func (av byName) Swap(i, j int) {
 	av.Attributes[i], av.Attributes[j] = av.Attributes[j], av.Attributes[i]
 	av.Values[i], av.Values[j] = av.Values[j], av.Values[i]
-}
-
-type nestedObject struct {
-	prefix  string
-	content map[string]interface{}
 }
 
 // ToAttributes transforms a claim struct to a list of attributes
@@ -69,7 +82,7 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 		queue.Remove(elem)
 		jsonObj := elem.Value.(*nestedObject)
 		for n, v := range jsonObj.content {
-			name := jsonObj.prefix + "." + n
+			name := jsonObj.prefix + SEPARATOR + n
 			if f, ok := v.(map[string]interface{}); ok {
 				queue.PushBack(&nestedObject{
 					prefix:  name,
@@ -109,11 +122,4 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 	sort.Sort(byName{attributes, values})
 
 	return attributes, values
-}
-
-// AttestedClaim contains the Claim and the gabi.Credential. It can be used to
-// disclose specific attributes to the verifier.
-type AttestedClaim struct {
-	Credential *gabi.Credential `json:"credential"`
-	Claim      *Claim           `json:"claim"`
 }

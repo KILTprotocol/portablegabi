@@ -16,10 +16,13 @@ import (
 // key as the second element. If the key generation fails, an error is returned.
 func GenKeypair(this js.Value, inputs []js.Value) (interface{}, error) {
 	issuer, err := credentials.NewAttester(SysParams, inputs[0].Int(), int64(inputs[1].Int()))
+	if err != nil {
+		return nil, err
+	}
 	return map[string]interface{}{
 		"privateKey": issuer.PrivateKey,
 		"publicKey":  issuer.PublicKey,
-	}, err
+	}, nil
 }
 
 // RevokeAttestation revokes an attestation and is not implemented yet.
