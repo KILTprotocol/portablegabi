@@ -33,9 +33,9 @@
 				console.log("1.2", pubKey)
 
 				const claimer = await promiser(genKey)
-				console.log("2", claimer, typeof (claimer))
+				console.log("2", claimer, typeof claimer)
 
-				const [attesterSignSession, startAttestationMsg] = await promiser(startAttestationSession, privKey, pubKey)
+				const { "session": attesterSignSession, "message": startAttestationMsg } = await promiser(startAttestationSession, privKey, pubKey)
 				console.log("3", attesterSignSession, startAttestationMsg)
 
 				const claim = JSON.stringify({
@@ -48,25 +48,26 @@
 						"eyeColor": true
 					}
 				})
-				const [claimerSignSession, reqSignMsg] = await promiser(requestAttestation, claimer, claim, startAttestationMsg, pubKey)
+				const { "session": claimerSignSession, "message": reqSignMsg } = await promiser(requestAttestation, claimer, claim, startAttestationMsg, pubKey)
 				console.log("4.1", claimerSignSession)
 				console.log("4.2", reqSignMsg)
 
 				const signature = await promiser(issueAttestation, privKey, pubKey, attesterSignSession, reqSignMsg)
-				console.log("5", signature, typeof (signature))
+				console.log("5", signature, typeof signature)
 
 				const credential = await promiser(buildCredential, claimer, claimerSignSession, signature)
 				console.log("6", credential)
 
-				const [verifierSession, reqRevealedAttrMsg] = await promiser(startVerificationSession, "ctype", "contents.eyeColor", "contents.balance", "contents.id")
+				const { "session": verifierSession, "message": reqRevealedAttrMsg } = await promiser(startVerificationSession, "ctype", "contents.eyeColor", "contents.balance", "contents.id")
 				console.log("7.1", verifierSession)
 				console.log("7.2", reqRevealedAttrMsg)
 
 				const proof = await promiser(revealAttributes, claimer, credential, reqRevealedAttrMsg, pubKey)
 				console.log("8", proof)
 
-				const result = await promiser(verifyAttributes, proof, verifierSession, pubKey)
-				console.log("9", JSON.parse(result))
+				const { "verified": verified, "claim": claim2 } = await promiser(verifyAttributes, proof, verifierSession, pubKey)
+				console.log("9.1 verified?", verified)
+				console.log("9.2", JSON.parse(claim2))
 
 				const revoked = await promiser(revokeAttestation)
 				console.log("10", revoked)

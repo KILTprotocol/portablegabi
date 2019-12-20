@@ -1,4 +1,5 @@
 // +build wasm
+
 package wasm
 
 import (
@@ -13,16 +14,16 @@ import (
 // GenKeypair generates a keypair for the attester. It takes no inputs and
 // returns a list containing the private key as the fist element and the public
 // key as the second element. If the key generation fails, an error is returned.
-func GenKeypair(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func GenKeypair(this js.Value, inputs []js.Value) (interface{}, error) {
 	issuer, err := credentials.NewAttester(SysParams, inputs[0].Int(), int64(inputs[1].Int()))
-	return []interface{}{
-		issuer.PrivateKey,
-		issuer.PublicKey,
+	return map[string]interface{}{
+		"publicKey":  issuer.PrivateKey,
+		"privateKey": issuer.PublicKey,
 	}, err
 }
 
 // RevokeAttestation revokes an attestation and is not implemented yet.
-func RevokeAttestation(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
@@ -30,7 +31,7 @@ func RevokeAttestation(this js.Value, inputs []js.Value) ([]interface{}, error) 
 // key of the attester as first input and the public key as second input. This
 // method returns a session object, which must be used as an argument for
 // issueAttestation and a message for the claimer
-func StartAttestationSession(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func StartAttestationSession(this js.Value, inputs []js.Value) (interface{}, error) {
 	issuer := &credentials.Attester{
 		PrivateKey: &gabi.PrivateKey{},
 		PublicKey:  &gabi.PublicKey{},
@@ -46,9 +47,9 @@ func StartAttestationSession(this js.Value, inputs []js.Value) ([]interface{}, e
 	if err != nil {
 		return nil, err
 	}
-	return []interface{}{
-		session,
-		msg,
+	return map[string]interface{}{
+		"session": session,
+		"message": msg,
 	}, nil
 }
 
@@ -56,7 +57,7 @@ func StartAttestationSession(this js.Value, inputs []js.Value) ([]interface{}, e
 // public key as second input. As third input the session (created using the
 // startAttestationSession method) is expected and the fourth input is the
 // request for attestion which is was send to the attester by the claimer.
-func IssueAttestation(this js.Value, inputs []js.Value) ([]interface{}, error) {
+func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 	issuer := &credentials.Attester{
 		PrivateKey: &gabi.PrivateKey{},
 		PublicKey:  &gabi.PublicKey{},
@@ -76,5 +77,5 @@ func IssueAttestation(this js.Value, inputs []js.Value) ([]interface{}, error) {
 		return nil, err
 	}
 	attest, err := issuer.AttestClaim(request, session)
-	return []interface{}{attest}, err
+	return attest, err
 }
