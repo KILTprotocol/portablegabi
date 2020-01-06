@@ -19,6 +19,15 @@ func GenKey(this js.Value, inputs []js.Value) (interface{}, error) {
 	return claimer, nil
 }
 
+// KeyFromMnemonic derives a key from a given mnemonic
+func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
+	claimer, err := credentials.ClaimerFromMnemonic(SysParams, inputs[0].String())
+	if err != nil {
+		return nil, err
+	}
+	return claimer, nil
+}
+
 // RequestAttestation creates a session object and a message which request the
 // attestation of specific attributes. The second object should be send to an
 // attester. This method expects as inputs the private key of the claimer, a

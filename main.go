@@ -20,6 +20,7 @@ func main() {
 	js.Global().Set("startAttestationSession", js.FuncOf(wasm.Callbacker(wasm.StartAttestationSession)))
 	js.Global().Set("issueAttestation", js.FuncOf(wasm.Callbacker(wasm.IssueAttestation)))
 	js.Global().Set("genKey", js.FuncOf(wasm.Callbacker(wasm.GenKey)))
+	js.Global().Set("keyFromMnemonic", js.FuncOf(wasm.Callbacker(wasm.KeyFromMnemonic)))
 	js.Global().Set("requestAttestation", js.FuncOf(wasm.Callbacker(wasm.RequestAttestation)))
 	js.Global().Set("buildCredential", js.FuncOf(wasm.Callbacker(wasm.BuildCredential)))
 	js.Global().Set("revealAttributes", js.FuncOf(wasm.Callbacker(wasm.RevealAttributes)))

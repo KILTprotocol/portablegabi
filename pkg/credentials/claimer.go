@@ -7,6 +7,7 @@ import (
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	"github.com/tyler-smith/go-bip39"
 )
 
 // UserIssuanceSession stores information which are used only by the user during
@@ -28,6 +29,18 @@ func NewClaimer(sysParams *gabi.SystemParameters) (*Claimer, error) {
 		return nil, err
 	}
 	return &Claimer{masterSecret}, nil
+}
+
+// ClaimerFromMnemonic derives a secret from a given mnemonic
+func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string) (*Claimer, error) {
+	// Generate a Bip39 HD wallet for the mnemonic and a user supplied password
+	seed := bip39.NewSeed(mnemonic, "")
+	if uint(len(seed)) < sysParams.Lm/8 {
+		return nil, fmt.Errorf("seed to small")
+	}
+	maxKey := new(big.Int).Lsh(big.NewInt(1), sysParams.Lm)
+	masterKey := big.NewInt(0).SetBytes(seed)
+	return &Claimer{new(big.Int).Mod(masterKey, maxKey)}, nil
 }
 
 // RequestSignatureForClaim creates a RequestAttestedClaim and a UserIssuanceSession.

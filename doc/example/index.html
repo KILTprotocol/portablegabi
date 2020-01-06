@@ -32,9 +32,10 @@
 				console.log("1.1", privKey)
 				console.log("1.2", pubKey)
 
-				// const claimer = await promiser(genKey)
-				const claimer = '{"MasterSecret":"i9QwwBaqmuMffM93xoJPu4RNuzmvR4BETaZ7ZWhHGWQ="}'
-				console.log("2", claimer, typeof claimer)
+				const claimer = await promiser(genKey)
+				const claimer2 = await promiser(keyFromMnemonic, "opera initial unknown sign minimum sadness crane worth attract ginger category discover")
+				console.log("2.1", claimer, typeof claimer)
+				console.log("2.2", claimer2, typeof claimer2)
 
 				const { "session": attesterSignSession, "message": startAttestationMsg } = await promiser(startAttestationSession, privKey, pubKey)
 				console.log("3", attesterSignSession, startAttestationMsg)
