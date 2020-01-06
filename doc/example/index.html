@@ -33,7 +33,7 @@
 				console.log("1.2", pubKey)
 
 				const claimer = await promiser(genKey)
-				const claimer2 = await promiser(keyFromMnemonic, "opera initial unknown sign minimum sadness crane worth attract ginger category discover")
+				const claimer2 = await promiser(keyFromMnemonic, "opera initial unknown sign minimum sadness crane worth attract ginger category discover", "")
 				console.log("2.1", claimer, typeof claimer)
 				console.log("2.2", claimer2, typeof claimer2)
 
@@ -44,9 +44,10 @@
 					"cType": "0x39ffc33202410721743e19082986e650b4e847b85bea7eab77...",
 					"contents": {
 						"id": 9007199254740993,
-						"guid": "006ee0f3-7edd-4010-ab21-458df91dc0d5",
-						"balance": 3289.88,
-						"picture": "http://placehold.it/32x32",
+						"picture": {
+							"URL": "http://placehold.it/32x32",
+							"DATA": "Ox123123123123123123DEADBEeF"
+						},
 						"eyeColor": true
 					}
 				})
@@ -62,7 +63,7 @@
 
 				// we use " as a delimiter for JSON keys because JSON keys can
 				// not contain unescaped "
-				const { "session": verifierSession, "message": reqRevealedAttrMsg } = await promiser(startVerificationSession, "ctype", "contents.eyeColor", "contents.balance", "contents.id")
+				const { "session": verifierSession, "message": reqRevealedAttrMsg } = await promiser(startVerificationSession, "ctype", "contents.picture.DATA", "contents.id")
 				console.log("7.1", verifierSession)
 				console.log("7.2", reqRevealedAttrMsg)
 

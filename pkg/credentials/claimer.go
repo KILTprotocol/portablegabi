@@ -32,15 +32,15 @@ func NewClaimer(sysParams *gabi.SystemParameters) (*Claimer, error) {
 }
 
 // ClaimerFromMnemonic derives a secret from a given mnemonic
-func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string) (*Claimer, error) {
+func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, password string) (*Claimer, error) {
 	// Generate a Bip39 HD wallet for the mnemonic and a user supplied password
-	seed := bip39.NewSeed(mnemonic, "")
+	seed := bip39.NewSeed(mnemonic, password)
 	if uint(len(seed)) < sysParams.Lm/8 {
 		return nil, fmt.Errorf("seed to small")
 	}
 	maxKey := new(big.Int).Lsh(big.NewInt(1), sysParams.Lm)
-	masterKey := big.NewInt(0).SetBytes(seed)
-	return &Claimer{new(big.Int).Mod(masterKey, maxKey)}, nil
+	bigSeed := big.NewInt(0).SetBytes(seed)
+	return &Claimer{new(big.Int).Mod(bigSeed, maxKey)}, nil
 }
 
 // RequestSignatureForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
