@@ -12,7 +12,7 @@ import (
 )
 
 // SEPARATOR is used to separate JSON keys from each other.
-const SEPARATOR = "\""
+const SEPARATOR = "."
 
 type (
 	// Claim contains the attributes the claimer claims to possess. Contents should

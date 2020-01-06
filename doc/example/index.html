@@ -62,7 +62,7 @@
 
 				// we use " as a delimiter for JSON keys because JSON keys can
 				// not contain unescaped "
-				const { "session": verifierSession, "message": reqRevealedAttrMsg } = await promiser(startVerificationSession, "ctype", "contents\"eyeColor", "contents\"balance", "contents\"id")
+				const { "session": verifierSession, "message": reqRevealedAttrMsg } = await promiser(startVerificationSession, "ctype", "contents.eyeColor", "contents.balance", "contents.id")
 				console.log("7.1", verifierSession)
 				console.log("7.2", reqRevealedAttrMsg)
 

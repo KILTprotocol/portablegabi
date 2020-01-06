@@ -62,7 +62,7 @@ func TestCredential(t *testing.T) {
 	cred, err := user.BuildAttestedClaim(sigMsg, userSession)
 	assert.NoError(t, err, "Could not request attributes")
 
-	requestedAttr := [4]string{"ctype", "contents\"age", "contents\"special", "contents\"gender"}
+	requestedAttr := [4]string{"ctype", "contents" + credentials.SEPARATOR + "age", "contents" + credentials.SEPARATOR + "special", "contents" + credentials.SEPARATOR + "gender"}
 	verifierSession, reqAttrMsg := credentials.RequestAttributes(sysParams, requestedAttr[:])
 	disclosedAttr, err := user.RevealAttributes(issuer.PublicKey, cred, reqAttrMsg)
 	assert.NoError(t, err, "Could not disclose attributes")
@@ -115,7 +115,7 @@ func TestBigCredential(t *testing.T) {
 	cred, err := user.BuildAttestedClaim(sigMsg, userSession)
 	assert.NoError(t, err, "Could not request attributes")
 
-	requestedAttr := [2]string{"ctype", "contents\"name"}
+	requestedAttr := [2]string{"ctype", "contents" + credentials.SEPARATOR + "name"}
 	verifierSession, reqAttrMsg := credentials.RequestAttributes(sysParams, requestedAttr[:])
 	disclosedAttr, err := user.RevealAttributes(issuer.PublicKey, cred, reqAttrMsg)
 	assert.NoError(t, err, "Could not disclose attributes")
