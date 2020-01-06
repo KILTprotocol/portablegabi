@@ -4,7 +4,6 @@ package wasm
 
 import (
 	"encoding/json"
-	"fmt"
 	"syscall/js"
 
 	"github.com/privacybydesign/gabi"
@@ -57,7 +56,6 @@ func Callbacker(function GoFunction) JSFunction {
 				}
 				retValues[k] = string(marshaledV)
 			}
-			fmt.Println(retValues)
 			callback.Invoke(js.Null(), js.ValueOf(retValues))
 		default:
 			marshaledV, err := json.Marshal(output)

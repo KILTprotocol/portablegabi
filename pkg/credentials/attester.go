@@ -1,6 +1,7 @@
 package credentials
 
 import (
+	"errors"
 	"time"
 
 	"github.com/privacybydesign/gabi"
@@ -58,5 +59,8 @@ func (attester *Attester) InitiateAttestation() (*AttesterSession, *StartSession
 // RequestAttestedClaim which was send by the claimer and an AttesterSession.
 // It returns an gabi.IssueSignatureMessage which should be send to the claimer.
 func (attester *Attester) AttestClaim(reqCred *RequestAttestedClaim, session *AttesterSession) (*gabi.IssueSignatureMessage, error) {
+	if len(attester.PublicKey.R) < len(reqCred.Values) {
+		return nil, errors.New("got too many attributes to sign")
+	}
 	return session.GabiIssuer.IssueSignature(reqCred.CommitMsg.U, reqCred.Values, reqCred.CommitMsg.Nonce2)
 }

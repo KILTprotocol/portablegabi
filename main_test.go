@@ -62,17 +62,19 @@ func TestCredential(t *testing.T) {
 	cred, err := user.BuildAttestedClaim(sigMsg, userSession)
 	assert.NoError(t, err, "Could not request attributes")
 
-	requestedAttr := [4]string{"ctype", "contents.age", "contents.special", "contents.gender"}
+	requestedAttr := [4]string{"ctype", "contents\"age", "contents\"special", "contents\"gender"}
 	verifierSession, reqAttrMsg := credentials.RequestAttributes(sysParams, requestedAttr[:])
 	disclosedAttr, err := user.RevealAttributes(issuer.PublicKey, cred, reqAttrMsg)
 	assert.NoError(t, err, "Could not disclose attributes")
 
 	attr, err := credentials.VerifyPresentation(issuer.PublicKey, disclosedAttr, verifierSession)
 	assert.NoError(t, err, "Could not verify attributes")
-	assert.Equal(t, claim.Contents["age"], attr["contents.age"])
+	contents, ok := attr["contents"].(map[string]interface{})
+	assert.True(t, ok, "should be a map")
+	assert.Equal(t, claim.Contents["age"], contents["age"])
 	assert.Equal(t, claim.CType, attr["ctype"])
-	assert.Equal(t, claim.Contents["gender"], attr["contents.gender"])
-	assert.Equal(t, claim.Contents["special"], attr["contents.special"])
+	assert.Equal(t, claim.Contents["gender"], contents["gender"])
+	assert.Equal(t, claim.Contents["special"], contents["special"])
 	assert.Nil(t, attr["contents.name"])
 }
 
@@ -113,7 +115,7 @@ func TestBigCredential(t *testing.T) {
 	cred, err := user.BuildAttestedClaim(sigMsg, userSession)
 	assert.NoError(t, err, "Could not request attributes")
 
-	requestedAttr := [2]string{"ctype", "contents.name"}
+	requestedAttr := [2]string{"ctype", "contents\"name"}
 	verifierSession, reqAttrMsg := credentials.RequestAttributes(sysParams, requestedAttr[:])
 	disclosedAttr, err := user.RevealAttributes(issuer.PublicKey, cred, reqAttrMsg)
 	assert.NoError(t, err, "Could not disclose attributes")
@@ -121,8 +123,10 @@ func TestBigCredential(t *testing.T) {
 	attr, err := credentials.VerifyPresentation(issuer.PublicKey, disclosedAttr, verifierSession)
 	assert.NoError(t, err, "Could not verify attributes")
 	assert.Equal(t, claim.CType, attr["ctype"], "ctype changed!")
-	assert.Equal(t, claim.Contents["name"], attr["contents.name"], "name changed!")
-	assert.Nil(t, attr["contents.age"], "age was unwillingly disclosed")
-	assert.Nil(t, attr["contents.gender"], "gender was unwillingly disclosed")
-	assert.Nil(t, attr["contents.special"], "special was unwillingly disclosed")
+	contents, ok := attr["contents"].(map[string]interface{})
+	assert.True(t, ok, "should be a map")
+	assert.Equal(t, claim.Contents["name"], contents["name"], "name changed!")
+	assert.Nil(t, contents["age"], "age was unwillingly disclosed")
+	assert.Nil(t, contents["gender"], "gender was unwillingly disclosed")
+	assert.Nil(t, contents["special"], "special was unwillingly disclosed")
 }
