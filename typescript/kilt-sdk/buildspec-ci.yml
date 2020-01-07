@@ -1,0 +1,11 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+    - echo Run build / lint / test
+    - docker build -t sdk-js . 
+    - docker run sdk-js yarn build
+    - docker run sdk-js yarn lint
+    - docker run sdk-js yarn testCI
+    - echo Build / lint / test successful!
