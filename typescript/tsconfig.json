@@ -22,7 +22,7 @@
     "noUnusedLocals": true
   },
   // "include": ["**.*"],
-  "include": ["./*.ts", "./wasm_to_typescript/*.ts", "./kilt-sdk/src/*.ts"],
+  "include": ["./*.ts", "./src/*.ts", "./src/Types/*.ts"],
   "exclude": [
     "node_modules",
     "coverage",
