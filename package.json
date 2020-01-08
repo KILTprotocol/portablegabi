@@ -14,7 +14,7 @@
     "style:fix": "yarn style --write",
     "build": "yarn build:typescript && yarn build:wasm",
     "build:typescript": "tsc --declaration",
-    "build:wasm": "cd go-wasm && env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go",
+    "build:wasm": "cd go-wasm && dep ensure && env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go",
     "publish": "npm publish --access public"
   },
   "author": "KILT Protocol",
