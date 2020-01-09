@@ -1,6 +1,6 @@
 {
   "name": "@kiltprotocol/portablegabi",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Portable version of the Gabi Go library for anonymous credential",
   "main": "./build/index.js",
   "typings": "./build/index.d.ts",
