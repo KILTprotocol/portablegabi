@@ -7,7 +7,6 @@ phases:
     commands:
       - yarn install
   pre_build:
-    run-as: Linux-user-name
     commands:
       - yarn lint
       - yarn style
