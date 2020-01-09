@@ -95,3 +95,7 @@ const { claim: verifiedClaim, verified } = await GabiVerifier.verifyAttributes({
 /** (4) Revocation **/
 // TODO
 ```
+
+## Development
+
+To build the package, you have to have [GO](https://golang.org/) installed.

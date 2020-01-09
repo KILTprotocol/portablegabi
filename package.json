@@ -9,10 +9,15 @@
     "lint:fix": "yarn lint --fix",
     "style": "prettier -l src/**/*.ts",
     "style:fix": "yarn style --write",
-    "build": "tsc --declaration",
-    "buildAndPublish": "yarn build && node ./npm-create-rc.js && npm publish --access public"
+    "build": "yarn build:typescript && yarn build:wasm",
+    "build:typescript": "tsc --declaration",
+    "build:wasm": "cd go-wasm && env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go",
+    "buildAndPublish": "yarn build && npm publish --access public"
   },
   "author": "KILT Protocol",
+  "files": [
+    "/build"
+  ],
   "license": "BSD-4-Clause",
   "bugs": {
     "url": "https://github.com/KILTprotocol/portablegabi/issues"

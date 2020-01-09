@@ -9,7 +9,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "strict": true,
-    "allowJs": false,
+    "allowJs": true,
     "esModuleInterop": true,
     "jsx": "preserve",
     "moduleResolution": "node",
@@ -25,7 +25,8 @@
   },
   "include": [
     "./src/*.ts",
-    "./src/Types/*.ts",
+    "./src/types/*.ts",
+    "src/wasm/*.js",
     "src/attestation/GabiAttester.ts",
     "src/claim/GabiClaimer.ts",
     "src/verification/GabiVerifier.ts"
