@@ -26,13 +26,13 @@ vendor/
 .vscode
 
 # dependencies
-typescript/node_modules 
+node_modules 
 
 # npm/yarn
-typescript/npm-debug.log*
-typescript/yarn-debug.log*
-typescript/yarn-error.log*
-typescript/.npmrc
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npmrc
 
 # production
-typescript/build
+build
