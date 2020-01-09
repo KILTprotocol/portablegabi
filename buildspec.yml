@@ -1,0 +1,20 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      node: 10
+    commands:
+      - yarn install
+  pre_build:
+    run-as: Linux-user-name
+    commands:
+      - yarn lint
+      - yarn style
+  build:
+    commands:
+      - yarn build
+  post_build:
+    commands:
+      - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+      - yarn publish
