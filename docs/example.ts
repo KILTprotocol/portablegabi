@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import GabiClaimer from '../src/claim/GabiClaimer'
-import GabiAttester from '../src/attestation/GabiAttester'
-import GabiVerifier from '../src/verification/GabiVerifier'
+import GabiClaimer from '../build/claim/GabiClaimer'
+import GabiAttester from '../build/attestation/GabiAttester'
+import GabiVerifier from '../build/verification/GabiVerifier'
 
 const testEnv = {
   privKey:
