@@ -25,7 +25,7 @@ export interface IGabiAttestationRequest {
   }
 }
 
-export interface IGabiAttester {
+export default interface IGabiAttester {
   startAttestation: Function
   issueAttestation: Function
   revokeAttestation: Function

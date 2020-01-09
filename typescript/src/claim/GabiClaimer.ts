@@ -1,4 +1,4 @@
-import { IGabiClaimer } from '../types/Claim'
+import IGabiClaimer from '../types/Claim'
 import WasmHooks from '../wasm/WasmHooks'
 import {
   IGabiAttestationRequest,
@@ -19,7 +19,6 @@ export default class GabiClaimer implements IGabiClaimer {
     return new GabiClaimer(secret)
   }
 
-  // TODO: Find better name
   public static async buildFromScratch(): Promise<GabiClaimer> {
     const secret = await goWasmExec<string>(WasmHooks.genKey)
     return new GabiClaimer(secret)

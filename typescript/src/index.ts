@@ -1,11 +1,23 @@
-import * as GabiClaimer from './claim/GabiClaimer'
-import * as GabiAttester from './attestation/GabiAttester'
-import * as GabiVerifier from './verification/GabiVerifier'
+import GabiClaimer from './claim/GabiClaimer'
+import GabiAttester from './attestation/GabiAttester'
+import GabiVerifier from './verification/GabiVerifier'
+import goWasmExec from './wasm/wasm_exec_wrapper'
+import WasmHooks from './wasm/WasmHooks'
 
-export { default as IGabiContextNonce } from './types/Attestation'
+export {
+  IGabiContextNonce,
+  IGabiMsgSession,
+  IGabiAttestationStart,
+  IGabiAttestationRequest,
+} from './types/Attestation'
+export { IGabiAttrMsg, IGabiVerifiedAtts } from './types/Verification'
 
+export { default as IGabiClaimer } from './types/Claim'
+export { default as IGabiAttester } from './types/Attestation'
 export default {
   GabiClaimer,
   GabiAttester,
   GabiVerifier,
+  goWasmExec,
+  WasmHooks,
 }

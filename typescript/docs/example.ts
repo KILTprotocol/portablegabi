@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import GabiClaimer from '../src/claim/GabiClaimer'
 import GabiAttester from '../src/attestation/GabiAttester'
 import GabiVerifier from '../src/verification/GabiVerifier'

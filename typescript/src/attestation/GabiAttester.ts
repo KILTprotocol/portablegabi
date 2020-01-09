@@ -1,7 +1,6 @@
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
-import {
-  IGabiAttester,
+import IGabiAttester, {
   IGabiAttestationStart,
   IGabiMsgSession,
   IGabiAttestationRequest,

@@ -5,7 +5,12 @@
   "main": "./build/index.js",
   "typings": "./build/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "lint": "eslint 'src/**'",
+    "lint:fix": "yarn lint --fix",
+    "style": "prettier -l src/**/*.ts",
+    "style:fix": "yarn style --write",
+    "build": "tsc --declaration",
+    "buildAndPublish": "yarn build && node ./npm-create-rc.js && npm publish --access public"
   },
   "author": "KILT Protocol",
   "license": "BSD-4-Clause",
