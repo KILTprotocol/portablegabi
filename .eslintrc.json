@@ -23,6 +23,7 @@
   "rules": {
     "prettier/prettier": "error",
     "semi": ["error", "never"],
+    "import/extensions": "off",
     "lines-between-class-members": [
       "error",
       "always",
