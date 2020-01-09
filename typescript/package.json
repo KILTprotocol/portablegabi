@@ -1,13 +1,18 @@
 {
-  "name": "@kiltprotocol/portablegabi-sdk",
+  "name": "@kiltprotocol/portablegabi",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "Portable version of the Gabi Go library for anonymous credential",
+  "main": "./build/index.js",
+  "typings": "./build/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc"
   },
-  "author": "",
+  "author": "KILT Protocol",
   "license": "BSD-4-Clause",
+  "bugs": {
+    "url": "https://github.com/KILTprotocol/portablegabi/issues"
+  },
+  "homepage": "https://github.com/KILTprotocol/portablegabi#readme",
   "devDependencies": {
     "@types/node": "^12.12.24",
     "@typescript-eslint/eslint-plugin": "^2.14.0",
@@ -17,12 +22,9 @@
     "eslint-config-prettier": "^6.9.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-jsdoc": "^15.9.1",
-    "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-tsc": "^1.2.0",
-    "typescript": "^3.7.4"
-  },
-  "dependencies": {
+    "typescript": "^3.7.4",
     "prettier": "^1.19.1"
   }
 }

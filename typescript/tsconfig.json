@@ -1,17 +1,19 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    // "outDir": "build",
-    "module": "none",
+    "outDir": "build",
+    "module": "commonjs",
     "target": "es2017",
     "lib": ["es6"],
+    "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "strict": true,
     "allowJs": false,
     "esModuleInterop": true,
     "jsx": "preserve",
     "moduleResolution": "node",
-    // "rootDir": "src",
+    "rootDir": "src",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -21,18 +23,12 @@
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true
   },
-  // "include": ["**.*"],
-  "include": ["./*.ts", "./src/*.ts", "./src/Types/*.ts"],
-  "exclude": [
-    "node_modules",
-    "coverage",
-    "build",
-    "scripts",
-    "acceptance-tests",
-    "webpack",
-    "jest",
-    "src/setupTests.ts",
-    "jest.config.js",
-    "docs"
-  ]
+  "include": [
+    "./src/*.ts",
+    "./src/Types/*.ts",
+    "src/attestation/GabiAttester.ts",
+    "src/claim/GabiClaimer.ts",
+    "src/verification/GabiVerifier.ts"
+  ],
+  "exclude": ["node_modules"]
 }
