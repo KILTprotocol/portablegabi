@@ -18,12 +18,12 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:3ccec126a9cfa0c28cb86e39667b6e8574ab63cfd656c39bdfe609bae4df99b1"
+  digest = "1:0886f4871903067916897c67caeb787f81c9a155391da901aa25f26802953ec6"
   name = "github.com/fxamacker/cbor"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1b578934f5f015c6b9fd1a010cf531d3bdf6d675"
-  version = "v1.4.0"
+  revision = "6faee5e1f8b6270f9bdcfefbc9bdfa8c026de629"
+  version = "v1.5.0"
 
 [[projects]]
   digest = "1:aacef5f5e45685f2aeda5534d0a750dee6859de7e9088cdd06192787bb01ae6d"
@@ -74,8 +74,8 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "export_fields_revocation"
-  digest = "1:799987aa7d7edef3fceb2d8058b7e23006240751ecbaa38d01b391b45427705d"
+  branch = "export_fields"
+  digest = "1:9938de49f8f055e534b2068c93c695575ab65ed0411fd8185f53ff42bb09722f"
   name = "github.com/privacybydesign/gabi"
   packages = [
     ".",
@@ -87,7 +87,7 @@
     "signed",
   ]
   pruneopts = "UT"
-  revision = "b28bb872d0d301192299dbfb2909f5ceff5cdea8"
+  revision = "519d8bc9da506b882dc574008625fd06ccc98941"
   source = "https://github.com/weichweich/gabi.git"
 
 [[projects]]
@@ -99,9 +99,12 @@
   version = "v1.1"
 
 [[projects]]
-  digest = "1:8548c309c65a85933a625be5e7d52b6ac927ca30c56869fae58123b8a77a75e1"
+  digest = "1:99d32780e5238c2621fff621123997c3e3cca96db8be13179013aea77dfab551"
   name = "github.com/stretchr/testify"
-  packages = ["assert"]
+  packages = [
+    "assert",
+    "require",
+  ]
   pruneopts = "UT"
   revision = "221dbe5ed46703ee255b1da0dec05086f5035f62"
   version = "v1.4.0"
@@ -118,8 +121,16 @@
   version = "1.0.2"
 
 [[projects]]
+  digest = "1:3c05adbe0ae103967371c140e04683bf89d791badd8f384c6425abe14fe26513"
+  name = "github.com/x448/float16"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ad709cdedc4e59c972effbb87ae80fe20bd81f7a"
+  version = "v0.8.3"
+
+[[projects]]
   branch = "master"
-  digest = "1:3418c20b7597c735154a19ec2f75349dc451151c574872a942b59681c191218a"
+  digest = "1:ab21860c302e36a82a205d19bf9a523c33a90960bd9c0186bbce7061ad1f2e42"
   name = "golang.org/x/crypto"
   packages = [
     "blake2s",
@@ -127,7 +138,7 @@
     "sha3",
   ]
   pruneopts = "UT"
-  revision = "53104e6ec876ad4e22ad27cce588b01392043c1b"
+  revision = "61a87790db17894570dfb32dbaa0a4af9ce60cb4"
 
 [[projects]]
   branch = "master"
@@ -151,7 +162,10 @@
   input-imports = [
     "github.com/privacybydesign/gabi",
     "github.com/privacybydesign/gabi/big",
+    "github.com/privacybydesign/gabi/pkg/common",
+    "github.com/privacybydesign/gabi/revocation",
     "github.com/stretchr/testify/assert",
+    "github.com/stretchr/testify/require",
     "github.com/tyler-smith/go-bip39",
   ]
   solver-name = "gps-cdcl"

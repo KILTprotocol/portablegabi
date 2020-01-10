@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/KILTprotocol/portablegabi/pkg/credentials"
+	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
 	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/revocation"
 )
 
 // GenKeypair generates a keypair for the attester. It takes no inputs and
@@ -67,6 +68,7 @@ func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 	}
 	session := &credentials.AttesterSession{}
 	request := &credentials.RequestAttestedClaim{}
+	update := &revocation.Update{}
 	if err := json.Unmarshal([]byte(inputs[0].String()), issuer.PrivateKey); err != nil {
 		return nil, err
 	}
@@ -79,6 +81,9 @@ func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 	if err := json.Unmarshal([]byte(inputs[3].String()), request); err != nil {
 		return nil, err
 	}
-	attest, err := issuer.AttestClaim(request, session)
+	if err := json.Unmarshal([]byte(inputs[4].String()), update); err != nil {
+		return nil, err
+	}
+	attest, err := issuer.AttestClaim(request, session, update)
 	return attest, err
 }

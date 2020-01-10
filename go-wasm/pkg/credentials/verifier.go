@@ -9,6 +9,7 @@ import (
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/gabi/pkg/common"
 )
 
 // VerifierSession stores information which is needed to verify the response of the claimer
@@ -22,8 +23,8 @@ type VerifierSession struct {
 // which represents the message which should be send to the claimer
 func RequestAttributes(sysParams *gabi.SystemParameters,
 	discloseAttributes []string) (*VerifierSession, *RequestDiscloseAttributes) {
-	context, _ := gabi.RandomBigInt(sysParams.Lh)
-	nonce, _ := gabi.RandomBigInt(sysParams.Lh)
+	context, _ := common.RandomBigInt(sysParams.Lh)
+	nonce, _ := common.RandomBigInt(sysParams.Lh)
 	return &VerifierSession{context, nonce}, &RequestDiscloseAttributes{
 		Context:            context,
 		DiscloseAttributes: discloseAttributes,

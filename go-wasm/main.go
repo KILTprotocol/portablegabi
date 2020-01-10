@@ -6,7 +6,7 @@ package main
 import (
 	"syscall/js"
 
-	"github.com/KILTprotocol/portablegabi/pkg/wasm"
+	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/wasm"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"syscall/js"
 
-	"github.com/KILTprotocol/portablegabi/pkg/credentials"
+	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
 	"github.com/privacybydesign/gabi"
 )
 

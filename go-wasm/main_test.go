@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/KILTprotocol/portablegabi/pkg/credentials"
+	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
 	"github.com/privacybydesign/gabi"
 	"github.com/stretchr/testify/assert"
 )
@@ -32,6 +32,9 @@ func TestCredential(t *testing.T) {
 
 	issuer, err := credentials.NewAttester(sysParams, 6, OneYear)
 	assert.NoError(t, err, "Error in attester key generation")
+	update, err := issuer.CreateAccumulator()
+	assert.NoError(t, err, "Could not create update")
+
 
 	user, err := credentials.NewClaimer(sysParams)
 	assert.NoError(t, err, "Error in user key generation")
@@ -56,7 +59,7 @@ func TestCredential(t *testing.T) {
 	userSession, reqAttestMsg, err := user.RequestSignatureForClaim(issuer.PublicKey, startSignMsg, claim)
 	assert.NoError(t, err, "Could not request signature")
 
-	sigMsg, err := issuer.AttestClaim(reqAttestMsg, issuerSession)
+	sigMsg, err := issuer.AttestClaim(reqAttestMsg, issuerSession, update)
 	assert.NoError(t, err, "Could not create signature")
 
 	cred, err := user.BuildAttestedClaim(sigMsg, userSession)
@@ -86,6 +89,8 @@ func TestBigCredential(t *testing.T) {
 
 	issuer, err := credentials.NewAttester(sysParams, 6, OneYear)
 	assert.NoError(t, err, "Error in attester key generation")
+	update, err := issuer.CreateAccumulator()
+	assert.NoError(t, err, "Could not create new accumulator")
 
 	user, err := credentials.NewClaimer(sysParams)
 	assert.NoError(t, err, "Error in user key generation")
@@ -109,7 +114,7 @@ func TestBigCredential(t *testing.T) {
 	userSession, reqAttestMsg, err := user.RequestSignatureForClaim(issuer.PublicKey, startSignMsg, claim)
 	assert.NoError(t, err, "Could not request signature")
 
-	sigMsg, err := issuer.AttestClaim(reqAttestMsg, issuerSession)
+	sigMsg, err := issuer.AttestClaim(reqAttestMsg, issuerSession, update)
 	assert.NoError(t, err, "Could not create signature")
 
 	cred, err := user.BuildAttestedClaim(sigMsg, userSession)

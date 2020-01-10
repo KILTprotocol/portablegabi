@@ -7,6 +7,7 @@ import (
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/gabi/pkg/common"
 	"github.com/tyler-smith/go-bip39"
 )
 
@@ -24,7 +25,7 @@ type Claimer struct {
 
 // NewClaimer generates a new secret and returns a Claimer
 func NewClaimer(sysParams *gabi.SystemParameters) (*Claimer, error) {
-	masterSecret, err := gabi.RandomBigInt(sysParams.Lm)
+	masterSecret, err := common.RandomBigInt(sysParams.Lm)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
 	_, values := claim.ToAttributes()
 
-	nonce, err := gabi.RandomBigInt(issuerPubK.Params.Lstatzk)
+	nonce, err := common.RandomBigInt(issuerPubK.Params.Lstatzk)
 	if err != nil {
 		return nil, nil, err
 	}
