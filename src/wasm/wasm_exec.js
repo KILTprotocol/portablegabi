@@ -578,7 +578,7 @@ module.exports.exec = (fn, fnArgs) => {
       })
       .catch(err => {
         console.error(err)
-        process.exit(1)
+        process.exit('Error while executing Gabi WASM')
       })
   }
 }
