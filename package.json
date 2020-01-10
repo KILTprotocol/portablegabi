@@ -5,6 +5,9 @@
   "main": "./build/index.js",
   "typings": "./build/index.d.ts",
   "scripts": {
+    "_comment": "NODE_ENV=custom is set because otherwise tests won't compile (see https://github.com/polkadot-js/common/issues/321)",
+    "test": "export NODE_ENV=custom; jest",
+    "testWatch": "jest --watch --coverage",
     "lint": "eslint 'src/**'",
     "lint:fix": "yarn lint --fix",
     "style": "prettier -l src/**/*.ts",
@@ -24,6 +27,7 @@
   },
   "homepage": "https://github.com/KILTprotocol/portablegabi#readme",
   "devDependencies": {
+    "@types/jest": "^24.0.25",
     "@types/node": "^12.12.24",
     "@typescript-eslint/eslint-plugin": "^2.14.0",
     "@typescript-eslint/parser": "^2.14.0",
@@ -34,8 +38,10 @@
     "eslint-plugin-jsdoc": "^15.9.1",
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-tsc": "^1.2.0",
-    "typescript": "^3.7.4",
-    "prettier": "^1.19.1"
+    "jest": "^24.9.0",
+    "prettier": "^1.19.1",
+    "ts-jest": "^24.3.0",
+    "typescript": "^3.7.4"
   },
   "repository": {
     "type": "git",
