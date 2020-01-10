@@ -21,7 +21,9 @@ export interface IGabiAttestationRequest {
       }
       [key: string]: any
     }
-    [crypto: string]: any
+    cb: {
+      [cryptoStuff: string]: any
+    }
   }
 }
 
