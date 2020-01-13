@@ -46,5 +46,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KILTprotocol/portablegabi.git"
+  },
+  "dependencies": {
+    "tslib": "^1.10.0"
   }
 }
