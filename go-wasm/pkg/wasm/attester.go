@@ -127,4 +127,4 @@ func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	return attester.RevokeAttestation(update, witness)
-} 
+}

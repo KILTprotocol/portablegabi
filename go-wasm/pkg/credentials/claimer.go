@@ -1,7 +1,7 @@
 package credentials
 
 import (
-	"fmt"
+	"errors"
 	"sort"
 	"strings"
 
@@ -38,7 +38,7 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 	// Generate a Bip39 HD wallet for the mnemonic and a user supplied password
 	seed := bip39.NewSeed(mnemonic, password)
 	if uint(len(seed)) < sysParams.Lm/8 {
-		return nil, fmt.Errorf("seed to small")
+		return nil, errors.New("seed to small")
 	}
 	maxKey := new(big.Int).Lsh(big.NewInt(1), sysParams.Lm)
 	bigSeed := big.NewInt(0).SetBytes(seed)
@@ -94,7 +94,7 @@ func (user *Claimer) UpdateCredential(attesterPubK *gabi.PublicKey, attestation 
 	}
 	index := witness.Accumulator.Index
 	if index < update.Events[0].Index-1 {
-		return nil, fmt.Errorf("update to old")
+		return nil, errors.New("update to old")
 	}
 	err = witness.Update(pubRevKey, update)
 	if err != nil {
@@ -105,6 +105,18 @@ func (user *Claimer) UpdateCredential(attesterPubK *gabi.PublicKey, attestation 
 
 // RevealAttributes reveals the attributes which are requested by the verifier.
 func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *RequestDiscloseAttributes) (*DiscloseAttributes, error) {
+	if reqAttributes.ReqNonRevocationProof {
+		witness := attestedClaim.Credential.NonRevocationWitness
+		revPK, err := pk.RevocationKey()
+		if err != nil {
+			return nil, err
+		}
+		acc, err := witness.SignedAccumulator.UnmarshalVerify(revPK)
+		if err != nil {
+			return nil, err
+		}
+		witness.Accumulator = acc
+	}
 	attestedClaim.Credential.Pk = pk
 	sort.Slice(reqAttributes.DiscloseAttributes[:], func(i, j int) bool {
 		return strings.Compare(reqAttributes.DiscloseAttributes[i], reqAttributes.DiscloseAttributes[j]) < 0
@@ -123,7 +135,7 @@ func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *Atteste
 		attributes[attrI] = v
 	}
 	if i == 0 {
-		return nil, fmt.Errorf("attribute not found")
+		return nil, errors.New("attribute not found")
 	}
 	proof, err := attestedClaim.Credential.CreateDisclosureProof(attrIndexes, reqAttributes.ReqNonRevocationProof, reqAttributes.Context, reqAttributes.Nonce)
 	if err != nil {
