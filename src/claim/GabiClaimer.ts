@@ -5,7 +5,7 @@ import {
   IGabiAttestationStart,
   IGabiMsgSession,
 } from '../types/Attestation'
-import { IGabiAttrMsg } from '../types/Verification'
+import { IGabiReqAttrMsg } from '../types/Verification'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 
 export default class GabiClaimer implements IGabiClaimer {
@@ -60,12 +60,11 @@ export default class GabiClaimer implements IGabiClaimer {
     claimerSignSession: IGabiAttestationRequest['session']
     signature: string
   }): Promise<string> {
-    const response = await goWasmExec<string>(WasmHooks.buildCredential, [
+    return goWasmExec<string>(WasmHooks.buildCredential, [
       this.secret,
       JSON.stringify(claimerSignSession),
       signature,
     ])
-    return response
   }
 
   // reveal attributes
@@ -75,15 +74,31 @@ export default class GabiClaimer implements IGabiClaimer {
     attesterPubKey,
   }: {
     credential: string
-    reqRevealedAttrMsg: IGabiAttrMsg
+    reqRevealedAttrMsg: IGabiReqAttrMsg
     attesterPubKey: string
   }): Promise<string> {
-    const response = await goWasmExec<string>(WasmHooks.revealAttributes, [
+    return goWasmExec<string>(WasmHooks.revealAttributes, [
       this.secret,
       credential,
       JSON.stringify(reqRevealedAttrMsg),
       attesterPubKey,
     ])
-    return response
+  }
+
+  public async updateCredential({
+    credential,
+    attesterPubKey,
+    update,
+  }: {
+    credential: string
+    attesterPubKey: string
+    update: string
+  }): Promise<string> {
+    return goWasmExec<string>(WasmHooks.updateCredential, [
+      this.secret,
+      credential,
+      update,
+      attesterPubKey,
+    ])
   }
 }

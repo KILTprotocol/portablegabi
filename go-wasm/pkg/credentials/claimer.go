@@ -8,6 +8,7 @@ import (
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/pkg/common"
+	"github.com/privacybydesign/gabi/revocation"
 	"github.com/tyler-smith/go-bip39"
 )
 
@@ -46,14 +47,14 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 
 // RequestSignatureForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
 // The request should be send to the attester.
-func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
+func (user *Claimer) RequestSignatureForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
 	_, values := claim.ToAttributes()
 
-	nonce, err := common.RandomBigInt(issuerPubK.Params.Lstatzk)
+	nonce, err := common.RandomBigInt(attesterPubK.Params.Lstatzk)
 	if err != nil {
 		return nil, nil, err
 	}
-	cb := gabi.NewCredentialBuilder(issuerPubK, startMsg.Context, user.MasterSecret, nonce)
+	cb := gabi.NewCredentialBuilder(attesterPubK, startMsg.Context, user.MasterSecret, nonce)
 	commitMsg := cb.CommitToSecretAndProve(startMsg.Nonce)
 
 	return &UserIssuanceSession{
@@ -78,6 +79,30 @@ func (user *Claimer) BuildAttestedClaim(signature *gabi.IssueSignatureMessage, s
 	return &AttestedClaim{cred, session.Claim}, nil
 }
 
+// UpdateCredential updates the non revocation witness using the provided update.
+func (user *Claimer) UpdateCredential(attesterPubK *gabi.PublicKey, attestation *AttestedClaim, update *revocation.Update) (*AttestedClaim, error) {
+	pubRevKey, err := attesterPubK.RevocationKey()
+	if err != nil {
+		return nil, err
+	}
+	witness := attestation.Credential.NonRevocationWitness
+	if witness.Accumulator == nil {
+		witness.Accumulator, err = witness.SignedAccumulator.UnmarshalVerify(pubRevKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	index := witness.Accumulator.Index
+	if index < update.Events[0].Index-1 {
+		return nil, fmt.Errorf("update to old")
+	}
+	err = witness.Update(pubRevKey, update)
+	if err != nil {
+		return nil, err
+	}
+	return attestation, nil
+}
+
 // RevealAttributes reveals the attributes which are requested by the verifier.
 func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *RequestDiscloseAttributes) (*DiscloseAttributes, error) {
 	attestedClaim.Credential.Pk = pk
@@ -100,7 +125,10 @@ func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *Atteste
 	if i == 0 {
 		return nil, fmt.Errorf("attribute not found")
 	}
-	proof := attestedClaim.Credential.CreateDisclosureProof(attrIndexes, reqAttributes.Context, reqAttributes.Nonce)
+	proof, err := attestedClaim.Credential.CreateDisclosureProof(attrIndexes, reqAttributes.ReqNonRevocationProof, reqAttributes.Context, reqAttributes.Nonce)
+	if err != nil {
+		return nil, err
+	}
 	return &DiscloseAttributes{
 		Proof:      proof,
 		Attributes: attributes,

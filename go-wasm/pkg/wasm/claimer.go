@@ -8,6 +8,7 @@ import (
 
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
 	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/revocation"
 )
 
 // GenKey creates the private key for the claimer
@@ -117,4 +118,26 @@ func RevealAttributes(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	return disclosedAttr, nil
+}
+
+// UpdateCredential updates the non revocation witness using the provided update.
+func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
+	claimer := &credentials.Claimer{}
+	credential := &credentials.AttestedClaim{}
+	update := &revocation.Update{}
+	issuerPubKey := &gabi.PublicKey{}
+
+	if err := json.Unmarshal([]byte(inputs[0].String()), claimer); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[1].String()), credential); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[2].String()), update); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[3].String()), issuerPubKey); err != nil {
+		return nil, err
+	}
+	return claimer.UpdateCredential(issuerPubKey, credential, update)
 }

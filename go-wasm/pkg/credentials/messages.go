@@ -22,9 +22,11 @@ type RequestAttestedClaim struct {
 // RequestDiscloseAttributes is send from the verifier to the claimer. The
 // verifier request specific attributes from the claimer.
 type RequestDiscloseAttributes struct {
-	DiscloseAttributes []string `json:"discloseAttributes"`
-	Context            *big.Int `json:"context"`
-	Nonce              *big.Int `json:"nonce"`
+	DiscloseAttributes    []string `json:"discloseAttributes"`
+	Context               *big.Int `json:"context"`
+	Nonce                 *big.Int `json:"nonce"`
+	ReqNonRevocationProof bool     `json:"reqNonRevocationProof"`
+	ReqMinIndex           uint64   `json:"reqMinIndex"`
 }
 
 // DiscloseAttributes represents the message that is send from the claimer to the verifier in order to disclose attributes.

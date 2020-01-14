@@ -28,7 +28,7 @@ func Callbacker(function GoFunction) JSFunction {
 		if len(inputs) == 0 {
 			panic("Callback argument is missing")
 		}
-		callback := inputs[len(inputs)-1:][0]
+		callback := inputs[len(inputs)-1]
 		output, err := function(this, inputs)
 		if err != nil {
 			callback.Invoke(err.Error(), js.Null())

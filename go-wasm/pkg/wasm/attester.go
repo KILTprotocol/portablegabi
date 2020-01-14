@@ -4,7 +4,7 @@ package wasm
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"syscall/js"
 
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
@@ -16,19 +16,14 @@ import (
 // returns a list containing the private key as the fist element and the public
 // key as the second element. If the key generation fails, an error is returned.
 func GenKeypair(this js.Value, inputs []js.Value) (interface{}, error) {
-	issuer, err := credentials.NewAttester(SysParams, inputs[0].Int(), int64(inputs[1].Int()))
+	attester, err := credentials.NewAttester(SysParams, inputs[0].Int(), int64(inputs[1].Int()))
 	if err != nil {
 		return nil, err
 	}
 	return map[string]interface{}{
-		"privateKey": issuer.PrivateKey,
-		"publicKey":  issuer.PublicKey,
+		"privateKey": attester.PrivateKey,
+		"publicKey":  attester.PublicKey,
 	}, nil
-}
-
-// RevokeAttestation revokes an attestation and is not implemented yet.
-func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
-	return nil, fmt.Errorf("Not implemented")
 }
 
 // StartAttestationSession starts the attestation process. It takes the private
@@ -36,18 +31,18 @@ func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 // method returns a session object, which must be used as an argument for
 // issueAttestation and a message for the claimer
 func StartAttestationSession(this js.Value, inputs []js.Value) (interface{}, error) {
-	issuer := &credentials.Attester{
+	attester := &credentials.Attester{
 		PrivateKey: &gabi.PrivateKey{},
 		PublicKey:  &gabi.PublicKey{},
 	}
-	if err := json.Unmarshal([]byte(inputs[0].String()), issuer.PrivateKey); err != nil {
+	if err := json.Unmarshal([]byte(inputs[0].String()), attester.PrivateKey); err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(inputs[1].String()), issuer.PublicKey); err != nil {
+	if err := json.Unmarshal([]byte(inputs[1].String()), attester.PublicKey); err != nil {
 		return nil, err
 	}
 
-	session, msg, err := issuer.InitiateAttestation()
+	session, msg, err := attester.InitiateAttestation()
 	if err != nil {
 		return nil, err
 	}
@@ -62,17 +57,17 @@ func StartAttestationSession(this js.Value, inputs []js.Value) (interface{}, err
 // startAttestationSession method) is expected and the fourth input is the
 // request for attestion which is was send to the attester by the claimer.
 func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
-	issuer := &credentials.Attester{
+	attester := &credentials.Attester{
 		PrivateKey: &gabi.PrivateKey{},
 		PublicKey:  &gabi.PublicKey{},
 	}
 	session := &credentials.AttesterSession{}
 	request := &credentials.RequestAttestedClaim{}
 	update := &revocation.Update{}
-	if err := json.Unmarshal([]byte(inputs[0].String()), issuer.PrivateKey); err != nil {
+	if err := json.Unmarshal([]byte(inputs[0].String()), attester.PrivateKey); err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(inputs[1].String()), issuer.PublicKey); err != nil {
+	if err := json.Unmarshal([]byte(inputs[1].String()), attester.PublicKey); err != nil {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), session); err != nil {
@@ -84,6 +79,52 @@ func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 	if err := json.Unmarshal([]byte(inputs[4].String()), update); err != nil {
 		return nil, err
 	}
-	attest, err := issuer.AttestClaim(request, session, update)
-	return attest, err
+	sig, witness, err := attester.AttestClaim(request, session, update)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"signature": sig,
+		"witness":   witness,
+	}, nil
 }
+
+// CreateAccumulator creates a new accumulator which can be used to revoke
+// attestations
+func CreateAccumulator(this js.Value, inputs []js.Value) (interface{}, error) {
+	attester := &credentials.Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	if err := json.Unmarshal([]byte(inputs[0].String()), attester.PrivateKey); err != nil {
+		return nil, errors.New("Error in private key")
+	}
+	if err := json.Unmarshal([]byte(inputs[1].String()), attester.PublicKey); err != nil {
+		return nil, errors.New("Error in private key")
+	}
+	return attester.CreateAccumulator()
+}
+
+// RevokeAttestation removes the attestation witness from the given accumulator.
+func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
+	attester := &credentials.Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	update := &revocation.Update{}
+	witness := &revocation.Witness{}
+
+	if err := json.Unmarshal([]byte(inputs[0].String()), attester.PrivateKey); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[1].String()), attester.PublicKey); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[2].String()), update); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[3].String()), witness); err != nil {
+		return nil, err
+	}
+	return attester.RevokeAttestation(update, witness)
+} 

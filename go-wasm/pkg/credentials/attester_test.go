@@ -2,6 +2,7 @@ package credentials
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/privacybydesign/gabi"
@@ -16,14 +17,38 @@ var (
 	reqForAttestationTooMay = []byte(`{"commitMsg":{"U":"UzwD/Ryn1TxSflS0ftzsM8CJFTbpzvDX/ZAb456o09e6XAxK+FsfzkqaCbsAsoEoN4fDZBhMHZPWw8JUnq76UpnSPoxkJpVoaa3jMzlTlKdJtsIk0KAfS6rdX2qflmB020PIKhCA5Dn+rY486o6z53M+UBkEjq2VqAkugPG5XWU=","n_2":"LGjfQYAmUVPNzA==","combinedProofs":[{"U":"UzwD/Ryn1TxSflS0ftzsM8CJFTbpzvDX/ZAb456o09e6XAxK+FsfzkqaCbsAsoEoN4fDZBhMHZPWw8JUnq76UpnSPoxkJpVoaa3jMzlTlKdJtsIk0KAfS6rdX2qflmB020PIKhCA5Dn+rY486o6z53M+UBkEjq2VqAkugPG5XWU=","c":"1uyxY/DVPQUnIwweMrPKlaZHizU5dJPYfqRDe+I/yCM=","v_prime_response":"m+5u64jZxrE7kZSgzCnfn2m7kP3yqhA2Us7arVs0te4nvIyQKJ1iQzvBctz8+tp6dXqo4lDW0hEGXMCKu4DJUD9zBNVWJl38PR2Sjoz45W6GA+Be799mItD1NUJkLIYekJ1vSs8kyMa8ggy8rGD8gO7g54TBd74V19MKVSVhbtIet0PK+2DFI1AyClsPRNzgOwMgCcQeNTVErwy4F7oORO1GDNWawGy7hcCdXl/2R6hVQuTA","s_response":"AaJYhsB7S94nWhYRpBuSlfVCBv6WB3Hutk94426xlxk+fy/TDBbL5nPaAJYsEXPr5mSDY2cIaWpGdnNUhppS+D2ibudlxdiOTs7l"}],"proofPJwt":"","proofPJwts":null},"values":["QKmzwo9cKPY=","AQ==","AQ==","AQ==","AQ==","AQ==","AQ==","AQ==","AQ==","AQ==","AQ==","AQ==","AQ==","MDA2ZWUwZjMtN2VkZC00MDEwLWFiMjEtNDU4ZGY5MWRjMGQ1","Q0AAAAAAAAA=","aHR0cDovL3BsYWNlaG9sZC5pdC8zMngzMg==","MHgzOWZmYzMzMjAyNDEwNzIxNzQzZTE5MDgyOTg2ZTY1MGI0ZTg0N2I4NWJlYTdlYWI3Ny4uLg=="]}`)
 )
 
-var KeyLength = 1024
+var (
+	KeyLength = 1024
+	OneYear   = (int64)(365 * 24 * 60 * 60 * 1000 * 1000 * 1000)
+)
 
 func TestNewAttester(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success)
-	attester, err := NewAttester(sysParams, 10, 9000)
+	attester, err := NewAttester(sysParams, 10, OneYear)
+	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
 	require.NoError(t, err)
 	require.NotNil(t, attester)
+	require.True(t, attester.PublicKey.RevocationSupported())
+	require.True(t, attester.PrivateKey.RevocationSupported())
+
+	privateKey := &gabi.PrivateKey{}
+	publicKey := &gabi.PublicKey{}
+
+	bts, err := json.Marshal(attester.PrivateKey)
+	require.NoError(t, err)
+	fmt.Println(string(bts))
+	err = json.Unmarshal(bts, privateKey)
+	require.NoError(t, err)
+
+	bts, err = json.Marshal(attester.PublicKey)
+	require.NoError(t, err)
+	fmt.Println(string(bts))
+	err = json.Unmarshal(bts, publicKey)
+	require.NoError(t, err)
+
+	require.True(t, privateKey.RevocationSupported())
+	require.True(t, publicKey.RevocationSupported())
 }
 
 func TestSign(t *testing.T) {
@@ -48,7 +73,7 @@ func TestSign(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err)
 
-	_, err = attester.AttestClaim(request, session, update)
+	_, _, err = attester.AttestClaim(request, session, update)
 	require.NoError(t, err)
 }
 
@@ -75,10 +100,11 @@ func TestSignAndRevoke(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err)
 
-	sig, err := attester.AttestClaim(request, session, update)
+	sig, witness, err := attester.AttestClaim(request, session, update)
 	require.NoError(t, err)
+	require.NotNil(t, sig)
 
-	revokedUpdate, err := attester.RevokeAttestation(update, sig.NonRevocationWitness)
+	revokedUpdate, err := attester.RevokeAttestation(update, witness)
 	require.NoError(t, err)
 	require.NotNil(t, revokedUpdate)
 }
@@ -105,7 +131,7 @@ func TestSignTooMany(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err)
 
-	_, err = attester.AttestClaim(request, session, update)
+	_, _, err = attester.AttestClaim(request, session, update)
 	require.Error(t, err)
 }
 
@@ -123,7 +149,5 @@ func TestCreateAccumulator(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err)
 	require.NotNil(t, update)
-	// bts, err := json.MarshalIndent(update, "", "    ")
-	// require.NoError(t, err)
-	// fmt.Println(string(bts))
+
 }

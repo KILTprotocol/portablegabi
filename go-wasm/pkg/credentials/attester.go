@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/pkg/common"
 	"github.com/privacybydesign/gabi/revocation"
 )
@@ -12,7 +13,7 @@ import (
 // AttesterSession contains information needed by the attester to create an
 // attestation
 type AttesterSession struct {
-	GabiIssuer *gabi.Issuer `json:"GabiIssuer"`
+	Context *big.Int `json:"context"`
 }
 
 // Attester can attest claims.
@@ -44,14 +45,13 @@ func (attester *Attester) InitiateAttestation() (*AttesterSession, *StartSession
 	if err != nil {
 		return nil, nil, err
 	}
-	gabiIssuer := gabi.NewIssuer(attester.PrivateKey, attester.PublicKey, context)
 
 	nonce, err := common.RandomBigInt(attester.PublicKey.Params.Lstatzk)
 	if err != nil {
 		return nil, nil, err
 	}
 	// send request attributes to sign
-	return &AttesterSession{gabiIssuer}, &StartSessionMsg{
+	return &AttesterSession{Context: context}, &StartSessionMsg{
 		Context: context,
 		Nonce:   nonce,
 	}, nil
@@ -60,26 +60,30 @@ func (attester *Attester) InitiateAttestation() (*AttesterSession, *StartSession
 // AttestClaim issues an attestation for the given claim. It takes the
 // RequestAttestedClaim which was send by the claimer and an AttesterSession.
 // It returns an gabi.IssueSignatureMessage which should be send to the claimer.
-func (attester *Attester) AttestClaim(reqCred *RequestAttestedClaim, session *AttesterSession, update *revocation.Update) (*gabi.IssueSignatureMessage, error) {
+func (attester *Attester) AttestClaim(reqCred *RequestAttestedClaim, session *AttesterSession, update *revocation.Update) (*gabi.IssueSignatureMessage, *revocation.Witness, error) {
 	if len(attester.PublicKey.R) < len(reqCred.Values) {
-		return nil, errors.New("got too many attributes to sign")
+		return nil, nil, errors.New("got too many attributes to sign")
 	}
 	revpk, err := attester.PublicKey.RevocationKey()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	acc, err := update.SignedAccumulator.UnmarshalVerify(revpk)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	witness, err := attester.PrivateKey.RevocationGenerateWitness(acc)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	witness.Accumulator = acc
 	witness.SignedAccumulator = update.SignedAccumulator
-
-	return session.GabiIssuer.IssueSignature(reqCred.CommitMsg.U, reqCred.Values, witness, reqCred.CommitMsg.Nonce2)
+	gabiIssuer := &gabi.Issuer{Pk: attester.PublicKey, Sk: attester.PrivateKey, Context: session.Context}
+	sig, err := gabiIssuer.IssueSignature(reqCred.CommitMsg.U, reqCred.Values, witness, reqCred.CommitMsg.Nonce2)
+	if err != nil {
+		return nil, nil, err
+	}
+	return sig, witness, nil
 }
 
 // CreateAccumulator creates a new accumulator which can be used to revoke
@@ -89,11 +93,7 @@ func (attester *Attester) CreateAccumulator() (*revocation.Update, error) {
 	if err != nil {
 		return nil, err
 	}
-	accUpdate, err := revocation.NewAccumulator(revKey)
-	if err != nil {
-		return nil, err
-	}
-	return accUpdate, nil
+	return revocation.NewAccumulator(revKey)
 }
 
 // RevokeAttestation removes the attestation witness from the given accumulator.

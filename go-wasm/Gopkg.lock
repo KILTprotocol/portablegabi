@@ -75,7 +75,7 @@
 
 [[projects]]
   branch = "export_fields"
-  digest = "1:9938de49f8f055e534b2068c93c695575ab65ed0411fd8185f53ff42bb09722f"
+  digest = "1:897ba8c5b2c33f400506608da9a08b3d65e5c1dc70e8642abe1ca7256c9a8c1a"
   name = "github.com/privacybydesign/gabi"
   packages = [
     ".",
@@ -87,7 +87,7 @@
     "signed",
   ]
   pruneopts = "UT"
-  revision = "519d8bc9da506b882dc574008625fd06ccc98941"
+  revision = "08ead794f7fc3933952970d1fc75c50c6b122b2d"
   source = "https://github.com/weichweich/gabi.git"
 
 [[projects]]
@@ -146,7 +146,7 @@
   name = "golang.org/x/sys"
   packages = ["cpu"]
   pruneopts = "UT"
-  revision = "548cf772de5052aa878ccb47cdeb7d262b75c8ec"
+  revision = "86b910548bc16777f40503131aa424ae0a092199"
 
 [[projects]]
   digest = "1:b75b3deb2bce8bc079e16bb2aecfe01eb80098f5650f9e93e5643ca8b7b73737"
