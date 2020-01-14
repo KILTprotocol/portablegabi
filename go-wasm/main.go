@@ -15,21 +15,25 @@ func main() {
 	// return style methods to callback style methods.
 	c := make(chan bool)
 
-	js.Global().Set("genKeypair", js.FuncOf(wasm.Callbacker(wasm.GenKeypair)))
-	js.Global().Set("startAttestationSession", js.FuncOf(wasm.Callbacker(wasm.StartAttestationSession)))
-	js.Global().Set("issueAttestation", js.FuncOf(wasm.Callbacker(wasm.IssueAttestation)))
-	js.Global().Set("createAccumulator", js.FuncOf(wasm.Callbacker(wasm.CreateAccumulator)))
-	js.Global().Set("revokeAttestation", js.FuncOf(wasm.Callbacker(wasm.RevokeAttestation)))
+	methods := make(map[string]js.Func)
+	methods["genKeypair"] = js.FuncOf(wasm.Callbacker(wasm.GenKeypair))
+	methods["startAttestationSession"] = js.FuncOf(wasm.Callbacker(wasm.StartAttestationSession))
+	methods["issueAttestation"] = js.FuncOf(wasm.Callbacker(wasm.IssueAttestation))
+	methods["createAccumulator"] = js.FuncOf(wasm.Callbacker(wasm.CreateAccumulator))
+	methods["revokeAttestation"] = js.FuncOf(wasm.Callbacker(wasm.RevokeAttestation))
+	methods["genKey"] = js.FuncOf(wasm.Callbacker(wasm.GenKey))
+	methods["keyFromMnemonic"] = js.FuncOf(wasm.Callbacker(wasm.KeyFromMnemonic))
+	methods["requestAttestation"] = js.FuncOf(wasm.Callbacker(wasm.RequestAttestation))
+	methods["buildCredential"] = js.FuncOf(wasm.Callbacker(wasm.BuildCredential))
+	methods["updateCredential"] = js.FuncOf(wasm.Callbacker(wasm.UpdateCredential))
+	methods["revealAttributes"] = js.FuncOf(wasm.Callbacker(wasm.RevealAttributes))
+	methods["startVerificationSession"] = js.FuncOf(wasm.Callbacker(wasm.StartVerificationSession))
+	methods["verifyAttributes"] = js.FuncOf(wasm.Callbacker(wasm.VerifyAttributes))
 
-	js.Global().Set("genKey", js.FuncOf(wasm.Callbacker(wasm.GenKey)))
-	js.Global().Set("keyFromMnemonic", js.FuncOf(wasm.Callbacker(wasm.KeyFromMnemonic)))
-	js.Global().Set("requestAttestation", js.FuncOf(wasm.Callbacker(wasm.RequestAttestation)))
-	js.Global().Set("buildCredential", js.FuncOf(wasm.Callbacker(wasm.BuildCredential)))
-	js.Global().Set("updateCredential", js.FuncOf(wasm.Callbacker(wasm.UpdateCredential)))
-	js.Global().Set("revealAttributes", js.FuncOf(wasm.Callbacker(wasm.RevealAttributes)))
-
-	js.Global().Set("startVerificationSession", js.FuncOf(wasm.Callbacker(wasm.StartVerificationSession)))
-	js.Global().Set("verifyAttributes", js.FuncOf(wasm.Callbacker(wasm.VerifyAttributes)))
+	for k, v := range methods {
+		js.Global().Set(k, v)
+		defer v.Release()
+	}
 
 	<-c
 }
