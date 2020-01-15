@@ -1,8 +1,7 @@
 import WasmHooks from './WasmHooks'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const goWasm = require('./new_wasm_exec')
-// const goWasm = require('./test')
+const goWasm = require('./wasm_exec')
 
 const GoInstance = goWasm.GoWasm.init()
 
