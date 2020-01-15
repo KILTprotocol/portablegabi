@@ -4,17 +4,24 @@ This TypeScript module of Portable Gabi enables the use of [Idemix](http://www.r
 
 A user (in the following referred to as "claimer") claiming something (e.g. citizenship in a specific country, ownership of a valid driver's license) can request an attestation from a trusted entity ("attester") and present these claims to multiple verifiers without revealing sensitive information uniquely tied to the claimer. The claimer can chose which attributes of the claim to disclose to a verifier.
 
-Note that due to the usage of a Go WASM all functions are asynchronous.
+Note that due to the usage of a Go WASM (--> callbacks), all functions are asynchronous. It can happen that NodeJs does not exit automatically since we keep the WASM instance open. We recommend calling `goWasmExec()` from `/src/wasm/wasm_exec_wrapper` at the end.
 
 ## Installing
 
+To build the package, you need to have [GO](https://golang.org/) installed.
+
 ```bash
-npm install portablegabi
+npm i @kiltprotocol/portablegabi
+yarn build:wasm
 ```
+
+## Tests
+
+TODO
 
 ## Example
 
-The complete process is showcased in the [example file](docs/example.ts).
+The complete process is showcased in the [example file](docs/example.ts). Note that the key generation `GabiAttester.buildFromScratch()` takes about 10 minutes due to finding huge prime numbers being very slow in WASM.
 
 ```javascript
 /** (1) Claim **/
@@ -94,8 +101,7 @@ const { claim: verifiedClaim, verified } = await GabiVerifier.verifyAttributes({
 
 /** (4) Revocation **/
 // TODO
+
+/** (5) Close WASM Instance **/
+goWasmClose()
 ```
-
-## Development
-
-To build the package, you have to have [GO](https://golang.org/) installed.
