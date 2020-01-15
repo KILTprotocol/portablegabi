@@ -1,7 +1,9 @@
 /* eslint-disable no-console */
+// TODO: Change back to /example
 import GabiClaimer from '../build/claim/GabiClaimer'
 import GabiAttester from '../build/attestation/GabiAttester'
 import GabiVerifier from '../build/verification/GabiVerifier'
+import { goWasmClose } from '../build/wasm/wasm_exec_wrapper'
 
 const testEnv = {
   privKey:
@@ -31,11 +33,13 @@ const runGabiExample = async (): Promise<void> => {
 
   console.time('(1) Build claimer identity')
   const gabiClaimer = await GabiClaimer.buildFromMnemonic(mnemonic)
-  // const gabiClaimer = await GabiClaimer.buildFromScratch() // this will take ~10 minutes due to finding big primes
   console.timeEnd('(1) Build claimer identity')
 
   console.time('(2) Start attestation: attester sends 2 nonces to claimer')
   const gabiAttester = new GabiAttester(pubKey, privKey)
+  // const gabiAttester = await GabiAttester.buildFromScratch() // takes ~10 min due to slow go wasm
+  console.log(gabiAttester)
+  console.log(pubKey, privKey)
   const attesterPubKey = gabiAttester.getPubKey()
   const {
     message: startAttestationMsg,
@@ -96,6 +100,7 @@ const runGabiExample = async (): Promise<void> => {
   console.log('Verified claim: ', verifiedClaim)
   console.log('Claim verified?', verified)
   console.timeEnd('>> Complete Gabi process <<')
+  goWasmClose()
 }
 
 runGabiExample()
