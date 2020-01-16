@@ -62,7 +62,7 @@ func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		PublicKey:  &gabi.PublicKey{},
 	}
 	session := &credentials.AttesterSession{}
-	request := &credentials.RequestAttestedClaim{}
+	request := &credentials.AttestedClaimRequest{}
 	update := &revocation.Update{}
 	if err := json.Unmarshal([]byte(inputs[0].String()), attester.PrivateKey); err != nil {
 		return nil, err

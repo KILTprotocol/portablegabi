@@ -60,7 +60,7 @@ func (attester *Attester) InitiateAttestation() (*AttesterSession, *StartSession
 // AttestClaim issues an attestation for the given claim. It takes the
 // RequestAttestedClaim which was send by the claimer and an AttesterSession.
 // It returns an gabi.IssueSignatureMessage which should be send to the claimer.
-func (attester *Attester) AttestClaim(reqCred *RequestAttestedClaim, session *AttesterSession, update *revocation.Update) (*gabi.IssueSignatureMessage, *revocation.Witness, error) {
+func (attester *Attester) AttestClaim(reqCred *AttestedClaimRequest, session *AttesterSession, update *revocation.Update) (*gabi.IssueSignatureMessage, *revocation.Witness, error) {
 	if len(attester.PublicKey.R) < len(reqCred.Values) {
 		return nil, nil, errors.New("got too many attributes to sign")
 	}

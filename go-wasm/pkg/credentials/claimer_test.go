@@ -61,7 +61,7 @@ func TestRequestSignature(t *testing.T) {
 
 	claimer, err := NewClaimer(sysParams)
 	require.NoError(t, err)
-	session, reqMsg, err := claimer.RequestSignatureForClaim(publicKey, attesterMsg, claim)
+	session, reqMsg, err := claimer.RequestAttestationForClaim(publicKey, attesterMsg, claim)
 	require.NoError(t, err)
 	require.NotNil(t, reqMsg)
 	require.NotNil(t, session)
@@ -85,7 +85,7 @@ func TestBuildUpdateCredential(t *testing.T) {
 	err = json.Unmarshal(byteUserSession, userSession)
 	require.NoError(t, err)
 
-	cred, err := claimer.BuildAttestedClaim(sigMsg, userSession)
+	cred, err := claimer.BuildCredential(sigMsg, userSession)
 	assert.NoError(t, err, "Could not request attributes")
 	require.NotNil(t, cred)
 }

@@ -26,7 +26,7 @@ func main() {
 	methods["requestAttestation"] = js.FuncOf(wasm.Callbacker(wasm.RequestAttestation))
 	methods["buildCredential"] = js.FuncOf(wasm.Callbacker(wasm.BuildCredential))
 	methods["updateCredential"] = js.FuncOf(wasm.Callbacker(wasm.UpdateCredential))
-	methods["revealAttributes"] = js.FuncOf(wasm.Callbacker(wasm.RevealAttributes))
+	methods["revealAttributes"] = js.FuncOf(wasm.Callbacker(wasm.BuildPresentation))
 	methods["startVerificationSession"] = js.FuncOf(wasm.Callbacker(wasm.StartVerificationSession))
 	methods["verifyAttributes"] = js.FuncOf(wasm.Callbacker(wasm.VerifyAttributes))
 

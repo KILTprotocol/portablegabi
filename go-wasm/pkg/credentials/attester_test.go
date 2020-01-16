@@ -38,6 +38,7 @@ func TestNewAttester(t *testing.T) {
 	// Marshall and unmarshall
 	bts, err := json.Marshal(attester.PrivateKey)
 	require.NoError(t, err)
+	fmt.Println(string(bts))
 	err = json.Unmarshal(bts, privateKey)
 	require.NoError(t, err)
 
@@ -61,7 +62,7 @@ func TestSign(t *testing.T) {
 	require.NoError(t, err)
 	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
 
-	request := &RequestAttestedClaim{}
+	request := &AttestedClaimRequest{}
 	err = json.Unmarshal(reqForAttestation, request)
 	require.NoError(t, err)
 
@@ -88,7 +89,7 @@ func TestSignAndRevoke(t *testing.T) {
 	// ignore error here, just ensure that revocation keys exists
 	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
 
-	request := &RequestAttestedClaim{}
+	request := &AttestedClaimRequest{}
 	err = json.Unmarshal(reqForAttestation, request)
 	require.NoError(t, err)
 
@@ -119,7 +120,7 @@ func TestSignTooMany(t *testing.T) {
 	require.NoError(t, err)
 	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
 
-	request := &RequestAttestedClaim{}
+	request := &AttestedClaimRequest{}
 	err = json.Unmarshal(reqForAttestationTooMay, request)
 	require.NoError(t, err)
 
