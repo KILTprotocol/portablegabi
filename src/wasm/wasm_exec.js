@@ -556,13 +556,16 @@ class GoWasm extends Go {
           }
           resolve(...messages)
         })
+      }).catch(e => {
+        console.error(e.stack)
+        process.exit(`Error while executing Gabi WASM function ${fn}`)
       })
     }
     throw new Error(`Function ${fn} missing in WASM`)
   }
 
   close() {
-    process.exit('Done')
+    process.exit('Closing WASM + exiting node')
   }
 }
 module.exports.GoWasm = GoWasm
