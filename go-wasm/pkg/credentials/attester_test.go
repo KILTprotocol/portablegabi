@@ -35,15 +35,14 @@ func TestNewAttester(t *testing.T) {
 	privateKey := &gabi.PrivateKey{}
 	publicKey := &gabi.PublicKey{}
 
+	// Marshall and unmarshall
 	bts, err := json.Marshal(attester.PrivateKey)
 	require.NoError(t, err)
-	fmt.Println(string(bts))
 	err = json.Unmarshal(bts, privateKey)
 	require.NoError(t, err)
 
 	bts, err = json.Marshal(attester.PublicKey)
 	require.NoError(t, err)
-	fmt.Println(string(bts))
 	err = json.Unmarshal(bts, publicKey)
 	require.NoError(t, err)
 

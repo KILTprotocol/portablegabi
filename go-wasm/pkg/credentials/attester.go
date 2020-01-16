@@ -40,7 +40,7 @@ func NewAttester(sysParams *gabi.SystemParameters, attributeCount int, periodOfV
 // AttesterSession, which contains information the attester needs for creating
 // the attestation and StartSessionMsg which represents the message for the claimer
 func (attester *Attester) InitiateAttestation() (*AttesterSession, *StartSessionMsg, error) {
-	// why is here a context?
+	// TODO: Calculate correct context
 	context, err := common.RandomBigInt(attester.PublicKey.Params.Lh)
 	if err != nil {
 		return nil, nil, err

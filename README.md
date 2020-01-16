@@ -8,7 +8,7 @@ Note that due to the usage of a Go WASM (--> callbacks), all functions are async
 
 ## Installing
 
-To build the package, you have to have [GO](https://golang.org/) and [dep](https://github.com/golang/dep) installed.
+To build the package, you need to have [GO](https://golang.org/) and [dep](https://github.com/golang/dep) installed.
 
 ```bash
 npm i @kiltprotocol/portablegabi

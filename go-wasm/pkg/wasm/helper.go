@@ -25,15 +25,19 @@ type JSFunction func(js.Value, []js.Value) interface{}
 // called. This makes is usable as a js interface function
 func Callbacker(function GoFunction) JSFunction {
 	return func(this js.Value, inputs []js.Value) interface{} {
+		// the callback is the last argument, check that it's there and retrieve it
 		if len(inputs) == 0 {
 			panic("Callback argument is missing")
 		}
 		callback := inputs[len(inputs)-1]
-		output, err := function(this, inputs)
+
+		// call the actual function without the callback
+		output, err := function(this, inputs[:len(inputs)-1])
 		if err != nil {
 			callback.Invoke(err.Error(), js.Null())
 			return nil
 		}
+		// if there was no error try to convert some of the return values to js.Values
 		switch x := output.(type) {
 		case []interface{}:
 			retValues := make([]interface{}, len(x))
