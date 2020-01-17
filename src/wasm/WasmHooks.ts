@@ -1,21 +1,24 @@
 enum WasmHooks {
-  // Attesters methods
+  // attester methods
   genKeypair = 'genKeypair',
-  revokeAttestation = 'revokeAttestation',
   createAccumulator = 'createAccumulator',
   startAttestationSession = 'startAttestationSession',
   issueAttestation = 'issueAttestation',
+  revokeAttestation = 'revokeAttestation',
 
   // Claimer methods
-  keyFromMnemonic = 'keyFromMnemonic',
   genKey = 'genKey',
+  keyFromMnemonic = 'keyFromMnemonic',
   requestAttestation = 'requestAttestation',
   buildCredential = 'buildCredential',
-  revealAttributes = 'revealAttributes',
   updateCredential = 'updateCredential',
+  buildPresentation = 'buildPresentation',
+  buildCombinedPresentation = 'buildCombinedPresentation',
 
   // Verifier methods
-  startVerificationSession = 'startVerificationSession',
-  verifyAttributes = 'verifyAttributes',
+  requestPresentation = 'requestPresentation',
+  requestCombinedPresentation = 'requestCombinedPresentation',
+  verifyPresentation = 'verifyPresentation',
+  verifyCombinedPresentation = 'verifyCombinedPresentation',
 }
 export default WasmHooks

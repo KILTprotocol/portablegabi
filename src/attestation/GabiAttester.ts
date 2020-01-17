@@ -75,7 +75,8 @@ export default class GabiAttester implements IGabiAttester {
         JSON.stringify(attesterSignSession),
         JSON.stringify(reqSignMsg),
         update,
-    ])
+      ]
+    )
     return response
   }
 

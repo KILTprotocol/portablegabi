@@ -77,11 +77,30 @@ export default class GabiClaimer implements IGabiClaimer {
     reqRevealedAttrMsg: IGabiReqAttrMsg
     attesterPubKey: string
   }): Promise<string> {
-    return goWasmExec<string>(WasmHooks.revealAttributes, [
+    return goWasmExec<string>(WasmHooks.buildPresentation, [
       this.secret,
       credential,
       JSON.stringify(reqRevealedAttrMsg),
       attesterPubKey,
+    ])
+  }
+
+  public async buildCombinedPresentation({
+    credentials,
+    reqCombinedPresentation,
+    attesterPubKeys,
+  }: {
+    credentials: string[]
+    reqCombinedPresentation: string
+    attesterPubKeys: string[]
+  }): Promise<string> {
+    // make an json array out of already json serialised values
+    // we don't want a json array of strings
+    return goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
+      this.secret,
+      `[${credentials.join(',')}]`,
+      reqCombinedPresentation,
+      `[${attesterPubKeys.join(',')}]`,
     ])
   }
 

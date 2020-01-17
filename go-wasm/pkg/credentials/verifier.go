@@ -133,13 +133,19 @@ func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *Presentati
 
 func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, combinedPresentation *CombinedPresentationResponse, session *CombinedVerifierSession) (bool, []map[string]interface{}, error) {
 	success := combinedPresentation.Proof.Verify(attesterPubKeys, session.Context, session.Nonce, false, nil)
+	if !success {
+		return false, nil, nil
+	}
 	claims := make([]map[string]interface{}, len(combinedPresentation.Attributes))
 	for i, genericP := range *combinedPresentation.Proof {
+		// check each proof: revocation has to be ok and accumulator fresh enough
 		if proofd, ok := genericP.(*gabi.ProofD); ok {
 			partialReq := session.PartialRequests[i]
 			claims[i] = reconstructClaim(proofd.ADisclosed, combinedPresentation.Attributes[i])
+
 			validRevocationProof := checkAccumulatorInProof(attesterPubKeys[i], partialReq.ReqMinIndex, proofd)
 			revocationOK := !partialReq.ReqNonRevocationProof || validRevocationProof
+
 			success = success && revocationOK
 		} else {
 			return false, nil, errors.New("unsupported proof in prooflist")

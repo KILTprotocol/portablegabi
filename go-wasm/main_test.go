@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -78,7 +79,6 @@ func verify(t *testing.T, attester *credentials.Attester, claimer *credentials.C
 	require.Equal(t, claim.Contents["gender"], contents["gender"])
 	require.Equal(t, claim.Contents["special"], contents["special"])
 	require.Nil(t, attr["contents.name"])
-
 }
 
 func TestCredential(t *testing.T) {
@@ -226,4 +226,110 @@ func TestBigCredential(t *testing.T) {
 	require.Nil(t, contents["age"], "age was unwillingly disclosed")
 	require.Nil(t, contents["gender"], "gender was unwillingly disclosed")
 	require.Nil(t, contents["special"], "special was unwillingly disclosed")
+}
+
+// used to print a new set of json objects
+func TestFullWorkflow(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	require.True(t, success, "Error in sysparams")
+
+	attester, err := credentials.NewAttester(sysParams, 6, OneYear)
+	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
+	require.NoError(t, err, "Error in attester key generation")
+	update, err := attester.CreateAccumulator()
+	require.NoError(t, err, "Could not create update")
+
+	bts, err := json.Marshal(attester)
+	require.NoError(t, err)
+	fmt.Println("Attester:", string(bts))
+
+	bts, err = json.Marshal(update)
+	require.NoError(t, err)
+	fmt.Println("Update:", string(bts))
+
+	claimer, err := credentials.ClaimerFromMnemonic(sysParams, Mnemonic, "")
+	require.NoError(t, err, "Error in claimer key generation")
+	bts, err = json.Marshal(claimer)
+	require.NoError(t, err)
+	fmt.Println("Claimer:", string(bts))
+
+	claim := &credentials.Claim{
+		CType: "0xDEADBEEFCOFEE",
+		Contents: map[string]interface{}{
+			"age":     34., // use float here, json will always parse numbers to float64
+			"name":    "Berta",
+			"gender":  "female",
+			"special": true,
+		},
+	}
+
+	attributes, values := claim.ToAttributes()
+	require.Equal(t, len(attributes), 5)
+	require.Equal(t, len(values), 5)
+
+	attesterSession, startSignMsg, err := attester.InitiateAttestation()
+	require.NoError(t, err, "Could not start signing session")
+
+	bts, err = json.Marshal(attesterSession)
+	require.NoError(t, err)
+	fmt.Println("AttesterSession:", string(bts))
+
+	bts, err = json.Marshal(startSignMsg)
+	require.NoError(t, err)
+	fmt.Println("StartAttestationMessage:", string(bts))
+
+	userSession, reqAttestMsg, err := claimer.RequestAttestationForClaim(attester.PublicKey, startSignMsg, claim)
+	require.NoError(t, err, "Could not request signature")
+
+	bts, err = json.Marshal(reqAttestMsg)
+	require.NoError(t, err)
+	fmt.Println("AttestationRequest:", string(bts))
+
+	bts, err = json.Marshal(userSession)
+	require.NoError(t, err)
+	fmt.Println("ClaimerSession:", string(bts))
+
+	sigMsg, _, err := attester.AttestClaim(reqAttestMsg, attesterSession, update)
+	require.NoError(t, err, "Could not create signature")
+
+	bts, err = json.Marshal(sigMsg)
+	require.NoError(t, err)
+	fmt.Println("AttestationResponse:", string(bts))
+
+	cred, err := claimer.BuildCredential(sigMsg, userSession)
+	require.NoError(t, err, "Could not request attributes")
+
+	bts, err = json.Marshal(cred)
+	require.NoError(t, err)
+	fmt.Println("Credential:", string(bts))
+
+	bts, err = json.Marshal(claim)
+	require.NoError(t, err)
+	fmt.Println("claim:", string(bts))
+
+	requestedAttr := [4]string{"ctype", "contents" + credentials.SEPARATOR + "age", "contents" + credentials.SEPARATOR + "special", "contents" + credentials.SEPARATOR + "gender"}
+	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
+	bts, err = json.Marshal(verifierSession)
+	require.NoError(t, err)
+	fmt.Println("verifierSession:", string(bts))
+	bts, err = json.Marshal(reqAttrMsg)
+	require.NoError(t, err)
+	fmt.Println("PresentationRequest:", string(bts))
+
+	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
+	require.NoError(t, err, "Could not disclose attributes")
+	bts, err = json.Marshal(disclosedAttr)
+	require.NoError(t, err)
+	fmt.Println("PresentationResponse:", string(bts))
+
+	_, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
+	require.NoError(t, err, "Could not verify attributes")
+	contents, ok := attr["contents"].(map[string]interface{})
+	require.True(t, ok, "should be a map")
+	require.Equal(t, claim.Contents["age"], contents["age"])
+	require.Equal(t, claim.CType, attr["ctype"])
+	require.Equal(t, claim.Contents["gender"], contents["gender"])
+	require.Equal(t, claim.Contents["special"], contents["special"])
+	require.Nil(t, attr["contents.name"])
+
 }

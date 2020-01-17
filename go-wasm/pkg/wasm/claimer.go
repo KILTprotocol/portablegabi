@@ -120,6 +120,32 @@ func BuildPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 	return disclosedAttr, nil
 }
 
+func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
+	claimer := &credentials.Claimer{}
+	creds := []*credentials.AttestedClaim{}
+	request := &credentials.CombinedPresentationRequest{}
+	attesterPubKey := []*gabi.PublicKey{}
+
+	if err := json.Unmarshal([]byte(inputs[0].String()), claimer); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[1].String()), &creds); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[2].String()), request); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[3].String()), &attesterPubKey); err != nil {
+		return nil, err
+	}
+
+	disclosedAttr, err := claimer.BuildCombinedPresentation(attesterPubKey, creds, request)
+	if err != nil {
+		return nil, err
+	}
+	return disclosedAttr, nil
+}
+
 // UpdateCredential updates the non revocation witness using the provided update.
 func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	claimer := &credentials.Claimer{}

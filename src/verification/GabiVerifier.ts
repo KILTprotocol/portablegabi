@@ -1,10 +1,48 @@
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
-import { IGabiReqAttrMsg, IGabiVerifiedAtts } from '../types/Verification'
+import {
+  IGabiReqAttrMsg,
+  IGabiVerifiedAtts,
+  IPartialPresentationRequest,
+} from '../types/Verification'
 import { IGabiMsgSession, IGabiContextNonce } from '../types/Attestation'
 
 export default class GabiVerifier {
-  public static async verifyAttributes({
+  public static async requestPresentation({
+    requestedAttributes,
+    requestNonRevocationProof,
+    minIndex,
+  }: IPartialPresentationRequest): Promise<{
+    message: IGabiReqAttrMsg
+    session: IGabiContextNonce
+  }> {
+    const { message, session } = await goWasmExec<IGabiMsgSession>(
+      WasmHooks.requestPresentation,
+      [requestNonRevocationProof, minIndex, ...requestedAttributes]
+    )
+    return {
+      message: JSON.parse(message),
+      session: JSON.parse(session),
+    }
+  }
+
+  public static async requestCombinedPresentation(
+    combinedRequest: IPartialPresentationRequest[]
+  ): Promise<{
+    message: string
+    session: string
+  }> {
+    const { message, session } = await goWasmExec<IGabiMsgSession>(
+      WasmHooks.requestCombinedPresentation,
+      [JSON.stringify(combinedRequest)]
+    )
+    return {
+      message,
+      session,
+    }
+  }
+
+  public static async verifyPresentation({
     proof,
     verifierSession,
     attesterPubKey,
@@ -14,32 +52,25 @@ export default class GabiVerifier {
     attesterPubKey: string
   }): Promise<IGabiVerifiedAtts> {
     const response = await goWasmExec<IGabiVerifiedAtts>(
-      WasmHooks.verifyAttributes,
+      WasmHooks.verifyPresentation,
       [proof, JSON.stringify(verifierSession), attesterPubKey]
     )
     return { claim: response.claim, verified: Boolean(response.verified) }
   }
 
-  // start verification
-  public static async startVerificationSession({
-    disclosedAttributes,
-    requestNonRevocationProof,
-    minIndex,
+  public static async verifyCombinedPresentation({
+    proof,
+    verifierSession,
+    attesterPubKeys,
   }: {
-    disclosedAttributes: string[]
-    requestNonRevocationProof: boolean
-    minIndex: number
-  }): Promise<{
-    message: IGabiReqAttrMsg
-    session: IGabiContextNonce
-  }> {
-    const { message, session } = await goWasmExec<IGabiMsgSession>(
-      WasmHooks.startVerificationSession,
-      [requestNonRevocationProof, minIndex, ...disclosedAttributes]
+    proof: string
+    verifierSession: string
+    attesterPubKeys: string[]
+  }): Promise<IGabiVerifiedAtts> {
+    const response = await goWasmExec<IGabiVerifiedAtts>(
+      WasmHooks.verifyCombinedPresentation,
+      [proof, JSON.stringify(verifierSession), `[${attesterPubKeys.join(',')}]`]
     )
-    return {
-      message: JSON.parse(message),
-      session: JSON.parse(session),
-    }
+    return response
   }
 }

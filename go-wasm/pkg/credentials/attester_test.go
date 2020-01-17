@@ -2,7 +2,6 @@ package credentials
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/privacybydesign/gabi"
@@ -38,7 +37,6 @@ func TestNewAttester(t *testing.T) {
 	// Marshall and unmarshall
 	bts, err := json.Marshal(attester.PrivateKey)
 	require.NoError(t, err)
-	fmt.Println(string(bts))
 	err = json.Unmarshal(bts, privateKey)
 	require.NoError(t, err)
 
