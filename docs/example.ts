@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-// TODO: Change back to /example
 import GabiClaimer from '../build/claim/GabiClaimer'
 import GabiAttester from '../build/attestation/GabiAttester'
 import GabiVerifier from '../build/verification/GabiVerifier'
@@ -128,14 +127,12 @@ const runGabiExample = async (): Promise<void> => {
   let update = await gabiAttester.createAccumulator()
   console.timeEnd('Build accumulator')
 
-  // eslint-disable-next-line prefer-const
   let { credential } = await issuanceProcess(
     gabiAttester,
     gabiClaimer,
     update,
     claim
   )
-  // eslint-disable-next-line prefer-const
   const { credential: credential2, witness: witness2 } = await issuanceProcess(
     gabiAttester,
     gabiClaimer,
