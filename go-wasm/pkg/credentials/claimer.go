@@ -1,12 +1,14 @@
 package credentials
 
 import (
-	"fmt"
+	"errors"
 	"sort"
 	"strings"
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/gabi/pkg/common"
+	"github.com/privacybydesign/gabi/revocation"
 	"github.com/tyler-smith/go-bip39"
 )
 
@@ -24,7 +26,7 @@ type Claimer struct {
 
 // NewClaimer generates a new secret and returns a Claimer
 func NewClaimer(sysParams *gabi.SystemParameters) (*Claimer, error) {
-	masterSecret, err := gabi.RandomBigInt(sysParams.Lm)
+	masterSecret, err := common.RandomBigInt(sysParams.Lm)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +38,7 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 	// Generate a Bip39 HD wallet for the mnemonic and a user supplied password
 	seed := bip39.NewSeed(mnemonic, password)
 	if uint(len(seed)) < sysParams.Lm/8 {
-		return nil, fmt.Errorf("seed to small")
+		return nil, errors.New("seed to small")
 	}
 	maxKey := new(big.Int).Lsh(big.NewInt(1), sysParams.Lm)
 	bigSeed := big.NewInt(0).SetBytes(seed)
@@ -45,14 +47,14 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 
 // RequestSignatureForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
 // The request should be send to the attester.
-func (user *Claimer) RequestSignatureForClaim(issuerPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
+func (user *Claimer) RequestSignatureForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
 	_, values := claim.ToAttributes()
 
-	nonce, err := gabi.RandomBigInt(issuerPubK.Params.Lstatzk)
+	nonce, err := common.RandomBigInt(attesterPubK.Params.Lstatzk)
 	if err != nil {
 		return nil, nil, err
 	}
-	cb := gabi.NewCredentialBuilder(issuerPubK, startMsg.Context, user.MasterSecret, nonce)
+	cb := gabi.NewCredentialBuilder(attesterPubK, startMsg.Context, user.MasterSecret, nonce)
 	commitMsg := cb.CommitToSecretAndProve(startMsg.Nonce)
 
 	return &UserIssuanceSession{
@@ -77,8 +79,44 @@ func (user *Claimer) BuildAttestedClaim(signature *gabi.IssueSignatureMessage, s
 	return &AttestedClaim{cred, session.Claim}, nil
 }
 
+// UpdateCredential updates the non revocation witness using the provided update.
+func (user *Claimer) UpdateCredential(attesterPubK *gabi.PublicKey, attestation *AttestedClaim, update *revocation.Update) (*AttestedClaim, error) {
+	pubRevKey, err := attesterPubK.RevocationKey()
+	if err != nil {
+		return nil, err
+	}
+	witness := attestation.Credential.NonRevocationWitness
+	if witness.Accumulator == nil {
+		witness.Accumulator, err = witness.SignedAccumulator.UnmarshalVerify(pubRevKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	index := witness.Accumulator.Index
+	if index < update.Events[0].Index-1 {
+		return nil, errors.New("update to old")
+	}
+	err = witness.Update(pubRevKey, update)
+	if err != nil {
+		return nil, err
+	}
+	return attestation, nil
+}
+
 // RevealAttributes reveals the attributes which are requested by the verifier.
 func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *RequestDiscloseAttributes) (*DiscloseAttributes, error) {
+	if reqAttributes.ReqNonRevocationProof {
+		witness := attestedClaim.Credential.NonRevocationWitness
+		revPK, err := pk.RevocationKey()
+		if err != nil {
+			return nil, err
+		}
+		acc, err := witness.SignedAccumulator.UnmarshalVerify(revPK)
+		if err != nil {
+			return nil, err
+		}
+		witness.Accumulator = acc
+	}
 	attestedClaim.Credential.Pk = pk
 	sort.Slice(reqAttributes.DiscloseAttributes[:], func(i, j int) bool {
 		return strings.Compare(reqAttributes.DiscloseAttributes[i], reqAttributes.DiscloseAttributes[j]) < 0
@@ -97,9 +135,12 @@ func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *Atteste
 		attributes[attrI] = v
 	}
 	if i == 0 {
-		return nil, fmt.Errorf("attribute not found")
+		return nil, errors.New("attribute not found")
 	}
-	proof := attestedClaim.Credential.CreateDisclosureProof(attrIndexes, reqAttributes.Context, reqAttributes.Nonce)
+	proof, err := attestedClaim.Credential.CreateDisclosureProof(attrIndexes, reqAttributes.ReqNonRevocationProof, reqAttributes.Context, reqAttributes.Nonce)
+	if err != nil {
+		return nil, err
+	}
 	return &DiscloseAttributes{
 		Proof:      proof,
 		Attributes: attributes,

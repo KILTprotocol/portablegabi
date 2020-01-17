@@ -1,6 +1,6 @@
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
-import { IGabiAttrMsg, IGabiVerifiedAtts } from '../types/Verification'
+import { IGabiReqAttrMsg, IGabiVerifiedAtts } from '../types/Verification'
 import { IGabiMsgSession, IGabiContextNonce } from '../types/Attestation'
 
 export default class GabiVerifier {
@@ -13,25 +13,29 @@ export default class GabiVerifier {
     verifierSession: IGabiContextNonce
     attesterPubKey: string
   }): Promise<IGabiVerifiedAtts> {
-    const reponse = await goWasmExec<IGabiVerifiedAtts>(
+    const response = await goWasmExec<IGabiVerifiedAtts>(
       WasmHooks.verifyAttributes,
       [proof, JSON.stringify(verifierSession), attesterPubKey]
     )
-    return reponse
+    return response
   }
 
   // start verification
   public static async startVerificationSession({
     disclosedAttributes,
+    requestNonRevocationProof,
+    minIndex,
   }: {
     disclosedAttributes: string[]
+    requestNonRevocationProof: boolean
+    minIndex: number
   }): Promise<{
-    message: IGabiAttrMsg
+    message: IGabiReqAttrMsg
     session: IGabiContextNonce
   }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.startVerificationSession,
-      disclosedAttributes
+      [requestNonRevocationProof, minIndex, ...disclosedAttributes]
     )
     return {
       message: JSON.parse(message),

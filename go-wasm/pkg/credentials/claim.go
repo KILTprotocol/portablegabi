@@ -77,6 +77,7 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 		prefix:  "contents",
 		content: claim.Contents,
 	})
+	// go through every property of the claim, transform it into an int and put it into the attributes array
 	for queue.Len() > 0 {
 		elem := queue.Front()
 		queue.Remove(elem)

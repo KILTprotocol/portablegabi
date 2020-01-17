@@ -4,6 +4,7 @@ import IGabiAttester, {
   IGabiAttestationStart,
   IGabiMsgSession,
   IGabiAttestationRequest,
+  IGabiAttestationResponse,
 } from '../types/Attestation'
 
 export default class GabiAttester implements IGabiAttester {
@@ -48,26 +49,50 @@ export default class GabiAttester implements IGabiAttester {
     return { message: JSON.parse(message), session: JSON.parse(session) }
   }
 
-  // issue attestation
-  public async issueAttestation({
-    attesterSignSession,
-    reqSignMsg,
-  }: {
-    attesterSignSession: IGabiAttestationStart['session']
-    reqSignMsg: IGabiAttestationRequest['message']
-  }): Promise<string> {
-    const response = await goWasmExec<string>(WasmHooks.issueAttestation, [
+  public async createAccumulator(): Promise<string> {
+    const response = await goWasmExec<string>(WasmHooks.createAccumulator, [
       this.privKey,
       this.pubKey,
-      JSON.stringify(attesterSignSession),
-      JSON.stringify(reqSignMsg),
     ])
     return response
   }
 
-  // TODO: To be implemented when revocation is published
+  // issue attestation
+  public async issueAttestation({
+    attesterSignSession,
+    reqSignMsg,
+    update,
+  }: {
+    attesterSignSession: IGabiAttestationStart
+    reqSignMsg: IGabiAttestationRequest
+    update: string
+  }): Promise<IGabiAttestationResponse> {
+    const response = await goWasmExec<IGabiAttestationResponse>(
+      WasmHooks.issueAttestation,
+      [
+        this.privKey,
+        this.pubKey,
+        JSON.stringify(attesterSignSession),
+        JSON.stringify(reqSignMsg),
+        update,
+    ])
+    return response
+  }
+
   // revoke attestation
-  revokeAttestation = async (): Promise<void> => {
-    return goWasmExec(WasmHooks.revokeAttestation)
+  public async revokeAttestation({
+    update,
+    witness,
+  }: {
+    update: string
+    witness: string
+  }): Promise<string> {
+    const response = await goWasmExec<string>(WasmHooks.revokeAttestation, [
+      this.privKey,
+      this.pubKey,
+      update,
+      witness,
+    ])
+    return response
   }
 }

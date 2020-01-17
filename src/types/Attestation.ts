@@ -27,9 +27,15 @@ export interface IGabiAttestationRequest {
   }
 }
 
+export interface IGabiAttestationResponse {
+  signature: string
+  witness: string
+}
+
 export default interface IGabiAttester {
   startAttestation: Function
   issueAttestation: Function
   revokeAttestation: Function
   getPubKey: Function
+  createAccumulator: Function
 }
