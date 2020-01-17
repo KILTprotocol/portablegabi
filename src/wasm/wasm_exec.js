@@ -517,7 +517,7 @@ class GoWasm extends Go {
     console.log('Instantiating WASM...')
     // instantiate WASM
     await WebAssembly.instantiate(
-      fs.readFileSync(path.resolve(__dirname, './main.wasm')),
+      fs.readFileSync(path.resolve(__dirname, '../../build/wasm/main.wasm')),
       go.importObject
     )
       .then(result => {
@@ -536,7 +536,7 @@ class GoWasm extends Go {
       })
       .catch(err => {
         console.error(err)
-        process.exit('Error while executing Gabi WASM')
+        this.exitCode = 'Error while executing Gabi WASM'
       })
     return new GoWasm()
   }
@@ -557,15 +557,15 @@ class GoWasm extends Go {
           resolve(...messages)
         })
       }).catch(e => {
-        console.error(e.stack)
-        process.exit(`Error while executing Gabi WASM function ${fn}`)
+        console.error(e)
       })
     }
     throw new Error(`Function ${fn} missing in WASM`)
   }
 
   close() {
-    process.exit('Closing WASM + exiting node')
+    process.exitCode = 0
+    this.exit(0)
   }
 }
 module.exports.GoWasm = GoWasm
