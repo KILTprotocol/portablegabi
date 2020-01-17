@@ -29,7 +29,7 @@ export default class GabiClaimer implements IGabiClaimer {
   }
 
   private static async genSecret(mnemonic: string): Promise<string> {
-    return goWasmExec<string>(WasmHooks.keyFromMnemonic, [mnemonic])
+    return goWasmExec<string>(WasmHooks.keyFromMnemonic, [mnemonic, ''])
   }
 
   // request attestation
