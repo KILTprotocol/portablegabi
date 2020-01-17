@@ -79,7 +79,6 @@ export default class GabiAttester implements IGabiAttester {
     return response
   }
 
-  // TODO: To be implemented when revocation is published
   // revoke attestation
   public async revokeAttestation({
     update,
