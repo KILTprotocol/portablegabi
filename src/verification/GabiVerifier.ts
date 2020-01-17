@@ -2,8 +2,9 @@ import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
 import {
   IGabiReqAttrMsg,
-  IGabiVerifiedAtts,
+  IGabiVerifiedPresentation,
   IPartialPresentationRequest,
+  IGabiVerifiedCombinedPresentations,
 } from '../types/Verification'
 import { IGabiMsgSession, IGabiContextNonce } from '../types/Attestation'
 
@@ -50,12 +51,19 @@ export default class GabiVerifier {
     proof: string
     verifierSession: IGabiContextNonce
     attesterPubKey: string
-  }): Promise<IGabiVerifiedAtts> {
-    const response = await goWasmExec<IGabiVerifiedAtts>(
-      WasmHooks.verifyPresentation,
-      [proof, JSON.stringify(verifierSession), attesterPubKey]
-    )
-    return { claim: response.claim, verified: Boolean(response.verified) }
+  }): Promise<IGabiVerifiedPresentation> {
+    const response = await goWasmExec<{
+      verified: boolean
+      claim: string
+    }>(WasmHooks.verifyPresentation, [
+      proof,
+      JSON.stringify(verifierSession),
+      attesterPubKey,
+    ])
+    return {
+      verified: response.verified,
+      claim: JSON.parse(response.claim),
+    }
   }
 
   public static async verifyCombinedPresentation({
@@ -66,11 +74,18 @@ export default class GabiVerifier {
     proof: string
     verifierSession: string
     attesterPubKeys: string[]
-  }): Promise<IGabiVerifiedAtts> {
-    const response = await goWasmExec<IGabiVerifiedAtts>(
-      WasmHooks.verifyCombinedPresentation,
-      [proof, JSON.stringify(verifierSession), `[${attesterPubKeys.join(',')}]`]
-    )
-    return response
+  }): Promise<IGabiVerifiedCombinedPresentations> {
+    const response = await goWasmExec<{
+      verified: boolean
+      claims: string
+    }>(WasmHooks.verifyCombinedPresentation, [
+      proof,
+      verifierSession,
+      `[${attesterPubKeys.join(',')}]`,
+    ])
+    return {
+      verified: response.verified,
+      claims: JSON.parse(response.claims),
+    }
   }
 }

@@ -4,9 +4,14 @@ export interface IGabiReqAttrMsg
   extends IGabiContextNonce,
     IPartialPresentationRequest {}
 
-export interface IGabiVerifiedAtts {
+export interface IGabiVerifiedPresentation {
   verified: boolean
-  claim: string
+  claim: Map<string, any>
+}
+
+export interface IGabiVerifiedCombinedPresentations {
+  verified: boolean
+  claims: Array<Map<string, any>>
 }
 
 export interface IPartialPresentationRequest {

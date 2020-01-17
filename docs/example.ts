@@ -241,19 +241,24 @@ const runCombinedWorkflow = async (): Promise<void> => {
       minIndex: 1,
     })
     .finalise()
-  console.log(message)
-  console.log(session)
+
+  console.time('Build combined presentation')
   const proof = await gabiClaimer.buildCombinedPresentation({
     credentials: [credential1, credential2],
     reqCombinedPresentation: message,
     attesterPubKeys: [gabiAttester1.getPubKey(), gabiAttester2.getPubKey()],
   })
+  console.timeEnd('Build combined presentation')
 
-  GabiVerifier.verifyCombinedPresentation({
+  console.time('verify combined presentation')
+  const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
     proof,
     attesterPubKeys: [gabiAttester1.getPubKey(), gabiAttester2.getPubKey()],
     verifierSession: session,
   })
+  console.time('verify combined presentation')
+
+  console.log('Verification:', verified, claims)
 }
 
 const runGabiExamples = async (): Promise<void> => {

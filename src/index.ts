@@ -10,7 +10,11 @@ export {
   IGabiAttestationStart,
   IGabiAttestationRequest,
 } from './types/Attestation'
-export { IGabiReqAttrMsg, IGabiVerifiedAtts } from './types/Verification'
+export {
+  IGabiReqAttrMsg,
+  IGabiVerifiedCombinedPresentations,
+  IGabiVerifiedPresentation,
+} from './types/Verification'
 
 export { default as IGabiClaimer } from './types/Claim'
 export { default as IGabiAttester } from './types/Attestation'

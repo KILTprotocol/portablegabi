@@ -90,12 +90,12 @@ func VerifyCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, 
 	if err := json.Unmarshal([]byte(inputs[2].String()), &attesterPubKeys); err != nil {
 		return nil, err
 	}
-	verified, rebuildClaim, err := credentials.VerifyCombinedPresentation(attesterPubKeys, proof, session)
+	verified, rebuildClaims, err := credentials.VerifyCombinedPresentation(attesterPubKeys, proof, session)
 	if err != nil {
 		return nil, err
 	}
 	return map[string]interface{}{
-		"claim":    rebuildClaim,
+		"claims":   rebuildClaims,
 		"verified": verified,
 	}, nil
 }

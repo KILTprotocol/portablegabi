@@ -85,9 +85,16 @@ func TestCredential(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
 
-	attester, err := credentials.NewAttester(sysParams, 6, OneYear)
+	attester := &credentials.Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	err := json.Unmarshal(attesterPrivKey, attester.PrivateKey)
+	require.NoError(t, err)
+	err = json.Unmarshal(attesterPubKey, attester.PublicKey)
+	require.NoError(t, err)
 	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
-	require.NoError(t, err, "Error in attester key generation")
+
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
