@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math"
 	"strings"
 
@@ -21,6 +22,7 @@ type (
 		ReqMinIndex           uint64   `json:"reqMinIndex"`
 	}
 
+	// CombinedVerifierSession stores the information for a combined presentation session.
 	CombinedVerifierSession struct {
 		Context         *big.Int                     `json:"context"`
 		Nonce           *big.Int                     `json:"nonce"`
@@ -50,6 +52,7 @@ func RequestPresentation(sysParams *gabi.SystemParameters, discloseAttributes []
 		}
 }
 
+// RequestCombinedPresentation request the disclosure of multiple different credentials from a user.
 func RequestCombinedPresentation(sysParams *gabi.SystemParameters, partialRequests []PartialPresentationRequest) (*CombinedVerifierSession, *CombinedPresentationRequest) {
 	context, _ := common.RandomBigInt(sysParams.Lh)
 	nonce, _ := common.RandomBigInt(sysParams.Lh)
@@ -64,17 +67,14 @@ func RequestCombinedPresentation(sysParams *gabi.SystemParameters, partialReques
 		}
 }
 
-func setNestedValue(m map[string]interface{}, key string, value interface{}) {
+func setNestedValue(m map[string]interface{}, key string, value interface{}) error {
 	parts := strings.Split(key, SEPARATOR)
-	if len(parts) == 0 {
-		panic("invalid key")
-	}
 	for _, v := range parts[:len(parts)-1] {
 		if acc, ok := m[v]; ok {
 			if accMap, ok := acc.(map[string]interface{}); ok {
 				m = accMap
 			} else {
-				panic("Value is not a map!")
+				return errors.New("Could not set value (not a map)")
 			}
 		} else {
 			old := m
@@ -83,6 +83,7 @@ func setNestedValue(m map[string]interface{}, key string, value interface{}) {
 		}
 	}
 	m[parts[len(parts)-1]] = value
+	return nil
 }
 
 func checkAccumulatorInProof(issuerPubK *gabi.PublicKey, minIndex uint64, proof *gabi.ProofD) bool {
@@ -100,25 +101,33 @@ func checkAccumulatorInProof(issuerPubK *gabi.PublicKey, minIndex uint64, proof 
 	return false
 }
 
-func reconstructClaim(disclosedAttributes map[int]*big.Int, attributes []*Attribute) map[string]interface{} {
+func reconstructClaim(disclosedAttributes map[int]*big.Int, attributes []*Attribute) (map[string]interface{}, error) {
 	claim := make(map[string]interface{})
 	for i, v := range disclosedAttributes {
 		// 0. attribute is private key of user and should never be disclosed
 		attr := attributes[i-1]
+		var err error
 		switch attr.Typename {
 		case "string":
-			setNestedValue(claim, attr.Name, string(v.Bytes()))
+			err = setNestedValue(claim, attr.Name, string(v.Bytes()))
 		case "float":
-			bits := binary.BigEndian.Uint64(v.Bytes())
-			setNestedValue(claim, attr.Name, math.Float64frombits(bits))
+			bytes := v.Bytes()
+			// a float requires at least 8 bytes.
+			if len(bytes) < 8 {
+				return nil, fmt.Errorf("invalid big.Int for %q float value", attr.Name)
+			}
+			bits := binary.BigEndian.Uint64(bytes)
+			err = setNestedValue(claim, attr.Name, math.Float64frombits(bits))
 		case "bool":
-			setNestedValue(claim, attr.Name, v.Int64() == 1)
+			err = setNestedValue(claim, attr.Name, v.Int64() != 0)
 		default:
-			setNestedValue(claim, attr.Name, hex.EncodeToString(v.Bytes()))
+			err = setNestedValue(claim, attr.Name, hex.EncodeToString(v.Bytes()))
+		}
+		if err != nil {
+			return nil, err
 		}
 	}
-	return claim
-
+	return claim, nil
 }
 
 // VerifyPresentation verifies the response of a claimer and returns the disclosed attributes.
@@ -126,11 +135,16 @@ func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *Presentati
 	success := !session.ReqNonRevocationProof || checkAccumulatorInProof(issuerPubK, session.ReqMinIndex, signedAttributes.Proof)
 	success = success && signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false)
 	if success {
-		return true, reconstructClaim(signedAttributes.Proof.ADisclosed, signedAttributes.Attributes), nil
+		claim, err := reconstructClaim(signedAttributes.Proof.ADisclosed, signedAttributes.Attributes)
+		if err != nil {
+			return false, nil, err
+		}
+		return true, claim, nil
 	}
 	return false, nil, nil
 }
 
+// VerifyCombinedPresentation verifies the response of a claimer and returns the presentations provided by the user.
 func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, combinedPresentation *CombinedPresentationResponse, session *CombinedVerifierSession) (bool, []map[string]interface{}, error) {
 	success := combinedPresentation.Proof.Verify(attesterPubKeys, session.Context, session.Nonce, false, nil)
 	if !success {
@@ -139,11 +153,14 @@ func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, combinedPrese
 	claims := make([]map[string]interface{}, len(combinedPresentation.Attributes))
 	for i, genericP := range *combinedPresentation.Proof {
 		// check each proof: revocation has to be ok and accumulator fresh enough
-		if proofd, ok := genericP.(*gabi.ProofD); ok {
+		if proofD, ok := genericP.(*gabi.ProofD); ok {
 			partialReq := session.PartialRequests[i]
-			claims[i] = reconstructClaim(proofd.ADisclosed, combinedPresentation.Attributes[i])
-
-			validRevocationProof := checkAccumulatorInProof(attesterPubKeys[i], partialReq.ReqMinIndex, proofd)
+			claim, err := reconstructClaim(proofD.ADisclosed, combinedPresentation.Attributes[i])
+			claims[i] = claim
+			if err != nil {
+				return false, nil, err
+			}
+			validRevocationProof := checkAccumulatorInProof(attesterPubKeys[i], partialReq.ReqMinIndex, proofD)
 			revocationOK := !partialReq.ReqNonRevocationProof || validRevocationProof
 
 			success = success && revocationOK

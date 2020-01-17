@@ -331,5 +331,4 @@ func TestFullWorkflow(t *testing.T) {
 	require.Equal(t, claim.Contents["gender"], contents["gender"])
 	require.Equal(t, claim.Contents["special"], contents["special"])
 	require.Nil(t, attr["contents.name"])
-
 }

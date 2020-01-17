@@ -29,15 +29,6 @@ func TestClaimerFromMnemonic(t *testing.T) {
 	assert.Equal(t, sysParams.Lm, uint(secret.MasterSecret.BitLen()))
 }
 
-func TestCredential(t *testing.T) {
-	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
-	assert.True(t, success, "Error in sysparams")
-	secret, err := ClaimerFromMnemonic(sysParams, mnemonic, "")
-	assert.NoError(t, err, "could not create claimer secret")
-	assert.NotNil(t, secret)
-	assert.Equal(t, sysParams.Lm, uint(secret.MasterSecret.BitLen()))
-}
-
 func TestRequestSignature(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	assert.True(t, success, "Error in sysparams")
@@ -65,6 +56,25 @@ func TestRequestSignature(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, reqMsg)
 	require.NotNil(t, session)
+}
+
+func TestBuildCredential(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	assert.True(t, success, "Error in sysparams")
+
+	attestation := &gabi.IssueSignatureMessage{}
+	err := json.Unmarshal(byteSigMsg, attestation)
+	require.NoError(t, err)
+
+	session := &UserIssuanceSession{}
+	err = json.Unmarshal(byteUserSession, session)
+	require.NoError(t, err)
+
+	claimer, err := ClaimerFromMnemonic(sysParams, mnemonic, "")
+	require.NoError(t, err)
+	cred, err := claimer.BuildCredential(attestation, session)
+	require.NoError(t, err)
+	require.NotNil(t, cred)
 }
 
 func TestBuildUpdateCredential(t *testing.T) {

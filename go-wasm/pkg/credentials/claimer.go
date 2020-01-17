@@ -75,7 +75,6 @@ func (user *Claimer) BuildCredential(signature *gabi.IssueSignatureMessage, sess
 	if err != nil {
 		return nil, err
 	}
-	// TODO: store things which should be stored!? What should be stored?
 	return &AttestedClaim{cred, session.Claim}, nil
 }
 
