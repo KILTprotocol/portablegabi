@@ -18,6 +18,8 @@ export const goWasmExecCustom = <T>(
 ): Promise<T> => customGoInstance.execWasmFn(goHook, args)
 
 export const goWasmClose = (): Promise<void> =>
-  Promise.resolve(GoInstance).then(wasm => wasm.close())
+  Promise.resolve(GoInstance).then(wasm => {
+    return wasm.close()
+  })
 
 export default goWasmExec

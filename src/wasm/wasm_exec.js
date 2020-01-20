@@ -564,8 +564,15 @@ class GoWasm extends Go {
   }
 
   close() {
-    process.exitCode = 0
-    this.exit(0)
+    console.log('Closing WASM...')
+    try {
+      this.execWasmFn('genKeypair', [])
+      console.log('active requests: ', process._getActiveRequests())
+    } catch (e) {
+      console.error('WASMCLOSINGERROR: ', e)
+    }
+    process.exitCode = 1337
+    this.exit(1337)
   }
 }
 module.exports.GoWasm = GoWasm

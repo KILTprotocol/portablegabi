@@ -4,6 +4,10 @@ import GabiAttester from '../build/attestation/GabiAttester'
 import GabiVerifier from '../build/verification/GabiVerifier'
 import { goWasmClose } from '../build/wasm/wasm_exec_wrapper'
 
+process.on('exit', async function() {
+  await goWasmClose()
+})
+
 const testEnv = {
   privKey:
     '{"XMLName":{"Space":"","Local":""},"Counter":0,"ExpiryDate":1610554062,"P":"iDYKxuFGt1Xv1aqMLaagjrOPX0hjkOlFrKOp4NPnSBHmQ9SFETUX1M43q3jLsGz+UEWFS3+SS9QpP4CTkl3p/w==","Q":"92MJOhwjESn7QohCCY1oBxsToAfccGoKtE3sBoaNxHWoowSiCy8fMG+B1sO5QU+bV3i1xwvVno9o30RcMoXEaw==","PPrime":"RBsFY3CjW6r36tVGFtNQR1nHr6QxyHSi1lHU8GnzpAjzIepCiJqL6mcb1bxl2DZ/KCLCpb/JJeoUn8BJyS70/w==","QPrime":"e7GEnQ4RiJT9oUQhBMa0A42J0APuODUFWib2A0NG4jrUUYJRBZePmDfA62HcoKfNq7xa44Xqz0e0b6IuGULiNQ==","ECDSA":"MHcCAQEEILO+g4uSDheZ6PSLxR7olFzUhZpeO9tQu84hX6UeIevaoAoGCCqGSM49AwEHoUQDQgAEKvmUz3HIZy890jE78CC9V9BuN8taO+L8GjAeS14v0CL7GCFZ1GMnaSZi4WG3mOjJlJ80CnMowIbUT3Fw1TluFw==","NonrevSk":null}',
@@ -84,6 +88,7 @@ const verify = async (
     disclosedAttributes,
     minIndex: index,
   })
+  console.log(reqRevealedAttrMsg)
   console.timeEnd('Verifier requests attributes')
 
   console.time('Claimer reveals attributes')
@@ -159,7 +164,10 @@ const runGabiExample = async (): Promise<void> => {
   await verify(gabiClaimer, gabiAttester, credential, disclosedAttributes, 1)
 
   console.timeEnd('>> Complete Gabi process <<')
-  goWasmClose()
+  await goWasmClose()
+  // process.exitCode = 0
+  // console.log('hi')
+  // process.exit(1337)
 }
 
 runGabiExample()
