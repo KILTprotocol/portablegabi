@@ -17,18 +17,23 @@ func main() {
 
 	methods := make(map[string]js.Func)
 	methods["genKeypair"] = js.FuncOf(wasm.Callbacker(wasm.GenKeypair))
+	methods["createAccumulator"] = js.FuncOf(wasm.Callbacker(wasm.CreateAccumulator))
 	methods["startAttestationSession"] = js.FuncOf(wasm.Callbacker(wasm.StartAttestationSession))
 	methods["issueAttestation"] = js.FuncOf(wasm.Callbacker(wasm.IssueAttestation))
-	methods["createAccumulator"] = js.FuncOf(wasm.Callbacker(wasm.CreateAccumulator))
 	methods["revokeAttestation"] = js.FuncOf(wasm.Callbacker(wasm.RevokeAttestation))
+
 	methods["genKey"] = js.FuncOf(wasm.Callbacker(wasm.GenKey))
 	methods["keyFromMnemonic"] = js.FuncOf(wasm.Callbacker(wasm.KeyFromMnemonic))
 	methods["requestAttestation"] = js.FuncOf(wasm.Callbacker(wasm.RequestAttestation))
 	methods["buildCredential"] = js.FuncOf(wasm.Callbacker(wasm.BuildCredential))
 	methods["updateCredential"] = js.FuncOf(wasm.Callbacker(wasm.UpdateCredential))
-	methods["revealAttributes"] = js.FuncOf(wasm.Callbacker(wasm.RevealAttributes))
-	methods["startVerificationSession"] = js.FuncOf(wasm.Callbacker(wasm.StartVerificationSession))
-	methods["verifyAttributes"] = js.FuncOf(wasm.Callbacker(wasm.VerifyAttributes))
+	methods["buildPresentation"] = js.FuncOf(wasm.Callbacker(wasm.BuildPresentation))
+	methods["buildCombinedPresentation"] = js.FuncOf(wasm.Callbacker(wasm.BuildCombinedPresentation))
+
+	methods["requestPresentation"] = js.FuncOf(wasm.Callbacker(wasm.RequestPresentation))
+	methods["requestCombinedPresentation"] = js.FuncOf(wasm.Callbacker(wasm.RequestCombinedPresentation))
+	methods["verifyPresentation"] = js.FuncOf(wasm.Callbacker(wasm.VerifyPresentation))
+	methods["verifyCombinedPresentation"] = js.FuncOf(wasm.Callbacker(wasm.VerifyCombinedPresentation))
 
 	for k, v := range methods {
 		js.Global().Set(k, v)

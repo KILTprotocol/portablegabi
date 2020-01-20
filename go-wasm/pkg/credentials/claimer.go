@@ -45,9 +45,9 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 	return &Claimer{new(big.Int).Mod(bigSeed, maxKey)}, nil
 }
 
-// RequestSignatureForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
+// RequestAttestationForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
 // The request should be send to the attester.
-func (user *Claimer) RequestSignatureForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *RequestAttestedClaim, error) {
+func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *AttestedClaimRequest, error) {
 	_, values := claim.ToAttributes()
 
 	nonce, err := common.RandomBigInt(attesterPubK.Params.Lstatzk)
@@ -60,22 +60,21 @@ func (user *Claimer) RequestSignatureForClaim(attesterPubK *gabi.PublicKey, star
 	return &UserIssuanceSession{
 			cb,
 			claim,
-		}, &RequestAttestedClaim{
+		}, &AttestedClaimRequest{
 			CommitMsg: commitMsg,
 			Values:    values,
 		}, nil
 }
 
-// BuildAttestedClaim uses the signature provided by the attester to build a
+// BuildCredential uses the signature provided by the attester to build a
 // new credential.
-func (user *Claimer) BuildAttestedClaim(signature *gabi.IssueSignatureMessage, session *UserIssuanceSession) (*AttestedClaim, error) {
+func (user *Claimer) BuildCredential(signature *gabi.IssueSignatureMessage, session *UserIssuanceSession) (*AttestedClaim, error) {
 	_, values := session.Claim.ToAttributes()
 
 	cred, err := session.Cb.ConstructCredential(signature, values)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: store things which should be stored!? What should be stored?
 	return &AttestedClaim{cred, session.Claim}, nil
 }
 
@@ -103,46 +102,103 @@ func (user *Claimer) UpdateCredential(attesterPubK *gabi.PublicKey, attestation 
 	return attestation, nil
 }
 
-// RevealAttributes reveals the attributes which are requested by the verifier.
-func (user *Claimer) RevealAttributes(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *RequestDiscloseAttributes) (*DiscloseAttributes, error) {
-	if reqAttributes.ReqNonRevocationProof {
-		witness := attestedClaim.Credential.NonRevocationWitness
-		revPK, err := pk.RevocationKey()
-		if err != nil {
-			return nil, err
-		}
-		acc, err := witness.SignedAccumulator.UnmarshalVerify(revPK)
-		if err != nil {
-			return nil, err
-		}
-		witness.Accumulator = acc
+func ensureAccumulator(pk *gabi.PublicKey, witness *revocation.Witness) error {
+	revPK, err := pk.RevocationKey()
+	if err != nil {
+		return err
 	}
-	attestedClaim.Credential.Pk = pk
-	sort.Slice(reqAttributes.DiscloseAttributes[:], func(i, j int) bool {
-		return strings.Compare(reqAttributes.DiscloseAttributes[i], reqAttributes.DiscloseAttributes[j]) < 0
+	acc, err := witness.SignedAccumulator.UnmarshalVerify(revPK)
+	if err != nil {
+		return err
+	}
+	witness.Accumulator = acc
+	return nil
+}
+
+func attributeIndicesFromPresentationRequest(req *PartialPresentationRequest,
+	credential *AttestedClaim) ([]int, []*Attribute, error) {
+	sort.Slice(req.RequestedAttributes[:], func(i, j int) bool {
+		return strings.Compare(req.RequestedAttributes[i], req.RequestedAttributes[j]) < 0
 	})
 
-	attrIndexes := make([]int, len(reqAttributes.DiscloseAttributes))
-	attributes, _ := attestedClaim.Claim.ToAttributes()
+	attrIndexes := make([]int, len(req.RequestedAttributes))
+	attributes, _ := credential.Claim.ToAttributes()
 	i := 0
 
-	// assert: attestedClaim.Attributes and reqAttributes.DiscloseAttributes are sorted!
+	// assert: attestedClaim.Attributes and req.RequestedAttributes are sorted!
 	for attrI, v := range attributes {
-		if i < len(reqAttributes.DiscloseAttributes) && strings.Compare(reqAttributes.DiscloseAttributes[i], v.Name) == 0 {
+		if i < len(req.RequestedAttributes) && strings.Compare(req.RequestedAttributes[i], v.Name) == 0 {
 			attrIndexes[i] = attrI + 1
 			i++
 		}
 		attributes[attrI] = v
 	}
 	if i == 0 {
-		return nil, errors.New("attribute not found")
+		return nil, nil, errors.New("attribute not found")
 	}
-	proof, err := attestedClaim.Credential.CreateDisclosureProof(attrIndexes, reqAttributes.ReqNonRevocationProof, reqAttributes.Context, reqAttributes.Nonce)
+	return attrIndexes, attributes, nil
+}
+
+// BuildPresentation reveals the attributes which are requested by the verifier.
+func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *PresentationRequest) (*PresentationResponse, error) {
+	partialReq := reqAttributes.PartialPresentationRequest
+	if partialReq.ReqNonRevocationProof {
+		witness := attestedClaim.Credential.NonRevocationWitness
+		err := ensureAccumulator(pk, witness)
+		if err != nil {
+			return nil, err
+		}
+	}
+	attrIndices, attributes, err := attributeIndicesFromPresentationRequest(partialReq, attestedClaim)
 	if err != nil {
 		return nil, err
 	}
-	return &DiscloseAttributes{
+	attestedClaim.Credential.Pk = pk
+	proof, err := attestedClaim.Credential.CreateDisclosureProof(attrIndices,
+		partialReq.ReqNonRevocationProof, reqAttributes.Context, reqAttributes.Nonce)
+	if err != nil {
+		return nil, err
+	}
+	return &PresentationResponse{
 		Proof:      proof,
 		Attributes: attributes,
+	}, nil
+}
+
+func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credentials []*AttestedClaim,
+	reqAttributes *CombinedPresentationRequest) (*CombinedPresentationResponse, error) {
+	if len(pubKs) != len(reqAttributes.PartialRequests) {
+		return nil, errors.New("wrong amount of public keys")
+	} else if len(credentials) != len(reqAttributes.PartialRequests) {
+		return nil, errors.New("wrong amount of attested claims")
+	}
+	proofBuilder := make([]gabi.ProofBuilder, len(reqAttributes.PartialRequests))
+	partialResponses := make([]PartialPresentationResponse, len(reqAttributes.PartialRequests))
+	for i, partialReq := range reqAttributes.PartialRequests {
+		cred := credentials[i].Credential
+		cred.Pk = pubKs[i]
+		if partialReq.ReqNonRevocationProof {
+			witness := cred.NonRevocationWitness
+			err := ensureAccumulator(pubKs[i], witness)
+			if err != nil {
+				return nil, err
+			}
+		}
+		attrIndices, attributes, err := attributeIndicesFromPresentationRequest(&partialReq, credentials[i])
+		if err != nil {
+			return nil, err
+		}
+		proofBuilder[i], err = cred.CreateDisclosureProofBuilder(attrIndices, partialReq.ReqNonRevocationProof)
+		if err != nil {
+			return nil, err
+		}
+		partialResponses[i] = attributes
+	}
+	builders := gabi.ProofBuilderList(proofBuilder)
+	prooflist := builders.BuildProofList(reqAttributes.Context, reqAttributes.Nonce, false)
+
+	return &CombinedPresentationResponse{
+		Proof:      &prooflist,
+		Attributes: partialResponses,
 	}, nil
 }

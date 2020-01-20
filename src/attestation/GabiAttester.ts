@@ -1,15 +1,19 @@
+import { AttestationRequest } from '../types/Claim'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
 import IGabiAttester, {
-  IGabiAttestationStart,
   IGabiMsgSession,
-  IGabiAttestationRequest,
-  IGabiAttestationResponse,
+  InitiateAttestationRequest,
+  AttesterAttestationSession,
+  Accumulator,
+  Witness,
+  Attestation,
+  AttesterPublicKey,
 } from '../types/Attestation'
 
 export default class GabiAttester implements IGabiAttester {
-  private readonly privKey: string
-  private readonly pubKey: string
+  private readonly privateKey: string
+  private readonly publicKey: string
 
   // generate keypair
   private static async buildFromKeyPair(): Promise<{
@@ -25,58 +29,56 @@ export default class GabiAttester implements IGabiAttester {
     return new GabiAttester(publicKey, privateKey)
   }
 
-  public constructor(pubKey: string, privKey: string) {
-    this.pubKey = pubKey
-    this.privKey = privKey
+  public constructor(publicKey: string, privateKey: string) {
+    this.publicKey = publicKey
+    this.privateKey = privateKey
   }
 
-  public getPubKey(): string {
-    return this.pubKey
+  public getPubKey(): AttesterPublicKey {
+    return this.publicKey as AttesterPublicKey
   }
 
   // start attestation
-  public async startAttestation(): Promise<IGabiAttestationStart> {
-    const {
-      message,
-      session,
-    }: {
-      message: string
-      session: string
-    } = await goWasmExec<IGabiMsgSession>(WasmHooks.startAttestationSession, [
-      this.privKey,
-      this.pubKey,
+  public async startAttestation(): Promise<{
+    message: InitiateAttestationRequest
+    session: AttesterAttestationSession
+  }> {
+    return goWasmExec<IGabiMsgSession>(WasmHooks.startAttestationSession, [
+      this.privateKey,
+      this.publicKey,
     ])
-    return { message: JSON.parse(message), session: JSON.parse(session) }
   }
 
-  public async createAccumulator(): Promise<string> {
-    const response = await goWasmExec<string>(WasmHooks.createAccumulator, [
-      this.privKey,
-      this.pubKey,
+  public async createAccumulator(): Promise<Accumulator> {
+    return goWasmExec<string>(WasmHooks.createAccumulator, [
+      this.privateKey,
+      this.publicKey,
     ])
-    return response
   }
 
   // issue attestation
   public async issueAttestation({
-    attesterSignSession,
-    reqSignMsg,
+    attestationSession,
+    attestationRequest,
     update,
   }: {
-    attesterSignSession: IGabiAttestationStart
-    reqSignMsg: IGabiAttestationRequest
-    update: string
-  }): Promise<IGabiAttestationResponse> {
-    const response = await goWasmExec<IGabiAttestationResponse>(
-      WasmHooks.issueAttestation,
-      [
-        this.privKey,
-        this.pubKey,
-        JSON.stringify(attesterSignSession),
-        JSON.stringify(reqSignMsg),
-        update,
+    attestationSession: AttesterAttestationSession
+    attestationRequest: AttestationRequest
+    update: Accumulator
+  }): Promise<{
+    attestation: Attestation
+    witness: Witness
+  }> {
+    return goWasmExec<{
+      attestation: string
+      witness: string
+    }>(WasmHooks.issueAttestation, [
+      this.privateKey,
+      this.publicKey,
+      attestationSession.valueOf(),
+      attestationRequest.valueOf(),
+      update.valueOf(),
     ])
-    return response
   }
 
   // revoke attestation
@@ -84,15 +86,14 @@ export default class GabiAttester implements IGabiAttester {
     update,
     witness,
   }: {
-    update: string
-    witness: string
+    update: Accumulator
+    witness: Witness
   }): Promise<string> {
-    const response = await goWasmExec<string>(WasmHooks.revokeAttestation, [
-      this.privKey,
-      this.pubKey,
-      update,
-      witness,
+    return goWasmExec<string>(WasmHooks.revokeAttestation, [
+      this.privateKey,
+      this.publicKey,
+      update.valueOf(),
+      witness.valueOf(),
     ])
-    return response
   }
 }

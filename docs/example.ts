@@ -1,10 +1,13 @@
 /* eslint-disable no-console */
-import GabiClaimer from '../build/claim/GabiClaimer'
-import GabiAttester from '../build/attestation/GabiAttester'
-import GabiVerifier from '../build/verification/GabiVerifier'
-import { goWasmClose } from '../build/wasm/wasm_exec_wrapper'
+import GabiClaimer from '../src/claim/GabiClaimer'
+import GabiAttester from '../src/attestation/GabiAttester'
+import GabiVerifier from '../src/verification/GabiVerifier'
+import { goWasmClose } from '../src/wasm/wasm_exec_wrapper'
+import CombinedRequestBuilder from '../src/verification/CombinedRequestBuilder'
+import { Witness, Accumulator } from '../src/types/Attestation'
+import { Credential } from '../src/types/Claim'
 
-const testEnv = {
+const testEnv1 = {
   privKey:
     '{"XMLName":{"Space":"","Local":""},"Counter":0,"ExpiryDate":1610554062,"P":"iDYKxuFGt1Xv1aqMLaagjrOPX0hjkOlFrKOp4NPnSBHmQ9SFETUX1M43q3jLsGz+UEWFS3+SS9QpP4CTkl3p/w==","Q":"92MJOhwjESn7QohCCY1oBxsToAfccGoKtE3sBoaNxHWoowSiCy8fMG+B1sO5QU+bV3i1xwvVno9o30RcMoXEaw==","PPrime":"RBsFY3CjW6r36tVGFtNQR1nHr6QxyHSi1lHU8GnzpAjzIepCiJqL6mcb1bxl2DZ/KCLCpb/JJeoUn8BJyS70/w==","QPrime":"e7GEnQ4RiJT9oUQhBMa0A42J0APuODUFWib2A0NG4jrUUYJRBZePmDfA62HcoKfNq7xa44Xqz0e0b6IuGULiNQ==","ECDSA":"MHcCAQEEILO+g4uSDheZ6PSLxR7olFzUhZpeO9tQu84hX6UeIevaoAoGCCqGSM49AwEHoUQDQgAEKvmUz3HIZy890jE78CC9V9BuN8taO+L8GjAeS14v0CL7GCFZ1GMnaSZi4WG3mOjJlJ80CnMowIbUT3Fw1TluFw==","NonrevSk":null}',
   pubKey:
@@ -25,16 +28,40 @@ const testEnv = {
     'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken',
 }
 
+const testEnv2 = {
+  privKey:
+    '{"XMLName":{"Space":"","Local":""},"Counter":0,"ExpiryDate":1610785920,"P":"9TW0SbOeS3UfKwv6a85VGcmCzb0wkG7ZCM0iesXzvXfjLBHoTc1dwpTNa85cgbS4eytypMBgRERmSEpS3f4A6w==","Q":"jMLlfQmJNUlBVI2i2bf0JCPgf47DV9VJ/b26eg+1VgdroIzNlJHhqn1kHBfCYKYCDu8u1P7u4aqiyZccdbLmzw==","PPrime":"epraJNnPJbqPlYX9NecqjOTBZt6YSDdshGaRPWL53rvxlgj0Juau4UpmtecuQNpcPZW5UmAwIiIzJCUpbv8AdQ==","QPrime":"RmFyvoTEmqSgqkbRbNv6EhHwP8dhq+qk/t7dPQfaqwO10EZmykjw1T6yDgvhMFMBB3eXan93cNVRZMuOOtlzZw==","ECDSA":"MHcCAQEEIIXBgLpoCL0Ly0J7ZGQVlOTf+MTuhUqnKX03XDlewf6ToAoGCCqGSM49AwEHoUQDQgAEdzoV71Dge11D7bCVbmQUEyOy9S5Y8h1cngnjq4tVR+JnvbzI/2bH4/O1GHmT+jtN9YTSHw5RgADpBGTmofmm1A=="}',
+  pubKey:
+    '{"XMLName":{"Space":"","Local":""},"Counter":0,"ExpiryDate":1610785920,"N":"htQNG7y19QDlkMHfrZzip1HyCpQzRDkmpfUEU2l3Bkx4N2bbSJ/CIcsqDjDViLk2c+eg44t6BcNxDcGUGMdBj2mh5uONNAE48bvfN3C/BogXbt/ilYUlMf9Q3XpPzc39JZGKXon5CreyK1sx2LVKhE9d65kSugGBvSO0L7+b4AU=","Z":"X1B+508I1b7i/+0Ej+JQFhjuvopJ9sQcu3+eirVdjNrnUWKR+6o8Fcb1mPg4oiPr8g5/BT1t8qOqy39j3/bW51SqHZf9y7rMoyNVl8mvcSHM83nbStMSFSJJCKCDksVtwEeCohCpAIvCH2y4S6AKkNUn0DfFZdCTXKOWVrFdosA=","S":"A8V9xIuQvZQVr1UfqcMQM4J4nw8TLggY7V51gWG+5xQ38OGh725+56oLmtGwwxgUR66BckJJ7gjeQh0usqKSgBQqg8GcZXTSGsC01QO1L8Vt+8OYKQKZFrbJN/xvnq5lRYNfEQ2B2gOqT1rubHt2kP1gVccCnpAmSlxZNORdHqg=","G":"GHR8oz3wVc+ory6aQWP5DC2O++Q7mpqIr0Qb7P4Qb3RgyyokfdR71+ko3ILDKsLWoSWlpaPchBif3PlAt0IiOziKmgdd9n3Psu4o/KnJc1x9bem8G8HrE7YwMfk71u9PcGYJaTgQ/xo+lrIHsNo0sLBED9fH2RiGtsQl2gnGoBg=","H":"CWj72rLGfbLKbm6f/fjctf/TDCMita3lwzjZJzMhEcXrTJ2RfO0XrkVLHb2hY7sfIj6RJchdaSDkuaRfxZfV+fR55h6y8tX6+vmHrpE2o4rZQ4nKNP6h3udmowTw+vQEy+dLwT+IUFDbW0CVlVv/OqtVOMM1tMf0huBBb8qBo6g=","T":"HsA4U2yoOICblCt9qtZ1pTlWyjCIOp3VwttHOnrsT0M0ZhKVrXhedQwJGBY+0PlLIzzGEz2WzFwF4Gdh7q2iJL/W7znEy8aolWYQrMWS8mDC5AS1FPyBdBAKdpCZbkjqV4BkumB8Q2sQSBxSuC2N9dFfh+u2+KVXlB9qs0O4UgY=","R":["J8b8BTbgPuc8x/zlXx4EoYJOfyfxrXbv0OnlLAuvFWDN1oEPutASYaL/Q0ghOaIvH+U1zJdAZr1TzXs7qHQFHqxxcnze3JwDKeY2gZ7wqaXW9nGwLKFmJYySm1zpmhxmpA0hJpxxt9UL47OV0KG9EzyEVFIkuasgO2URuTAiiQg=","O8++5a8Z4frJwz3LuDomlbE4HebLlcnyNeqe23jY5GOsuRARfRoJEhOQvQQs3SVPVp/o4ApywyN94LW7HdAhH9Ef9U6tR7kJE/X/9IRdo17AYwm/R+n6moU3sKXo80XyXk3YBipURkYvZr69/qDtWMQhaTS0UOMTUlU1rG04IBg=","KN66kHkvOukEKj5oakbQYAt8KfCgQSOZ5G8EDb0l6CL2NUXwPncEKgSofBEAcK5sq2PAINZ9SnG0NAeKAHA0xbY9h22JgOrfwQn4QRQLFKSYz44qG/msa3McLseX6wzVQVpY/h0oWKEXcCItZ+mQrXBkYFAxoFoxwHUOthVsE4I=","RZzBYfb8W/i2NU02t685bkLzUNdKLFuyA/HvBrpaz48P/9ACQ2s3N033v5M/IBFO7MpucR42x/yfFvbnUmB+2rVifdjPEwWbHydwPLi5hq1WN5iExUw0YMtmnt+NpC2N2kbUMmpotaVB1w0atCcZ9eR3J7GixBKIikwffEndbPM=","bUx5ZpJfn7n/dbsGxQ4cGGBDbW1VvejXU6/Qiu33PF+gYkdKrHMMCnmhglJfbRwpBH3Fj6L0LVpybLOjTyzK/3F+C7AlE0E1E9nXQGiW6qAxWDw9sNXke65lt/VEwO6uu1LSf6nNuYJNzcGH3aRq4N7wrDYkkb2Eu42aKHkVl+U=","hmVW2rT3HBSWH6F3sZDhZQOVvqfcuPtzZ2PU2FC/HVxDroHm/xAOojh7W/68mfXfUlfjsZJHr7SoOOXSGSXjU0tmn7xRuOD2vjzzWXnXcpn284fsO9O4qb7gjqy7HLfSGWxxKtSHyKdCuzIJE1Iiuo369wGt4paMV71sCH39DV0="],"EpochLength":432000,"Params":{"LePrime":120,"Lh":256,"Lm":256,"Ln":1024,"Lstatzk":80,"Le":597,"LeCommit":456,"LmCommit":592,"LRA":1104,"LsCommit":593,"Lv":1700,"LvCommit":2036,"LvPrime":1104,"LvPrimeCommit":1440},"Issuer":"","ECDSA":"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdzoV71Dge11D7bCVbmQUEyOy9S5Y8h1cngnjq4tVR+JnvbzI/2bH4/O1GHmT+jtN9YTSHw5RgADpBGTmofmm1A=="}',
+  claim: JSON.stringify({
+    cType: '0x39ffc33202410721743e19082986e650b4e847b85bea7eab77...',
+    contents: {
+      ident: 9007199254740993,
+      image: {
+        URI: 'http://placehold.it/32x32',
+        BINARY: 'Ox123123123123123123DEADBEeF',
+      },
+      eyeColour: true,
+    },
+  }),
+  disclosedAttributes: ['contents.image.BINARY', 'contents.ident'],
+  mnemonic:
+    'scissors again purse yellow cabbage fat alpha snack come ripple jacket broken',
+}
+
 const issuanceProcess = async (
   attester: GabiAttester,
   claimer: GabiClaimer,
-  update: string,
+  update: Accumulator,
   claim: string
-): Promise<{ credential: string; witness: string }> => {
+): Promise<{
+  credential: Credential
+  witness: Witness
+}> => {
   console.time('Start attestation: attester sends nonce and context to claimer')
   const {
     message: startAttestationMsg,
-    session: attesterSignSession,
+    session: attestationSession,
   } = await attester.startAttestation()
   console.timeEnd(
     'Start attestation: attester sends nonce and context to claimer'
@@ -42,7 +69,7 @@ const issuanceProcess = async (
 
   console.time('Claimer requests attestation')
   const {
-    message: reqSignMsg,
+    message: attestationRequest,
     session: claimerSignSession,
   } = await claimer.requestAttestation({
     startAttestationMsg,
@@ -52,9 +79,9 @@ const issuanceProcess = async (
   console.timeEnd('Claimer requests attestation')
 
   console.time('Attester issues requested attestation')
-  const { signature, witness } = await attester.issueAttestation({
-    attesterSignSession,
-    reqSignMsg,
+  const { attestation, witness } = await attester.issueAttestation({
+    attestationSession,
+    attestationRequest,
     update,
   })
   console.timeEnd('Attester issues requested attestation')
@@ -62,7 +89,7 @@ const issuanceProcess = async (
   console.time('Claimer builds credential')
   const credential = await claimer.buildCredential({
     claimerSignSession,
-    signature,
+    attestation,
   })
   console.timeEnd('Claimer builds credential')
   return { credential, witness }
@@ -71,25 +98,25 @@ const issuanceProcess = async (
 const verify = async (
   claimer: GabiClaimer,
   attester: GabiAttester,
-  credential: string,
+  credential: Credential,
   disclosedAttributes: string[],
   index: number
 ): Promise<boolean> => {
   console.time('Verifier requests attributes')
   const {
     session: verifierSession,
-    message: reqRevealedAttrMsg,
-  } = await GabiVerifier.startVerificationSession({
+    message: presentationReq,
+  } = await GabiVerifier.requestPresentation({
     requestNonRevocationProof: true,
-    disclosedAttributes,
+    requestedAttributes: disclosedAttributes,
     minIndex: index,
   })
   console.timeEnd('Verifier requests attributes')
 
   console.time('Claimer reveals attributes')
-  const proof = await claimer.revealAttributes({
+  const proof = await claimer.buildPresentation({
     credential,
-    reqRevealedAttrMsg,
+    presentationReq,
     attesterPubKey: attester.getPubKey(),
   })
   console.timeEnd('Claimer reveals attributes')
@@ -98,7 +125,7 @@ const verify = async (
   const {
     claim: verifiedClaim,
     verified,
-  } = await GabiVerifier.verifyAttributes({
+  } = await GabiVerifier.verifyPresentation({
     proof,
     verifierSession,
     attesterPubKey: attester.getPubKey(),
@@ -110,10 +137,9 @@ const verify = async (
   return false
 }
 
-const runGabiExample = async (): Promise<void> => {
-  const { disclosedAttributes, claim, privKey, pubKey } = testEnv
+const runWorkflow = async (): Promise<void> => {
+  const { disclosedAttributes, claim, privKey, pubKey } = testEnv1
 
-  console.time('>> Complete Gabi process <<')
   console.time('build attester')
   const gabiAttester = new GabiAttester(pubKey, privKey)
   console.timeEnd('build attester')
@@ -157,9 +183,99 @@ const runGabiExample = async (): Promise<void> => {
   })
   console.timeEnd('update credential')
   await verify(gabiClaimer, gabiAttester, credential, disclosedAttributes, 1)
+}
 
+const runCombinedWorkflow = async (): Promise<void> => {
+  const {
+    disclosedAttributes: disclosedAttributes1,
+    claim: claim1,
+    privKey: privKey1,
+    pubKey: pubKey1,
+  } = testEnv1
+  const {
+    disclosedAttributes: disclosedAttributes2,
+    claim: claim2,
+    privKey: privKey2,
+    pubKey: pubKey2,
+  } = testEnv2
+
+  console.time('build attester')
+  const gabiAttester1 = new GabiAttester(pubKey1, privKey1)
+  console.timeEnd('build attester')
+
+  console.time('build attester')
+  const gabiAttester2 = new GabiAttester(pubKey2, privKey2)
+  console.timeEnd('build attester')
+
+  console.time('Build claimer identity')
+  // const gabiClaimer = await GabiClaimer.buildFromMnemonic(mnemonic)
+  const gabiClaimer = await GabiClaimer.buildFromScratch()
+  console.timeEnd('Build claimer identity')
+
+  console.time('Build accumulator')
+  const update1 = await gabiAttester1.createAccumulator()
+  console.timeEnd('Build accumulator')
+
+  console.time('Build accumulator')
+  const update2 = await gabiAttester2.createAccumulator()
+  console.timeEnd('Build accumulator')
+
+  // eslint-disable-next-line prefer-const
+  const { credential: credential1 } = await issuanceProcess(
+    gabiAttester1,
+    gabiClaimer,
+    update1,
+    claim1
+  )
+  const { credential: credential2 } = await issuanceProcess(
+    gabiAttester2,
+    gabiClaimer,
+    update2,
+    claim2
+  )
+
+  const { message, session } = await new CombinedRequestBuilder()
+    .requestPresentation({
+      requestedAttributes: disclosedAttributes1,
+      requestNonRevocationProof: true,
+      minIndex: 1,
+    })
+    .requestPresentation({
+      requestedAttributes: disclosedAttributes2,
+      requestNonRevocationProof: true,
+      minIndex: 1,
+    })
+    .finalise()
+
+  console.time('Build combined presentation')
+  const proof = await gabiClaimer.buildCombinedPresentation({
+    credentials: [credential1, credential2],
+    combinedPresentationReq: message,
+    attesterPubKeys: [gabiAttester1.getPubKey(), gabiAttester2.getPubKey()],
+  })
+  console.timeEnd('Build combined presentation')
+
+  console.time('verify combined presentation')
+  const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
+    proof,
+    attesterPubKeys: [gabiAttester1.getPubKey(), gabiAttester2.getPubKey()],
+    verifierSession: session,
+  })
+  console.timeEnd('verify combined presentation')
+
+  console.log('Verification:', verified, claims)
+}
+
+const runGabiExamples = async (): Promise<void> => {
+  console.time('>> Complete Combined Gabi process <<')
+  await runCombinedWorkflow()
+  console.timeEnd('>> Complete Combined Gabi process <<')
+
+  console.time('>> Complete Gabi process <<')
+  await runWorkflow()
   console.timeEnd('>> Complete Gabi process <<')
+
   goWasmClose()
 }
 
-runGabiExample()
+runGabiExamples()

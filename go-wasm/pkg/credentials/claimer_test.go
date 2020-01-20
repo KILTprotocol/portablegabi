@@ -29,15 +29,6 @@ func TestClaimerFromMnemonic(t *testing.T) {
 	assert.Equal(t, sysParams.Lm, uint(secret.MasterSecret.BitLen()))
 }
 
-func TestCredential(t *testing.T) {
-	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
-	assert.True(t, success, "Error in sysparams")
-	secret, err := ClaimerFromMnemonic(sysParams, mnemonic, "")
-	assert.NoError(t, err, "could not create claimer secret")
-	assert.NotNil(t, secret)
-	assert.Equal(t, sysParams.Lm, uint(secret.MasterSecret.BitLen()))
-}
-
 func TestRequestSignature(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	assert.True(t, success, "Error in sysparams")
@@ -61,10 +52,29 @@ func TestRequestSignature(t *testing.T) {
 
 	claimer, err := NewClaimer(sysParams)
 	require.NoError(t, err)
-	session, reqMsg, err := claimer.RequestSignatureForClaim(publicKey, attesterMsg, claim)
+	session, reqMsg, err := claimer.RequestAttestationForClaim(publicKey, attesterMsg, claim)
 	require.NoError(t, err)
 	require.NotNil(t, reqMsg)
 	require.NotNil(t, session)
+}
+
+func TestBuildCredential(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	assert.True(t, success, "Error in sysparams")
+
+	attestation := &gabi.IssueSignatureMessage{}
+	err := json.Unmarshal(byteSigMsg, attestation)
+	require.NoError(t, err)
+
+	session := &UserIssuanceSession{}
+	err = json.Unmarshal(byteUserSession, session)
+	require.NoError(t, err)
+
+	claimer, err := ClaimerFromMnemonic(sysParams, mnemonic, "")
+	require.NoError(t, err)
+	cred, err := claimer.BuildCredential(attestation, session)
+	require.NoError(t, err)
+	require.NotNil(t, cred)
 }
 
 func TestBuildUpdateCredential(t *testing.T) {
@@ -85,7 +95,7 @@ func TestBuildUpdateCredential(t *testing.T) {
 	err = json.Unmarshal(byteUserSession, userSession)
 	require.NoError(t, err)
 
-	cred, err := claimer.BuildAttestedClaim(sigMsg, userSession)
+	cred, err := claimer.BuildCredential(sigMsg, userSession)
 	assert.NoError(t, err, "Could not request attributes")
 	require.NotNil(t, cred)
 }

@@ -53,7 +53,7 @@ func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 
-	session, msg, err := claimer.RequestSignatureForClaim(issuerPubKey, handshakeMsg, claim)
+	session, msg, err := claimer.RequestAttestationForClaim(issuerPubKey, handshakeMsg, claim)
 	if err != nil {
 		return nil, err
 	}
@@ -82,22 +82,22 @@ func BuildCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 
-	credential, err := claimer.BuildAttestedClaim(signature, session)
+	credential, err := claimer.BuildCredential(signature, session)
 	if err != nil {
 		return nil, err
 	}
 	return credential, nil
 }
 
-// RevealAttributes creates a proof that the claimer posseses the requested
+// BuildPresentation creates a proof that the claimer posseses the requested
 // attributes. This method takes as input the private key of the claimer, the
 // credential which contains the requested attributes, a json encoded list
 // containing the requested attributes and the public key of the attester.
 // It returns a proof containing the values of the requested attributes.
-func RevealAttributes(this js.Value, inputs []js.Value) (interface{}, error) {
+func BuildPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 	claimer := &credentials.Claimer{}
 	credential := &credentials.AttestedClaim{}
-	request := &credentials.RequestDiscloseAttributes{}
+	request := &credentials.PresentationRequest{}
 	issuerPubKey := &gabi.PublicKey{}
 
 	if err := json.Unmarshal([]byte(inputs[0].String()), claimer); err != nil {
@@ -113,7 +113,33 @@ func RevealAttributes(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 
-	disclosedAttr, err := claimer.RevealAttributes(issuerPubKey, credential, request)
+	disclosedAttr, err := claimer.BuildPresentation(issuerPubKey, credential, request)
+	if err != nil {
+		return nil, err
+	}
+	return disclosedAttr, nil
+}
+
+func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
+	claimer := &credentials.Claimer{}
+	creds := []*credentials.AttestedClaim{}
+	request := &credentials.CombinedPresentationRequest{}
+	attesterPubKey := []*gabi.PublicKey{}
+
+	if err := json.Unmarshal([]byte(inputs[0].String()), claimer); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[1].String()), &creds); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[2].String()), request); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[3].String()), &attesterPubKey); err != nil {
+		return nil, err
+	}
+
+	disclosedAttr, err := claimer.BuildCombinedPresentation(attesterPubKey, creds, request)
 	if err != nil {
 		return nil, err
 	}

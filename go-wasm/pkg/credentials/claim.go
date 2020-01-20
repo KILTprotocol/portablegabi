@@ -60,7 +60,7 @@ func (av byName) Swap(i, j int) {
 	av.Values[i], av.Values[j] = av.Values[j], av.Values[i]
 }
 
-// ToAttributes transforms a claim struct to a list of attributes
+// ToAttributes transforms a claim struct to a list of attributes. The returned list is sorted by name.
 func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 	var attributes []*Attribute
 	var values []*big.Int

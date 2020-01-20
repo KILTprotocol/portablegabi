@@ -1,19 +1,23 @@
 import GabiClaimer from './GabiClaimer'
 import runTestSetup from '../testSetup/testSetup'
 import GabiAttester from '../attestation/GabiAttester'
-import { IGabiContextNonce } from '../types/Attestation'
 import { claim, numOfClaimKeys } from '../testSetup/testConfig'
 import {
-  IClaimerSignSession,
   ICredential,
-  AttesterSignSession,
   IIssueAttestation,
-  ReqSignMsg,
   Spy,
+  ReqSignMsg,
 } from '../testSetup/testTypes'
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
+import { InitiateAttestationRequest } from '../../build/types/Attestation'
+import {
+  ClaimerAttestationSession,
+  AttestationRequest,
+  Credential,
+} from '../types/Claim'
+import { Attestation } from '../types/Attestation'
 
-function buildCredentialError(credential: string, spy: Spy<'log'>): void {
+function buildCredentialError(credential: Credential, spy: Spy<'log'>): void {
   expect(credential).toBeUndefined()
   expect(spy.error).toHaveBeenCalledWith(
     'Proof of correctness on signature does not verify.'
@@ -62,16 +66,16 @@ describe('Test claimer creation', () => {
 describe('Test claimer functionality', () => {
   let gabiClaimer: GabiClaimer
   let gabiAttester: GabiAttester
-  let startAttestationMsg: IGabiContextNonce
-  let attesterSignSession: AttesterSignSession
-  let reqSignMsg: ReqSignMsg
-  let aSignature: string
-  let claimerSignSession: IClaimerSignSession
-  let claimerSignSession2: IClaimerSignSession
-  let claimerSignSessionE12: IClaimerSignSession
-  let claimerSignSessionE21: IClaimerSignSession
-  let invalidSignatures: string[]
-  let aSignature2: string
+  let startAttestationMsg: InitiateAttestationRequest
+  let attesterSignSession: ClaimerAttestationSession
+  let reqSignMsg: AttestationRequest
+  let aSignature: Attestation
+  let claimerSignSession: ClaimerAttestationSession
+  let claimerSignSession2: ClaimerAttestationSession
+  let claimerSignSessionE12: ClaimerAttestationSession
+  let claimerSignSessionE21: ClaimerAttestationSession
+  let invalidSignatures: Attestation[]
+  let aSignature2: Attestation
   let spy: Spy<'log'>
 
   // get data from runTestSetup
@@ -114,26 +118,18 @@ describe('Test claimer functionality', () => {
       })
       expect(request).toBeDefined()
       expect(typeof request).toBe('object')
-      expect(Object.keys(request)).toStrictEqual(['message', 'session'])
+      expect(Object.keys(request)).toContain('session')
+      expect(Object.keys(request)).toContain('message')
     })
     it('Checks for correct data in requestAttestion', async () => {
       expect(startAttestationMsg).toBeDefined()
       expect(attesterSignSession).toBeDefined()
       expect(reqSignMsg).toBeDefined()
       expect(claimerSignSession).toBeDefined()
-      // check context
-      expect(claimerSignSession.cb.Context).toStrictEqual(
-        startAttestationMsg.context
-      )
-      expect(claimerSignSession.cb.Context).toStrictEqual(
-        attesterSignSession.context
-      )
-      // values
-      expect(reqSignMsg.values).toContain(claimerSignSession.cb.UCommit)
     })
     it('Should build credential for gabiAttester', async () => {
       const credential = await gabiClaimer.buildCredential({
-        signature: aSignature,
+        attestation: aSignature,
         claimerSignSession,
       })
       expect(credential).toBeDefined()
@@ -142,7 +138,7 @@ describe('Test claimer functionality', () => {
     })
     it('Should build credential for gabiAttester2', async () => {
       const credential = await gabiClaimer.buildCredential({
-        signature: aSignature2,
+        attestation: aSignature2,
         claimerSignSession: claimerSignSession2,
       })
       expect(credential).toBeDefined()
@@ -152,13 +148,15 @@ describe('Test claimer functionality', () => {
     it('Checks for correct data in buildCredential', async () => {
       const credential = await gabiClaimer.buildCredential({
         claimerSignSession,
-        signature: aSignature,
+        attestation: aSignature,
       })
       expect(credential).toBeDefined()
-      const credObj: ICredential<typeof claim> = JSON.parse(credential)
+      const credObj: ICredential<typeof claim> = JSON.parse(
+        credential.valueOf()
+      )
       expect(credObj).toHaveProperty('claim', claim)
       // compare signatures
-      const aSigObj: IIssueAttestation = JSON.parse(aSignature)
+      const aSigObj: IIssueAttestation = JSON.parse(aSignature.valueOf())
       expect(Object.keys(aSigObj.signature)).toStrictEqual(
         Object.keys(credObj.credential.signature)
       )
@@ -173,7 +171,8 @@ describe('Test claimer functionality', () => {
       expect(aSigObj.nonrev).toStrictEqual(credObj.credential.nonrevWitness)
       // compare attributes
       expect(credObj.credential.attributes).toHaveLength(numOfClaimKeys + 1)
-      reqSignMsg.values.map(val =>
+      const parsedReq = JSON.parse(reqSignMsg.valueOf()) as ReqSignMsg
+      parsedReq.values.map(val =>
         expect(credObj.credential.attributes).toContain(val)
       )
     })
@@ -185,36 +184,36 @@ describe('Test claimer functionality', () => {
   describe('Checks invalid data', () => {
     it('Should throw for signature from wrong attester (gabiAttester)', async () => {
       const credential = await gabiClaimer.buildCredential({
-        signature: aSignature,
+        attestation: aSignature,
         claimerSignSession: claimerSignSession2,
       })
       buildCredentialError(credential, spy)
     })
     it('Should throw for signature from wrong attester (gabiAttester2)', async () => {
       const credential = await gabiClaimer.buildCredential({
-        signature: aSignature2,
+        attestation: aSignature2,
         claimerSignSession,
       })
       buildCredentialError(credential, spy)
     })
     it('Should throw on all invalid signatures', async () => {
       return Promise.all(
-        invalidSignatures.map(async signature => {
+        invalidSignatures.map(async attestation => {
           return [
             await gabiClaimer.buildCredential({
-              signature,
+              attestation,
               claimerSignSession,
             }),
             await gabiClaimer.buildCredential({
-              signature,
+              attestation,
               claimerSignSession: claimerSignSessionE12,
             }),
             await gabiClaimer.buildCredential({
-              signature,
+              attestation,
               claimerSignSession: claimerSignSessionE21,
             }),
             await gabiClaimer.buildCredential({
-              signature,
+              attestation,
               claimerSignSession: claimerSignSession2,
             }),
           ]

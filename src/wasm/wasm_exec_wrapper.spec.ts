@@ -11,7 +11,7 @@ describe('Test WASM wrapper', () => {
     x =>
       x !== WasmHooks.genKeypair && // takes too much time
       x !== WasmHooks.genKey && // works
-      x !== WasmHooks.startVerificationSession && // issues
+      x !== WasmHooks.startAttestationSession && // issues
       x !== WasmHooks.keyFromMnemonic // issues
   )
   beforeEach(() => {
