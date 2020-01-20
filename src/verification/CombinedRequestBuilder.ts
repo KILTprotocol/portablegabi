@@ -1,25 +1,28 @@
 import GabiVerifier from '../../build/verification/GabiVerifier'
-import { IPartialPresentationRequest } from '../../build/types/Verification'
+import {
+  CombinedVerificationSession,
+  CombinedPresentationRequest,
+  IPresentationRequest,
+} from '../../build/types/Verification'
 
 export default class CombinedProofBuilder {
-  private partialRequests: IPartialPresentationRequest[]
+  private partialRequests: IPresentationRequest[]
 
   constructor() {
     this.partialRequests = []
   }
 
   public requestPresentation(
-    partialRequest: IPartialPresentationRequest
+    partialRequest: IPresentationRequest
   ): CombinedProofBuilder {
     this.partialRequests.push(partialRequest)
     return this
   }
 
   public async finalise(): Promise<{
-    message: string
-    session: string
+    message: CombinedPresentationRequest
+    session: CombinedVerificationSession
   }> {
-    console.log(this.partialRequests)
     return GabiVerifier.requestCombinedPresentation(this.partialRequests)
   }
 }

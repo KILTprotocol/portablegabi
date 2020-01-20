@@ -1,11 +1,18 @@
-import IGabiClaimer from '../types/Claim'
+import IGabiClaimer, {
+  AttestationRequest,
+  AttestationSession,
+} from '../types/Claim'
 import WasmHooks from '../wasm/WasmHooks'
 import {
-  IGabiAttestationRequest,
-  IGabiAttestationStart,
   IGabiMsgSession,
+  InitiateAttestationRequest,
+  Attestation,
+  Accumulator,
 } from '../types/Attestation'
-import { IGabiReqAttrMsg } from '../types/Verification'
+import {
+  CombinedPresentationRequest,
+  PresentationRequest,
+} from '../types/Verification'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 
 export default class GabiClaimer implements IGabiClaimer {
@@ -32,66 +39,64 @@ export default class GabiClaimer implements IGabiClaimer {
     return goWasmExec<string>(WasmHooks.keyFromMnemonic, [mnemonic, ''])
   }
 
-  // request attestation
   public async requestAttestation({
     claim,
     startAttestationMsg,
     attesterPubKey,
   }: {
     claim: string
-    startAttestationMsg: IGabiAttestationStart['message']
+    startAttestationMsg: InitiateAttestationRequest
     attesterPubKey: string
-  }): Promise<IGabiAttestationRequest> {
-    const { session, message } = await goWasmExec<IGabiMsgSession>(
-      WasmHooks.requestAttestation,
-      [this.secret, claim, JSON.stringify(startAttestationMsg), attesterPubKey]
-    )
-    return {
-      message: JSON.parse(message),
-      session: JSON.parse(session),
-    }
-  }
-
-  // build credential
-  public async buildCredential({
-    claimerSignSession,
-    signature,
-  }: {
-    claimerSignSession: IGabiAttestationRequest['session']
-    signature: string
-  }): Promise<string> {
-    return goWasmExec<string>(WasmHooks.buildCredential, [
+  }): Promise<{
+    message: AttestationRequest
+    session: AttestationSession
+  }> {
+    return goWasmExec<IGabiMsgSession>(WasmHooks.requestAttestation, [
       this.secret,
-      JSON.stringify(claimerSignSession),
-      signature,
+      claim,
+      startAttestationMsg as string,
+      attesterPubKey,
     ])
   }
 
-  // reveal attributes
+  public async buildCredential({
+    claimerSignSession,
+    attestation,
+  }: {
+    claimerSignSession: AttestationSession
+    attestation: Attestation
+  }): Promise<string> {
+    return goWasmExec<string>(WasmHooks.buildCredential, [
+      this.secret,
+      claimerSignSession as string,
+      attestation as string,
+    ])
+  }
+
   public async revealAttributes({
     credential,
-    reqRevealedAttrMsg,
+    presentationReq,
     attesterPubKey,
   }: {
     credential: string
-    reqRevealedAttrMsg: IGabiReqAttrMsg
+    presentationReq: PresentationRequest
     attesterPubKey: string
   }): Promise<string> {
     return goWasmExec<string>(WasmHooks.buildPresentation, [
       this.secret,
       credential,
-      JSON.stringify(reqRevealedAttrMsg),
+      presentationReq as string, // TODO: why can't we use PresentationRequest as a string? It extends string...
       attesterPubKey,
     ])
   }
 
   public async buildCombinedPresentation({
     credentials,
-    reqCombinedPresentation,
+    combinedPresentationReq,
     attesterPubKeys,
   }: {
     credentials: string[]
-    reqCombinedPresentation: string
+    combinedPresentationReq: CombinedPresentationRequest
     attesterPubKeys: string[]
   }): Promise<string> {
     // make an json array out of already json serialised values
@@ -99,7 +104,7 @@ export default class GabiClaimer implements IGabiClaimer {
     return goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
       this.secret,
       `[${credentials.join(',')}]`,
-      reqCombinedPresentation,
+      combinedPresentationReq as string,
       `[${attesterPubKeys.join(',')}]`,
     ])
   }
@@ -111,12 +116,12 @@ export default class GabiClaimer implements IGabiClaimer {
   }: {
     credential: string
     attesterPubKey: string
-    update: string
+    update: Accumulator
   }): Promise<string> {
     return goWasmExec<string>(WasmHooks.updateCredential, [
       this.secret,
       credential,
-      update,
+      update as string,
       attesterPubKey,
     ])
   }

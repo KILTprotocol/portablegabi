@@ -4,6 +4,7 @@ import GabiAttester from '../build/attestation/GabiAttester'
 import GabiVerifier from '../build/verification/GabiVerifier'
 import { goWasmClose } from '../build/wasm/wasm_exec_wrapper'
 import CombinedProofBuilder from '../src/verification/CombinedRequestBuilder'
+import { Witness, Accumulator } from '../src/types/Attestation'
 
 const testEnv1 = {
   privKey:
@@ -50,13 +51,13 @@ const testEnv2 = {
 const issuanceProcess = async (
   attester: GabiAttester,
   claimer: GabiClaimer,
-  update: string,
+  update: Accumulator,
   claim: string
-): Promise<{ credential: string; witness: string }> => {
+): Promise<{ credential: string; witness: Witness }> => {
   console.time('Start attestation: attester sends nonce and context to claimer')
   const {
     message: startAttestationMsg,
-    session: attesterSignSession,
+    session: attestationSession,
   } = await attester.startAttestation()
   console.timeEnd(
     'Start attestation: attester sends nonce and context to claimer'
@@ -64,7 +65,7 @@ const issuanceProcess = async (
 
   console.time('Claimer requests attestation')
   const {
-    message: reqSignMsg,
+    message: attestationRequest,
     session: claimerSignSession,
   } = await claimer.requestAttestation({
     startAttestationMsg,
@@ -74,9 +75,9 @@ const issuanceProcess = async (
   console.timeEnd('Claimer requests attestation')
 
   console.time('Attester issues requested attestation')
-  const { signature, witness } = await attester.issueAttestation({
-    attesterSignSession,
-    reqSignMsg,
+  const { attestation, witness } = await attester.issueAttestation({
+    attestationSession,
+    attestationRequest,
     update,
   })
   console.timeEnd('Attester issues requested attestation')
@@ -84,7 +85,7 @@ const issuanceProcess = async (
   console.time('Claimer builds credential')
   const credential = await claimer.buildCredential({
     claimerSignSession,
-    signature,
+    attestation,
   })
   console.timeEnd('Claimer builds credential')
   return { credential, witness }
@@ -100,7 +101,7 @@ const verify = async (
   console.time('Verifier requests attributes')
   const {
     session: verifierSession,
-    message: reqRevealedAttrMsg,
+    message: presentationReq,
   } = await GabiVerifier.requestPresentation({
     requestNonRevocationProof: true,
     requestedAttributes: disclosedAttributes,
@@ -111,7 +112,7 @@ const verify = async (
   console.time('Claimer reveals attributes')
   const proof = await claimer.revealAttributes({
     credential,
-    reqRevealedAttrMsg,
+    presentationReq,
     attesterPubKey: attester.getPubKey(),
   })
   console.timeEnd('Claimer reveals attributes')
@@ -245,7 +246,7 @@ const runCombinedWorkflow = async (): Promise<void> => {
   console.time('Build combined presentation')
   const proof = await gabiClaimer.buildCombinedPresentation({
     credentials: [credential1, credential2],
-    reqCombinedPresentation: message,
+    combinedPresentationReq: message,
     attesterPubKeys: [gabiAttester1.getPubKey(), gabiAttester2.getPubKey()],
   })
   console.timeEnd('Build combined presentation')
@@ -256,7 +257,7 @@ const runCombinedWorkflow = async (): Promise<void> => {
     attesterPubKeys: [gabiAttester1.getPubKey(), gabiAttester2.getPubKey()],
     verifierSession: session,
   })
-  console.time('verify combined presentation')
+  console.timeEnd('verify combined presentation')
 
   console.log('Verification:', verified, claims)
 }

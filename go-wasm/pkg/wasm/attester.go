@@ -84,8 +84,8 @@ func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	return map[string]interface{}{
-		"signature": sig,
-		"witness":   witness,
+		"attestation": sig,
+		"witness":     witness,
 	}, nil
 }
 

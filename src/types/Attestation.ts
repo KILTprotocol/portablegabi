@@ -1,35 +1,7 @@
-export interface IGabiContextNonce {
-  context: string
-  nonce: string
-}
-
+// eslint-disable-next-line max-classes-per-file
 export interface IGabiMsgSession {
   message: string
   session: string
-}
-export interface IGabiAttestationStart {
-  message: IGabiContextNonce
-  session: any
-}
-
-export interface IGabiAttestationRequest {
-  message: any
-  session: {
-    claim: {
-      contents: {
-        [key: string]: any
-      }
-      [key: string]: any
-    }
-    cb: {
-      [cryptoStuff: string]: any
-    }
-  }
-}
-
-export interface IGabiAttestationResponse {
-  signature: string
-  witness: string
 }
 
 export default interface IGabiAttester {
@@ -39,3 +11,9 @@ export default interface IGabiAttester {
   getPubKey: Function
   createAccumulator: Function
 }
+
+export class AttestationSession extends String {}
+export class InitiateAttestationRequest extends String {}
+export class Accumulator extends String {}
+export class Witness extends String {}
+export class Attestation extends String {}
