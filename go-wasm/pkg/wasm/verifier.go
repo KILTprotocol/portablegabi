@@ -4,6 +4,8 @@ package wasm
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"syscall/js"
 
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
@@ -17,6 +19,9 @@ import (
 func RequestPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 
 	// ignore the first two values (ReqRevProof-Flag & min Accumulator index)
+	if len(inputs) < 3 {
+		return nil, errors.New("Require at least one requested attribute.")
+	}
 	attrs := make([]string, len(inputs)-2)
 	for i, v := range inputs[2:] {
 		attrs[i] = v.String()
@@ -55,13 +60,13 @@ func VerifyPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 	session := &credentials.VerifierSession{}
 	attesterPubKey := &gabi.PublicKey{}
 	if err := json.Unmarshal([]byte(inputs[0].String()), proof); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not parse string: '%s' into credentials.PresentationResponse", inputs[0].String())
 	}
 	if err := json.Unmarshal([]byte(inputs[1].String()), session); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not parse string: '%s' into credentials.VerifierSession", inputs[1].String())
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), attesterPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not parse string: '%s' into gabi.PublicKey", inputs[2].String())
 	}
 	verified, rebuildClaim, err := credentials.VerifyPresentation(attesterPubKey, proof, session)
 	if err != nil {
