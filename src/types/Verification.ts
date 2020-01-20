@@ -1,12 +1,12 @@
 import { IGabiContextNonce } from './Attestation'
 
 export interface IGabiReqAttrMsg extends IGabiContextNonce {
-  disclosedAttributes: string[]
+  discloseAttributes: string[]
   reqNonRevocationProof: boolean
   ReqMinIndex: number
 }
 
-export interface IGabiVerifiedAtts {
+export interface IGabiVerifiedAtts<Claim> {
   verified: boolean
-  claim: string
+  claim: Claim
 }

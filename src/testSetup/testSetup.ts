@@ -13,8 +13,8 @@ import {
   claim,
   disclosedAttributes,
 } from './testConfig'
-import GabiVerifier from '../../build/verification/GabiVerifier'
-import { IGabiReqAttrMsg } from '../types/Verification'
+import GabiVerifier from '../verification/GabiVerifier'
+import { IGabiReqAttrMsg, IGabiVerifiedAtts } from '../types/Verification'
 
 const runTestSetup = async (): Promise<{
   gabiClaimer: GabiClaimer
@@ -24,6 +24,9 @@ const runTestSetup = async (): Promise<{
   attesterSignSession: AttesterSignSession
   reqSignMsg: ReqSignMsg
   aSignature: string
+  witness: string
+  update: string
+  update2: string
   aSignature2: string
   claimerSignSession: any // IClaimerSignSession
   startAttestationMsg2: IGabiContextNonce
@@ -40,7 +43,7 @@ const runTestSetup = async (): Promise<{
   verifierSession: IGabiContextNonce
   reqRevealedAttrMsg: IGabiReqAttrMsg
   proof: string
-  verifiedClaim: string
+  verifiedClaim: any
   verified: boolean
 }> => {
   const gabiAttester = new GabiAttester(pubKey, privKey)
@@ -65,7 +68,10 @@ const runTestSetup = async (): Promise<{
     attesterPubKey: gabiAttester.getPubKey(),
   })
   // Attester issues claim
-  const { signature: aSignature } = await gabiAttester.issueAttestation({
+  const {
+    witness,
+    signature: aSignature,
+  } = await gabiAttester.issueAttestation({
     attesterSignSession,
     reqSignMsg,
     update,
@@ -169,7 +175,7 @@ const runTestSetup = async (): Promise<{
   } = await GabiVerifier.startVerificationSession({
     requestNonRevocationProof: true,
     disclosedAttributes,
-    minIndex: 1,
+    minIndex: 0,
   })
 
   const proof = await gabiClaimer.revealAttributes({
@@ -195,6 +201,9 @@ const runTestSetup = async (): Promise<{
     attesterSignSession,
     reqSignMsg,
     aSignature,
+    witness,
+    update,
+    update2,
     aSignature2,
     claimerSignSession,
     startAttestationMsg2,
@@ -222,7 +231,10 @@ export const verifySetup = async (
   credential: string,
   disclosedAttributesInput: string[],
   index: number
-): Promise<{ verified: boolean; verifiedClaim: string }> => {
+): Promise<{
+  verified: boolean
+  verifiedClaim: IGabiVerifiedAtts<typeof claim>['claim']
+}> => {
   const {
     session: verifierSession,
     message: reqRevealedAttrMsg,
@@ -246,5 +258,4 @@ export const verifySetup = async (
   })
   return { verified, verifiedClaim }
 }
-String(Boolean)
 export default runTestSetup
