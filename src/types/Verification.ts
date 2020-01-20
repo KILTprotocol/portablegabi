@@ -7,6 +7,6 @@ export interface IGabiReqAttrMsg extends IGabiContextNonce {
 }
 
 export interface IGabiVerifiedAtts {
-  verified: 'true' | 'false'
+  verified: boolean
   claim: string
 }
