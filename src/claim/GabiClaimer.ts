@@ -1,6 +1,6 @@
 import IGabiClaimer, {
   AttestationRequest,
-  AttestationSession,
+  ClaimerAttestationSession,
 } from '../types/Claim'
 import WasmHooks from '../wasm/WasmHooks'
 import {
@@ -49,7 +49,7 @@ export default class GabiClaimer implements IGabiClaimer {
     attesterPubKey: string
   }): Promise<{
     message: AttestationRequest
-    session: AttestationSession
+    session: ClaimerAttestationSession
   }> {
     return goWasmExec<IGabiMsgSession>(WasmHooks.requestAttestation, [
       this.secret,
@@ -63,7 +63,7 @@ export default class GabiClaimer implements IGabiClaimer {
     claimerSignSession,
     attestation,
   }: {
-    claimerSignSession: AttestationSession
+    claimerSignSession: ClaimerAttestationSession
     attestation: Attestation
   }): Promise<string> {
     return goWasmExec<string>(WasmHooks.buildCredential, [

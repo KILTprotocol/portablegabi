@@ -6,4 +6,4 @@ export default interface IGabiClaimer {
 }
 
 export class AttestationRequest extends String {}
-export class AttestationSession extends String {}
+export class ClaimerAttestationSession extends String {}

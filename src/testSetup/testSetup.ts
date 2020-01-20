@@ -14,7 +14,7 @@ import {
   InitiateAttestationRequest,
   Attestation,
   Witness,
-  AttestationSession,
+  AttesterAttestationSession,
 } from '../types/Attestation'
 import { VerificationSession } from '../types/Verification'
 import { PresentationRequest } from '../../build/types/Verification'
@@ -25,13 +25,13 @@ const runTestSetup = async (): Promise<{
   gabiAttester: GabiAttester
   gabiAttester2: GabiAttester
   startAttestationMsg: InitiateAttestationRequest
-  attesterSignSession: AttestationSession
+  attesterSignSession: AttesterAttestationSession
   reqSignMsg: AttestationRequest
   aSignature: Attestation
   aSignature2: Attestation
   claimerSignSession: any // IClaimerSignSession
   startAttestationMsg2: InitiateAttestationRequest
-  attesterSignSession2: AttestationSession
+  attesterSignSession2: AttesterAttestationSession
   reqSignMsg2: AttestationRequest
   reqSignMsgE12: AttestationRequest
   reqSignMsgE21: AttestationRequest

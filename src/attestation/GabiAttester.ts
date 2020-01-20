@@ -4,7 +4,7 @@ import WasmHooks from '../wasm/WasmHooks'
 import IGabiAttester, {
   IGabiMsgSession,
   InitiateAttestationRequest,
-  AttestationSession,
+  AttesterAttestationSession,
   Accumulator,
   Witness,
   Attestation,
@@ -40,7 +40,7 @@ export default class GabiAttester implements IGabiAttester {
   // start attestation
   public async startAttestation(): Promise<{
     message: InitiateAttestationRequest
-    session: AttestationSession
+    session: AttesterAttestationSession
   }> {
     const {
       message,
@@ -69,7 +69,7 @@ export default class GabiAttester implements IGabiAttester {
     attestationRequest,
     update,
   }: {
-    attestationSession: AttestationSession
+    attestationSession: AttesterAttestationSession
     attestationRequest: AttestationRequest
     update: Accumulator
   }): Promise<{

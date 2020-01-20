@@ -10,7 +10,7 @@ import {
 } from '../testSetup/testTypes'
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import { InitiateAttestationRequest } from '../../build/types/Attestation'
-import { AttestationSession, AttestationRequest } from '../types/Claim'
+import { ClaimerAttestationSession, AttestationRequest } from '../types/Claim'
 import { Attestation } from '../types/Attestation'
 
 function buildCredentialError(credential: string, spy: Spy<'log'>): void {
@@ -63,13 +63,13 @@ describe('Test claimer functionality', () => {
   let gabiClaimer: GabiClaimer
   let gabiAttester: GabiAttester
   let startAttestationMsg: InitiateAttestationRequest
-  let attesterSignSession: AttestationSession
+  let attesterSignSession: ClaimerAttestationSession
   let reqSignMsg: AttestationRequest
   let aSignature: Attestation
-  let claimerSignSession: AttestationSession
-  let claimerSignSession2: AttestationSession
-  let claimerSignSessionE12: AttestationSession
-  let claimerSignSessionE21: AttestationSession
+  let claimerSignSession: ClaimerAttestationSession
+  let claimerSignSession2: ClaimerAttestationSession
+  let claimerSignSessionE12: ClaimerAttestationSession
+  let claimerSignSessionE21: ClaimerAttestationSession
   let invalidSignatures: Attestation[]
   let aSignature2: Attestation
   let spy: Spy<'log'>

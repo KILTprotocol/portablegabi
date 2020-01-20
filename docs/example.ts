@@ -3,7 +3,7 @@ import GabiClaimer from '../build/claim/GabiClaimer'
 import GabiAttester from '../build/attestation/GabiAttester'
 import GabiVerifier from '../build/verification/GabiVerifier'
 import { goWasmClose } from '../build/wasm/wasm_exec_wrapper'
-import CombinedProofBuilder from '../src/verification/CombinedRequestBuilder'
+import CombinedRequestBuilder from '../src/verification/CombinedRequestBuilder'
 import { Witness, Accumulator } from '../src/types/Attestation'
 
 const testEnv1 = {
@@ -230,7 +230,7 @@ const runCombinedWorkflow = async (): Promise<void> => {
     claim2
   )
 
-  const { message, session } = await new CombinedProofBuilder()
+  const { message, session } = await new CombinedRequestBuilder()
     .requestPresentation({
       requestedAttributes: disclosedAttributes1,
       requestNonRevocationProof: true,

@@ -1,11 +1,11 @@
-import GabiVerifier from '../../build/verification/GabiVerifier'
+import GabiVerifier from './GabiVerifier'
 import {
   CombinedVerificationSession,
   CombinedPresentationRequest,
   IPresentationRequest,
-} from '../../build/types/Verification'
+} from '../types/Verification'
 
-export default class CombinedProofBuilder {
+export default class CombinedRequestBuilder {
   private partialRequests: IPresentationRequest[]
 
   constructor() {
@@ -14,7 +14,7 @@ export default class CombinedProofBuilder {
 
   public requestPresentation(
     partialRequest: IPresentationRequest
-  ): CombinedProofBuilder {
+  ): CombinedRequestBuilder {
     this.partialRequests.push(partialRequest)
     return this
   }
