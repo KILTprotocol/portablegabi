@@ -9,15 +9,14 @@ import {
   claim,
   disclosedAttributes,
 } from './testConfig'
-import GabiVerifier from '../../build/verification/GabiVerifier'
+import GabiVerifier from '../verification/GabiVerifier'
 import {
   InitiateAttestationRequest,
   Attestation,
   Witness,
   AttesterAttestationSession,
 } from '../types/Attestation'
-import { VerificationSession } from '../types/Verification'
-import { PresentationRequest } from '../../build/types/Verification'
+import { VerificationSession, PresentationRequest } from '../types/Verification'
 import {
   AttestationRequest,
   Presentation,
