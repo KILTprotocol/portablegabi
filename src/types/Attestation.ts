@@ -12,6 +12,7 @@ export default interface IGabiAttester {
   createAccumulator: Function
 }
 
+export class AttesterPublicKey extends String {}
 export class AttesterAttestationSession extends String {}
 export class InitiateAttestationRequest extends String {}
 export class Accumulator extends String {}

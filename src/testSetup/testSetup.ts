@@ -18,7 +18,12 @@ import {
 } from '../types/Attestation'
 import { VerificationSession } from '../types/Verification'
 import { PresentationRequest } from '../../build/types/Verification'
-import { AttestationRequest } from '../types/Claim'
+import {
+  AttestationRequest,
+  Presentation,
+  ClaimerAttestationSession,
+  Credential,
+} from '../types/Claim'
 
 const runTestSetup = async (): Promise<{
   gabiClaimer: GabiClaimer
@@ -29,15 +34,15 @@ const runTestSetup = async (): Promise<{
   reqSignMsg: AttestationRequest
   aSignature: Attestation
   aSignature2: Attestation
-  claimerSignSession: any // IClaimerSignSession
+  claimerSignSession: ClaimerAttestationSession // IClaimerSignSession
   startAttestationMsg2: InitiateAttestationRequest
   attesterSignSession2: AttesterAttestationSession
   reqSignMsg2: AttestationRequest
   reqSignMsgE12: AttestationRequest
   reqSignMsgE21: AttestationRequest
-  claimerSignSession2: any // IClaimerSignSession
-  claimerSignSessionE12: any // IClaimerSignSession
-  claimerSignSessionE21: any // IClaimerSignSession
+  claimerSignSession2: ClaimerAttestationSession // IClaimerSignSession
+  claimerSignSessionE12: ClaimerAttestationSession // IClaimerSignSession
+  claimerSignSessionE21: ClaimerAttestationSession // IClaimerSignSession
   invalidAttestationResponses: {
     [key: number]: {
       attestation: Attestation
@@ -45,10 +50,10 @@ const runTestSetup = async (): Promise<{
     }
   }
   invalidSignatures: Attestation[]
-  credential: string
+  credential: Credential
   verifierSession: VerificationSession
   reqRevealedAttrMsg: PresentationRequest
-  proof: string
+  proof: Presentation
   verifiedClaim: string
   verified: boolean
 }> => {
@@ -181,7 +186,7 @@ const runTestSetup = async (): Promise<{
     minIndex: 1,
   })
 
-  const proof = await gabiClaimer.revealAttributes({
+  const proof = await gabiClaimer.buildPresentation({
     credential,
     presentationReq: reqRevealedAttrMsg,
     attesterPubKey: gabiAttester.getPubKey(),
@@ -240,7 +245,7 @@ export const verifySetup = async (
     requestedAttributes: disclosedAttributesInput,
     minIndex: index,
   })
-  const proof = await claimer.revealAttributes({
+  const proof = await claimer.buildPresentation({
     credential,
     presentationReq: reqRevealedAttrMsg,
     attesterPubKey: attester.getPubKey(),

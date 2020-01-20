@@ -1,6 +1,9 @@
 import IGabiClaimer, {
   AttestationRequest,
   ClaimerAttestationSession,
+  Credential,
+  Presentation,
+  CombinedPresentation,
 } from '../types/Claim'
 import WasmHooks from '../wasm/WasmHooks'
 import {
@@ -8,6 +11,7 @@ import {
   InitiateAttestationRequest,
   Attestation,
   Accumulator,
+  AttesterPublicKey,
 } from '../types/Attestation'
 import {
   CombinedPresentationRequest,
@@ -46,7 +50,7 @@ export default class GabiClaimer implements IGabiClaimer {
   }: {
     claim: string
     startAttestationMsg: InitiateAttestationRequest
-    attesterPubKey: string
+    attesterPubKey: AttesterPublicKey
   }): Promise<{
     message: AttestationRequest
     session: ClaimerAttestationSession
@@ -55,7 +59,7 @@ export default class GabiClaimer implements IGabiClaimer {
       this.secret,
       claim,
       startAttestationMsg as string,
-      attesterPubKey,
+      attesterPubKey as string,
     ])
   }
 
@@ -65,7 +69,7 @@ export default class GabiClaimer implements IGabiClaimer {
   }: {
     claimerSignSession: ClaimerAttestationSession
     attestation: Attestation
-  }): Promise<string> {
+  }): Promise<Credential> {
     return goWasmExec<string>(WasmHooks.buildCredential, [
       this.secret,
       claimerSignSession as string,
@@ -73,20 +77,20 @@ export default class GabiClaimer implements IGabiClaimer {
     ])
   }
 
-  public async revealAttributes({
+  public async buildPresentation({
     credential,
     presentationReq,
     attesterPubKey,
   }: {
-    credential: string
+    credential: Credential
     presentationReq: PresentationRequest
-    attesterPubKey: string
-  }): Promise<string> {
+    attesterPubKey: AttesterPublicKey
+  }): Promise<Presentation> {
     return goWasmExec<string>(WasmHooks.buildPresentation, [
       this.secret,
-      credential,
+      credential as string,
       presentationReq as string, // TODO: why can't we use PresentationRequest as a string? It extends string...
-      attesterPubKey,
+      attesterPubKey as string,
     ])
   }
 
@@ -95,10 +99,10 @@ export default class GabiClaimer implements IGabiClaimer {
     combinedPresentationReq,
     attesterPubKeys,
   }: {
-    credentials: string[]
+    credentials: Credential[]
     combinedPresentationReq: CombinedPresentationRequest
-    attesterPubKeys: string[]
-  }): Promise<string> {
+    attesterPubKeys: AttesterPublicKey[]
+  }): Promise<CombinedPresentation> {
     // make an json array out of already json serialised values
     // we don't want a json array of strings
     return goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
@@ -114,15 +118,15 @@ export default class GabiClaimer implements IGabiClaimer {
     attesterPubKey,
     update,
   }: {
-    credential: string
-    attesterPubKey: string
+    credential: Credential
+    attesterPubKey: AttesterPublicKey
     update: Accumulator
   }): Promise<string> {
     return goWasmExec<string>(WasmHooks.updateCredential, [
       this.secret,
-      credential,
+      credential as string,
       update as string,
-      attesterPubKey,
+      attesterPubKey as string,
     ])
   }
 }

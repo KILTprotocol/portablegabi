@@ -8,6 +8,7 @@ import IGabiAttester, {
   Accumulator,
   Witness,
   Attestation,
+  AttesterPublicKey,
 } from '../types/Attestation'
 
 export default class GabiAttester implements IGabiAttester {
@@ -33,8 +34,8 @@ export default class GabiAttester implements IGabiAttester {
     this.privateKey = privateKey
   }
 
-  public getPubKey(): string {
-    return this.publicKey
+  public getPubKey(): AttesterPublicKey {
+    return this.publicKey as AttesterPublicKey
   }
 
   // start attestation
@@ -42,25 +43,17 @@ export default class GabiAttester implements IGabiAttester {
     message: InitiateAttestationRequest
     session: AttesterAttestationSession
   }> {
-    const {
-      message,
-      session,
-    }: {
-      message: string
-      session: string
-    } = await goWasmExec<IGabiMsgSession>(WasmHooks.startAttestationSession, [
+    return goWasmExec<IGabiMsgSession>(WasmHooks.startAttestationSession, [
       this.privateKey,
       this.publicKey,
     ])
-    return { message, session }
   }
 
   public async createAccumulator(): Promise<Accumulator> {
-    const response = await goWasmExec<string>(WasmHooks.createAccumulator, [
+    return goWasmExec<string>(WasmHooks.createAccumulator, [
       this.privateKey,
       this.publicKey,
     ])
-    return response
   }
 
   // issue attestation
@@ -76,7 +69,7 @@ export default class GabiAttester implements IGabiAttester {
     attestation: Attestation
     witness: Witness
   }> {
-    const response = await goWasmExec<{
+    return goWasmExec<{
       attestation: string
       witness: string
     }>(WasmHooks.issueAttestation, [
@@ -86,10 +79,6 @@ export default class GabiAttester implements IGabiAttester {
       attestationRequest as string,
       update as string,
     ])
-    return {
-      attestation: response.attestation,
-      witness: response.witness,
-    }
   }
 
   // revoke attestation
@@ -100,12 +89,11 @@ export default class GabiAttester implements IGabiAttester {
     update: Accumulator
     witness: Witness
   }): Promise<string> {
-    const response = await goWasmExec<string>(WasmHooks.revokeAttestation, [
+    return goWasmExec<string>(WasmHooks.revokeAttestation, [
       this.privateKey,
       this.publicKey,
       update as string,
       witness as string,
     ])
-    return response
   }
 }

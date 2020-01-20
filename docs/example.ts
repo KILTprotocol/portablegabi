@@ -1,10 +1,11 @@
 /* eslint-disable no-console */
-import GabiClaimer from '../build/claim/GabiClaimer'
-import GabiAttester from '../build/attestation/GabiAttester'
-import GabiVerifier from '../build/verification/GabiVerifier'
-import { goWasmClose } from '../build/wasm/wasm_exec_wrapper'
+import GabiClaimer from '../src/claim/GabiClaimer'
+import GabiAttester from '../src/attestation/GabiAttester'
+import GabiVerifier from '../src/verification/GabiVerifier'
+import { goWasmClose } from '../src/wasm/wasm_exec_wrapper'
 import CombinedRequestBuilder from '../src/verification/CombinedRequestBuilder'
 import { Witness, Accumulator } from '../src/types/Attestation'
+import { Credential } from '../src/types/Claim'
 
 const testEnv1 = {
   privKey:
@@ -53,7 +54,10 @@ const issuanceProcess = async (
   claimer: GabiClaimer,
   update: Accumulator,
   claim: string
-): Promise<{ credential: string; witness: Witness }> => {
+): Promise<{
+  credential: Credential
+  witness: Witness
+}> => {
   console.time('Start attestation: attester sends nonce and context to claimer')
   const {
     message: startAttestationMsg,
@@ -94,7 +98,7 @@ const issuanceProcess = async (
 const verify = async (
   claimer: GabiClaimer,
   attester: GabiAttester,
-  credential: string,
+  credential: Credential,
   disclosedAttributes: string[],
   index: number
 ): Promise<boolean> => {
@@ -110,7 +114,7 @@ const verify = async (
   console.timeEnd('Verifier requests attributes')
 
   console.time('Claimer reveals attributes')
-  const proof = await claimer.revealAttributes({
+  const proof = await claimer.buildPresentation({
     credential,
     presentationReq,
     attesterPubKey: attester.getPubKey(),

@@ -7,8 +7,10 @@ import {
   VerificationSession,
   PresentationRequest,
   CombinedVerificationSession,
+  CombinedPresentationRequest,
 } from '../types/Verification'
-import { IGabiMsgSession } from '../types/Attestation'
+import { IGabiMsgSession, AttesterPublicKey } from '../types/Attestation'
+import { Presentation, CombinedPresentation } from '../types/Claim'
 
 export default class GabiVerifier {
   public static async requestPresentation({
@@ -32,17 +34,12 @@ export default class GabiVerifier {
   public static async requestCombinedPresentation(
     presentationReqs: IPresentationRequest[]
   ): Promise<{
-    message: string
-    session: string
+    message: CombinedPresentationRequest
+    session: CombinedVerificationSession
   }> {
-    const { message, session } = await goWasmExec<IGabiMsgSession>(
-      WasmHooks.requestCombinedPresentation,
-      [JSON.stringify(presentationReqs)]
-    )
-    return {
-      message,
-      session,
-    }
+    return goWasmExec<IGabiMsgSession>(WasmHooks.requestCombinedPresentation, [
+      JSON.stringify(presentationReqs),
+    ])
   }
 
   public static async verifyPresentation({
@@ -50,17 +47,17 @@ export default class GabiVerifier {
     verifierSession,
     attesterPubKey,
   }: {
-    proof: string
+    proof: Presentation
     verifierSession: VerificationSession
-    attesterPubKey: string
+    attesterPubKey: AttesterPublicKey
   }): Promise<IVerifiedPresentation> {
     const response = await goWasmExec<{
       verified: boolean
       claim: string
     }>(WasmHooks.verifyPresentation, [
-      proof,
+      proof as string,
       verifierSession as string,
-      attesterPubKey,
+      attesterPubKey as string,
     ])
     return {
       verified: response.verified,
@@ -73,15 +70,15 @@ export default class GabiVerifier {
     verifierSession,
     attesterPubKeys,
   }: {
-    proof: string
+    proof: CombinedPresentation
     verifierSession: CombinedVerificationSession
-    attesterPubKeys: string[]
+    attesterPubKeys: AttesterPublicKey[]
   }): Promise<IVerifiedCombinedPresentation> {
     const response = await goWasmExec<{
       verified: boolean
       claims: string
     }>(WasmHooks.verifyCombinedPresentation, [
-      proof,
+      proof as string,
       verifierSession as string,
       `[${attesterPubKeys.join(',')}]`,
     ])
