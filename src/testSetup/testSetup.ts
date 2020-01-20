@@ -5,7 +5,16 @@ import {
   IGabiAttestationResponse,
 } from '../types/Attestation'
 import { AttesterSignSession, ReqSignMsg } from './testTypes'
-import { pubKey, privKey, pubKeyRevo2, privKeyRevo2, claim } from './testConfig'
+import {
+  pubKey,
+  privKey,
+  pubKeyRevo2,
+  privKeyRevo2,
+  claim,
+  disclosedAttributes,
+} from './testConfig'
+import GabiVerifier from '../../build/verification/GabiVerifier'
+import { IGabiReqAttrMsg } from '../types/Verification'
 
 const runTestSetup = async (): Promise<{
   gabiClaimer: GabiClaimer
@@ -27,6 +36,12 @@ const runTestSetup = async (): Promise<{
   claimerSignSessionE21: any // IClaimerSignSession
   invalidAttestationResponses: { [key: number]: IGabiAttestationResponse }
   invalidSignatures: string[]
+  credential: string
+  verifierSession: IGabiContextNonce
+  reqRevealedAttrMsg: IGabiReqAttrMsg
+  proof: string
+  verifiedClaim: string
+  verified: boolean
 }> => {
   const gabiAttester = new GabiAttester(pubKey, privKey)
   const gabiAttester2 = new GabiAttester(pubKeyRevo2, privKeyRevo2)
@@ -141,6 +156,37 @@ const runTestSetup = async (): Promise<{
   const invalidSignatures = Object.values(invalidAttestationResponses).map(
     response => response.signature
   )
+
+  const credential = await gabiClaimer.buildCredential({
+    claimerSignSession,
+    signature: aSignature,
+  })
+
+  // verification
+  const {
+    session: verifierSession,
+    message: reqRevealedAttrMsg,
+  } = await GabiVerifier.startVerificationSession({
+    requestNonRevocationProof: true,
+    disclosedAttributes,
+    minIndex: 1,
+  })
+
+  const proof = await gabiClaimer.revealAttributes({
+    credential,
+    reqRevealedAttrMsg,
+    attesterPubKey: gabiAttester.getPubKey(),
+  })
+
+  const {
+    claim: verifiedClaim,
+    verified,
+  } = await GabiVerifier.verifyAttributes({
+    proof,
+    verifierSession,
+    attesterPubKey: gabiAttester.getPubKey(),
+  })
+
   return {
     gabiClaimer,
     gabiAttester,
@@ -161,6 +207,44 @@ const runTestSetup = async (): Promise<{
     claimerSignSessionE21,
     invalidAttestationResponses,
     invalidSignatures,
+    credential,
+    verifierSession,
+    reqRevealedAttrMsg,
+    proof,
+    verifiedClaim,
+    verified,
   }
 }
+
+export const verifySetup = async (
+  claimer: GabiClaimer,
+  attester: GabiAttester,
+  credential: string,
+  disclosedAttributesInput: string[],
+  index: number
+): Promise<{ verified: boolean; verifiedClaim: string }> => {
+  const {
+    session: verifierSession,
+    message: reqRevealedAttrMsg,
+  } = await GabiVerifier.startVerificationSession({
+    requestNonRevocationProof: true,
+    disclosedAttributes: disclosedAttributesInput,
+    minIndex: index,
+  })
+  const proof = await claimer.revealAttributes({
+    credential,
+    reqRevealedAttrMsg,
+    attesterPubKey: attester.getPubKey(),
+  })
+  const {
+    claim: verifiedClaim,
+    verified,
+  } = await GabiVerifier.verifyAttributes({
+    proof,
+    verifierSession,
+    attesterPubKey: attester.getPubKey(),
+  })
+  return { verified, verifiedClaim }
+}
+String(Boolean)
 export default runTestSetup

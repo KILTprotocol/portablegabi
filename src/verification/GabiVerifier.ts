@@ -17,7 +17,7 @@ export default class GabiVerifier {
       WasmHooks.verifyAttributes,
       [proof, JSON.stringify(verifierSession), attesterPubKey]
     )
-    return response
+    return { claim: response.claim, verified: Boolean(response.verified) }
   }
 
   // start verification
