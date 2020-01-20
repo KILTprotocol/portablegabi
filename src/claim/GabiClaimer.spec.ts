@@ -10,10 +10,14 @@ import {
 } from '../testSetup/testTypes'
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import { InitiateAttestationRequest } from '../../build/types/Attestation'
-import { ClaimerAttestationSession, AttestationRequest } from '../types/Claim'
+import {
+  ClaimerAttestationSession,
+  AttestationRequest,
+  Credential,
+} from '../types/Claim'
 import { Attestation } from '../types/Attestation'
 
-function buildCredentialError(credential: string, spy: Spy<'log'>): void {
+function buildCredentialError(credential: Credential, spy: Spy<'log'>): void {
   expect(credential).toBeUndefined()
   expect(spy.error).toHaveBeenCalledWith(
     'Proof of correctness on signature does not verify.'
@@ -147,7 +151,9 @@ describe('Test claimer functionality', () => {
         attestation: aSignature,
       })
       expect(credential).toBeDefined()
-      const credObj: ICredential<typeof claim> = JSON.parse(credential)
+      const credObj: ICredential<typeof claim> = JSON.parse(
+        credential as string
+      )
       expect(credObj).toHaveProperty('claim', claim)
       // compare signatures
       const aSigObj: IIssueAttestation = JSON.parse(aSignature as string)
