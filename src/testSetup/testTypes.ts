@@ -99,3 +99,34 @@ export interface ICredential<Claim> {
     signature: IIssueAttestation['signature']
   }
 }
+
+export interface IProof {
+  attributes: string[]
+  proof: {
+    A: 'string'
+    a_disclosed: {
+      [key: number]: string
+    }
+    a_responses: {
+      [key: number]: string
+    }
+    c: string
+    e_response: string
+    nonrev_proof: {
+      C_r: string
+      C_u: string
+      responses: {
+        beta: string
+        delta: string
+        epsilon: string
+        zeta: string
+      }
+      sacc: {
+        data: string
+        pk: number
+      }
+    }
+    nonrev_response: string
+    v_response: string
+  }
+}
