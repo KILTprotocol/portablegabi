@@ -152,11 +152,11 @@ describe('Test claimer functionality', () => {
       })
       expect(credential).toBeDefined()
       const credObj: ICredential<typeof claim> = JSON.parse(
-        credential as string
+        credential.valueOf()
       )
       expect(credObj).toHaveProperty('claim', claim)
       // compare signatures
-      const aSigObj: IIssueAttestation = JSON.parse(aSignature as string)
+      const aSigObj: IIssueAttestation = JSON.parse(aSignature.valueOf())
       expect(Object.keys(aSigObj.signature)).toStrictEqual(
         Object.keys(credObj.credential.signature)
       )
@@ -171,7 +171,7 @@ describe('Test claimer functionality', () => {
       expect(aSigObj.nonrev).toStrictEqual(credObj.credential.nonrevWitness)
       // compare attributes
       expect(credObj.credential.attributes).toHaveLength(numOfClaimKeys + 1)
-      const parsedReq = JSON.parse(reqSignMsg as string) as ReqSignMsg
+      const parsedReq = JSON.parse(reqSignMsg.valueOf()) as ReqSignMsg
       parsedReq.values.map(val =>
         expect(credObj.credential.attributes).toContain(val)
       )

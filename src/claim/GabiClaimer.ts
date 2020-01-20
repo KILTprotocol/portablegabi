@@ -58,8 +58,8 @@ export default class GabiClaimer implements IGabiClaimer {
     return goWasmExec<IGabiMsgSession>(WasmHooks.requestAttestation, [
       this.secret,
       claim,
-      startAttestationMsg as string,
-      attesterPubKey as string,
+      startAttestationMsg.valueOf(),
+      attesterPubKey.valueOf(),
     ])
   }
 
@@ -72,8 +72,8 @@ export default class GabiClaimer implements IGabiClaimer {
   }): Promise<Credential> {
     return goWasmExec<string>(WasmHooks.buildCredential, [
       this.secret,
-      claimerSignSession as string,
-      attestation as string,
+      claimerSignSession.valueOf(),
+      attestation.valueOf(),
     ])
   }
 
@@ -88,9 +88,9 @@ export default class GabiClaimer implements IGabiClaimer {
   }): Promise<Presentation> {
     return goWasmExec<string>(WasmHooks.buildPresentation, [
       this.secret,
-      credential as string,
-      presentationReq as string, // TODO: why can't we use PresentationRequest as a string? It extends string...
-      attesterPubKey as string,
+      credential.valueOf(),
+      presentationReq.valueOf(), // TODO: why can't we use PresentationRequest as a string? It extends string...
+      attesterPubKey.valueOf(),
     ])
   }
 
@@ -108,7 +108,7 @@ export default class GabiClaimer implements IGabiClaimer {
     return goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
       this.secret,
       `[${credentials.join(',')}]`,
-      combinedPresentationReq as string,
+      combinedPresentationReq.valueOf(),
       `[${attesterPubKeys.join(',')}]`,
     ])
   }
@@ -124,9 +124,9 @@ export default class GabiClaimer implements IGabiClaimer {
   }): Promise<string> {
     return goWasmExec<string>(WasmHooks.updateCredential, [
       this.secret,
-      credential as string,
-      update as string,
-      attesterPubKey as string,
+      credential.valueOf(),
+      update.valueOf(),
+      attesterPubKey.valueOf(),
     ])
   }
 }

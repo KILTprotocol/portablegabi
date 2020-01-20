@@ -55,9 +55,9 @@ export default class GabiVerifier {
       verified: boolean
       claim: string
     }>(WasmHooks.verifyPresentation, [
-      proof as string,
-      verifierSession as string,
-      attesterPubKey as string,
+      proof.valueOf(),
+      verifierSession.valueOf(),
+      attesterPubKey.valueOf(),
     ])
     return {
       verified: response.verified,
@@ -78,8 +78,8 @@ export default class GabiVerifier {
       verified: boolean
       claims: string
     }>(WasmHooks.verifyCombinedPresentation, [
-      proof as string,
-      verifierSession as string,
+      proof.valueOf(),
+      verifierSession.valueOf(),
       `[${attesterPubKeys.join(',')}]`,
     ])
     return {

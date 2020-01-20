@@ -75,9 +75,9 @@ export default class GabiAttester implements IGabiAttester {
     }>(WasmHooks.issueAttestation, [
       this.privateKey,
       this.publicKey,
-      attestationSession as string,
-      attestationRequest as string,
-      update as string,
+      attestationSession.valueOf(),
+      attestationRequest.valueOf(),
+      update.valueOf(),
     ])
   }
 
@@ -92,8 +92,8 @@ export default class GabiAttester implements IGabiAttester {
     return goWasmExec<string>(WasmHooks.revokeAttestation, [
       this.privateKey,
       this.publicKey,
-      update as string,
-      witness as string,
+      update.valueOf(),
+      witness.valueOf(),
     ])
   }
 }
