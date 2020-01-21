@@ -3,7 +3,7 @@ export type Spy<T extends SpyKeys | ''> = {
   [key in Exclude<SpyKeys, T>]: jest.SpyInstance
 }
 
-export type ReqSignMsg = {
+export interface IAttestationRequest {
   commitMsg: {
     U: string
     n_2: string
@@ -14,7 +14,7 @@ export type ReqSignMsg = {
   values: string[]
 }
 
-export type AttesterSignSession = {
+export interface IAttesterSignSession {
   //   GabiIssuer: {
   //     Sk: {
   //       XMLName: { Space: string; Local: string }

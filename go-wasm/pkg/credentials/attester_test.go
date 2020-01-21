@@ -2,7 +2,6 @@ package credentials
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/privacybydesign/gabi"
@@ -61,7 +60,7 @@ func TestSign(t *testing.T) {
 	require.NoError(t, err)
 	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
 
-	request := &RequestAttestedClaim{}
+	request := &AttestedClaimRequest{}
 	err = json.Unmarshal(reqForAttestation, request)
 	require.NoError(t, err)
 
@@ -88,7 +87,7 @@ func TestSignAndRevoke(t *testing.T) {
 	// ignore error here, just ensure that revocation keys exists
 	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
 
-	request := &RequestAttestedClaim{}
+	request := &AttestedClaimRequest{}
 	err = json.Unmarshal(reqForAttestation, request)
 	require.NoError(t, err)
 
@@ -119,7 +118,7 @@ func TestSignTooMany(t *testing.T) {
 	require.NoError(t, err)
 	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
 
-	request := &RequestAttestedClaim{}
+	request := &AttestedClaimRequest{}
 	err = json.Unmarshal(reqForAttestationTooMay, request)
 	require.NoError(t, err)
 

@@ -511,6 +511,8 @@ class Go {
   }
 }
 
+class WasmError extends Error {}
+
 class GoWasm extends Go {
   static async init() {
     const go = new Go()
@@ -557,22 +559,16 @@ class GoWasm extends Go {
           resolve(...messages)
         })
       }).catch(e => {
-        console.error(e)
+        throw new WasmError(e)
       })
     }
     throw new Error(`Function ${fn} missing in WASM`)
   }
 
   close() {
-    console.log('Closing WASM...')
-    try {
-      this.execWasmFn('genKeypair', [])
-      console.log('active requests: ', process._getActiveRequests())
-    } catch (e) {
-      console.error('WASMCLOSINGERROR: ', e)
-    }
-    process.exitCode = 1337
-    this.exit(1337)
+    process.exitCode = 0
+    this.exit(0)
   }
 }
 module.exports.GoWasm = GoWasm
+module.exports.WasmError = WasmError

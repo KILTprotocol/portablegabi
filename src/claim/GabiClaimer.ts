@@ -1,11 +1,22 @@
-import IGabiClaimer from '../types/Claim'
+import IGabiClaimer, {
+  AttestationRequest,
+  ClaimerAttestationSession,
+  Credential,
+  Presentation,
+  CombinedPresentation,
+} from '../types/Claim'
 import WasmHooks from '../wasm/WasmHooks'
 import {
-  IGabiAttestationRequest,
-  IGabiAttestationStart,
   IGabiMsgSession,
+  InitiateAttestationRequest,
+  Attestation,
+  Accumulator,
+  AttesterPublicKey,
 } from '../types/Attestation'
-import { IGabiReqAttrMsg } from '../types/Verification'
+import {
+  CombinedPresentationRequest,
+  PresentationRequest,
+} from '../types/Verification'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 
 export default class GabiClaimer implements IGabiClaimer {
@@ -32,57 +43,87 @@ export default class GabiClaimer implements IGabiClaimer {
     return goWasmExec<string>(WasmHooks.keyFromMnemonic, [mnemonic, ''])
   }
 
-  // request attestation
   public async requestAttestation({
     claim,
     startAttestationMsg,
     attesterPubKey,
   }: {
     claim: string
-    startAttestationMsg: IGabiAttestationStart['message']
-    attesterPubKey: string
-  }): Promise<IGabiAttestationRequest> {
-    const { session, message } = await goWasmExec<IGabiMsgSession>(
+    startAttestationMsg: InitiateAttestationRequest
+    attesterPubKey: AttesterPublicKey
+  }): Promise<{
+    message: AttestationRequest
+    session: ClaimerAttestationSession
+  }> {
+    const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.requestAttestation,
-      [this.secret, claim, JSON.stringify(startAttestationMsg), attesterPubKey]
+      [
+        this.secret,
+        claim,
+        startAttestationMsg.valueOf(),
+        attesterPubKey.valueOf(),
+      ]
     )
     return {
-      message: JSON.parse(message),
-      session: JSON.parse(session),
+      message: new AttestationRequest(message),
+      session: new ClaimerAttestationSession(session),
     }
   }
 
-  // build credential
   public async buildCredential({
     claimerSignSession,
-    signature,
+    attestation,
   }: {
-    claimerSignSession: IGabiAttestationRequest['session']
-    signature: string
-  }): Promise<string> {
-    return goWasmExec<string>(WasmHooks.buildCredential, [
-      this.secret,
-      JSON.stringify(claimerSignSession),
-      signature,
-    ])
+    claimerSignSession: ClaimerAttestationSession
+    attestation: Attestation
+  }): Promise<Credential> {
+    return new Credential(
+      await goWasmExec<string>(WasmHooks.buildCredential, [
+        this.secret,
+        claimerSignSession.valueOf(),
+        attestation.valueOf(),
+      ])
+    )
   }
 
-  // reveal attributes
-  public async revealAttributes({
+  public async buildPresentation({
     credential,
-    reqRevealedAttrMsg,
+    presentationReq,
     attesterPubKey,
   }: {
-    credential: string
-    reqRevealedAttrMsg: IGabiReqAttrMsg
-    attesterPubKey: string
-  }): Promise<string> {
-    return goWasmExec<string>(WasmHooks.revealAttributes, [
-      this.secret,
-      credential,
-      JSON.stringify(reqRevealedAttrMsg),
-      attesterPubKey,
-    ])
+    credential: Credential
+    presentationReq: PresentationRequest
+    attesterPubKey: AttesterPublicKey
+  }): Promise<Presentation> {
+    return new Presentation(
+      await goWasmExec<string>(WasmHooks.buildPresentation, [
+        this.secret,
+        credential.valueOf(),
+        presentationReq.valueOf(),
+        attesterPubKey.valueOf(),
+      ])
+    )
+  }
+
+  public async buildCombinedPresentation({
+    credentials,
+    combinedPresentationReq,
+    attesterPubKeys,
+  }: {
+    credentials: Credential[]
+    combinedPresentationReq: CombinedPresentationRequest
+    attesterPubKeys: AttesterPublicKey[]
+  }): Promise<CombinedPresentation> {
+    // make an json array out of already json serialised values
+    // we don't want a json array of strings
+    return new CombinedPresentation(
+      await goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
+        this.secret,
+        `[${credentials.join(',')}]`,
+        combinedPresentationReq.valueOf(),
+        `[${attesterPubKeys.join(',')}]`,
+      ])
+    )
   }
 
   public async updateCredential({
@@ -90,15 +131,17 @@ export default class GabiClaimer implements IGabiClaimer {
     attesterPubKey,
     update,
   }: {
-    credential: string
-    attesterPubKey: string
-    update: string
-  }): Promise<string> {
-    return goWasmExec<string>(WasmHooks.updateCredential, [
-      this.secret,
-      credential,
-      update,
-      attesterPubKey,
-    ])
+    credential: Credential
+    attesterPubKey: AttesterPublicKey
+    update: Accumulator
+  }): Promise<Credential> {
+    return new Credential(
+      await goWasmExec<string>(WasmHooks.updateCredential, [
+        this.secret,
+        credential.valueOf(),
+        update.valueOf(),
+        attesterPubKey.valueOf(),
+      ])
+    )
   }
 }

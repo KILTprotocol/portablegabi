@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -51,13 +52,13 @@ func buildCredential(t *testing.T, sysParams *gabi.SystemParameters, attester *c
 	attesterSession, startSignMsg, err := attester.InitiateAttestation()
 	require.NoError(t, err, "Could not start signing session")
 
-	userSession, reqAttestMsg, err := claimer.RequestSignatureForClaim(attester.PublicKey, startSignMsg, claim)
+	userSession, reqAttestMsg, err := claimer.RequestAttestationForClaim(attester.PublicKey, startSignMsg, claim)
 	require.NoError(t, err, "Could not request signature")
 
 	sigMsg, _, err := attester.AttestClaim(reqAttestMsg, attesterSession, update)
 	require.NoError(t, err, "Could not create signature")
 
-	cred, err := claimer.BuildAttestedClaim(sigMsg, userSession)
+	cred, err := claimer.BuildCredential(sigMsg, userSession)
 	require.NoError(t, err, "Could not request attributes")
 
 	return claim, cred
@@ -65,8 +66,8 @@ func buildCredential(t *testing.T, sysParams *gabi.SystemParameters, attester *c
 
 func verify(t *testing.T, attester *credentials.Attester, claimer *credentials.Claimer, cred *credentials.AttestedClaim, claim *credentials.Claim, accI uint64) {
 	requestedAttr := [4]string{"ctype", "contents" + credentials.SEPARATOR + "age", "contents" + credentials.SEPARATOR + "special", "contents" + credentials.SEPARATOR + "gender"}
-	verifierSession, reqAttrMsg := credentials.RequestAttributes(attester.PublicKey.Params, requestedAttr[:], true, accI)
-	disclosedAttr, err := claimer.RevealAttributes(attester.PublicKey, cred, reqAttrMsg)
+	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, accI)
+	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
 	require.NoError(t, err, "Could not disclose attributes")
 
 	_, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
@@ -78,16 +79,22 @@ func verify(t *testing.T, attester *credentials.Attester, claimer *credentials.C
 	require.Equal(t, claim.Contents["gender"], contents["gender"])
 	require.Equal(t, claim.Contents["special"], contents["special"])
 	require.Nil(t, attr["contents.name"])
-
 }
 
 func TestCredential(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
 
-	attester, err := credentials.NewAttester(sysParams, 6, OneYear)
+	attester := &credentials.Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	err := json.Unmarshal(attesterPrivKey, attester.PrivateKey)
+	require.NoError(t, err)
+	err = json.Unmarshal(attesterPubKey, attester.PublicKey)
+	require.NoError(t, err)
 	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
-	require.NoError(t, err, "Error in attester key generation")
+
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
@@ -96,17 +103,70 @@ func TestCredential(t *testing.T) {
 
 	claim, cred := buildCredential(t, sysParams, attester, claimer, update)
 
-	verify(t, attester, claimer, cred, claim, 0)
+	verify(t, attester, claimer, cred, claim, 1)
 
 	_, cred2 := buildCredential(t, sysParams, attester, claimer, update)
-	verify(t, attester, claimer, cred2, claim, 0)
+	verify(t, attester, claimer, cred2, claim, 1)
 
 	update, err = attester.RevokeAttestation(update, cred2.Credential.NonRevocationWitness)
 	require.NoError(t, err, "Could not revoke!")
 	cred, err = claimer.UpdateCredential(attester.PublicKey, cred, update)
 	require.NoError(t, err, "Could not update cred!")
 	// increase the accumulator index and ensure that the witness was updates!
-	verify(t, attester, claimer, cred, claim, 1)
+	verify(t, attester, claimer, cred, claim, 2)
+}
+
+func TestCombinedCredential(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	require.True(t, success, "Error in sysparams")
+
+	attester1, err := credentials.NewAttester(sysParams, 6, OneYear)
+	gabi.GenerateRevocationKeypair(attester1.PrivateKey, attester1.PublicKey)
+	require.NoError(t, err, "Error in attester key generation")
+	update1, err := attester1.CreateAccumulator()
+	require.NoError(t, err, "Could not create update")
+
+	attester2, err := credentials.NewAttester(sysParams, 6, OneYear)
+	gabi.GenerateRevocationKeypair(attester2.PrivateKey, attester2.PublicKey)
+	require.NoError(t, err, "Error in attester key generation")
+	update2, err := attester2.CreateAccumulator()
+	require.NoError(t, err, "Could not create update")
+
+	claimer, err := credentials.ClaimerFromMnemonic(sysParams, Mnemonic, "")
+	require.NoError(t, err, "Error in claimer key generation")
+
+	claim, cred := buildCredential(t, sysParams, attester1, claimer, update1)
+	verify(t, attester1, claimer, cred, claim, 1)
+
+	_, cred2 := buildCredential(t, sysParams, attester2, claimer, update2)
+	verify(t, attester2, claimer, cred2, claim, 1)
+
+	requestedAttrs := [4]string{"ctype", "contents" + credentials.SEPARATOR + "age", "contents" + credentials.SEPARATOR + "special", "contents" + credentials.SEPARATOR + "gender"}
+	requestPresentation := [2]credentials.PartialPresentationRequest{
+		credentials.PartialPresentationRequest{
+			RequestedAttributes:   requestedAttrs[:],
+			ReqNonRevocationProof: true,
+			ReqMinIndex:           1,
+		},
+		credentials.PartialPresentationRequest{
+			RequestedAttributes:   requestedAttrs[2:],
+			ReqNonRevocationProof: true,
+			ReqMinIndex:           1,
+		},
+	}
+	verifierSession, reqAttrMsg := credentials.RequestCombinedPresentation(attester1.PublicKey.Params, requestPresentation[:])
+	require.NotNil(t, verifierSession)
+	require.NotNil(t, reqAttrMsg)
+
+	combinedPresentation, err := claimer.BuildCombinedPresentation([]*gabi.PublicKey{attester1.PublicKey, attester2.PublicKey}, []*credentials.AttestedClaim{cred, cred2}, reqAttrMsg)
+	require.NoError(t, err)
+	require.NotNil(t, combinedPresentation)
+
+	verified, disclosedPresentations, err := credentials.VerifyCombinedPresentation([]*gabi.PublicKey{attester1.PublicKey, attester2.PublicKey}, combinedPresentation, verifierSession)
+	require.NoError(t, err)
+	require.True(t, verified)
+	require.NotNil(t, disclosedPresentations)
+	require.Equal(t, 2, len(disclosedPresentations))
 }
 
 func TestBigCredential(t *testing.T) {
@@ -147,18 +207,18 @@ func TestBigCredential(t *testing.T) {
 	attesterSession, startSignMsg, err := attester.InitiateAttestation()
 	require.NoError(t, err, "Could not start signing session")
 
-	userSession, reqAttestMsg, err := user.RequestSignatureForClaim(attester.PublicKey, startSignMsg, claim)
+	userSession, reqAttestMsg, err := user.RequestAttestationForClaim(attester.PublicKey, startSignMsg, claim)
 	require.NoError(t, err, "Could not request signature")
 
 	sigMsg, _, err := attester.AttestClaim(reqAttestMsg, attesterSession, update)
 	require.NoError(t, err, "Could not create signature")
 
-	cred, err := user.BuildAttestedClaim(sigMsg, userSession)
+	cred, err := user.BuildCredential(sigMsg, userSession)
 	require.NoError(t, err, "Could not request attributes")
 
 	requestedAttr := [2]string{"ctype", "contents" + credentials.SEPARATOR + "name"}
-	verifierSession, reqAttrMsg := credentials.RequestAttributes(sysParams, requestedAttr[:], true, 0)
-	disclosedAttr, err := user.RevealAttributes(attester.PublicKey, cred, reqAttrMsg)
+	verifierSession, reqAttrMsg := credentials.RequestPresentation(sysParams, requestedAttr[:], true, 0)
+	disclosedAttr, err := user.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
 	require.NoError(t, err, "Could not disclose attributes")
 	require.NotNil(t, verifierSession, "Session must not be nil")
 	require.NotNil(t, disclosedAttr, "there need to be a disclosure proof")
@@ -173,4 +233,109 @@ func TestBigCredential(t *testing.T) {
 	require.Nil(t, contents["age"], "age was unwillingly disclosed")
 	require.Nil(t, contents["gender"], "gender was unwillingly disclosed")
 	require.Nil(t, contents["special"], "special was unwillingly disclosed")
+}
+
+// used to print a new set of json objects
+func TestFullWorkflow(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	require.True(t, success, "Error in sysparams")
+
+	attester, err := credentials.NewAttester(sysParams, 6, OneYear)
+	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
+	require.NoError(t, err, "Error in attester key generation")
+	update, err := attester.CreateAccumulator()
+	require.NoError(t, err, "Could not create update")
+
+	bts, err := json.Marshal(attester)
+	require.NoError(t, err)
+	fmt.Println("Attester:", string(bts))
+
+	bts, err = json.Marshal(update)
+	require.NoError(t, err)
+	fmt.Println("Update:", string(bts))
+
+	claimer, err := credentials.ClaimerFromMnemonic(sysParams, Mnemonic, "")
+	require.NoError(t, err, "Error in claimer key generation")
+	bts, err = json.Marshal(claimer)
+	require.NoError(t, err)
+	fmt.Println("Claimer:", string(bts))
+
+	claim := &credentials.Claim{
+		CType: "0xDEADBEEFCOFEE",
+		Contents: map[string]interface{}{
+			"age":     34., // use float here, json will always parse numbers to float64
+			"name":    "Berta",
+			"gender":  "female",
+			"special": true,
+		},
+	}
+
+	attributes, values := claim.ToAttributes()
+	require.Equal(t, len(attributes), 5)
+	require.Equal(t, len(values), 5)
+
+	attesterSession, startSignMsg, err := attester.InitiateAttestation()
+	require.NoError(t, err, "Could not start signing session")
+
+	bts, err = json.Marshal(attesterSession)
+	require.NoError(t, err)
+	fmt.Println("AttesterSession:", string(bts))
+
+	bts, err = json.Marshal(startSignMsg)
+	require.NoError(t, err)
+	fmt.Println("StartAttestationMessage:", string(bts))
+
+	userSession, reqAttestMsg, err := claimer.RequestAttestationForClaim(attester.PublicKey, startSignMsg, claim)
+	require.NoError(t, err, "Could not request signature")
+
+	bts, err = json.Marshal(reqAttestMsg)
+	require.NoError(t, err)
+	fmt.Println("AttestationRequest:", string(bts))
+
+	bts, err = json.Marshal(userSession)
+	require.NoError(t, err)
+	fmt.Println("ClaimerSession:", string(bts))
+
+	sigMsg, _, err := attester.AttestClaim(reqAttestMsg, attesterSession, update)
+	require.NoError(t, err, "Could not create signature")
+
+	bts, err = json.Marshal(sigMsg)
+	require.NoError(t, err)
+	fmt.Println("AttestationResponse:", string(bts))
+
+	cred, err := claimer.BuildCredential(sigMsg, userSession)
+	require.NoError(t, err, "Could not request attributes")
+
+	bts, err = json.Marshal(cred)
+	require.NoError(t, err)
+	fmt.Println("Credential:", string(bts))
+
+	bts, err = json.Marshal(claim)
+	require.NoError(t, err)
+	fmt.Println("claim:", string(bts))
+
+	requestedAttr := [4]string{"ctype", "contents" + credentials.SEPARATOR + "age", "contents" + credentials.SEPARATOR + "special", "contents" + credentials.SEPARATOR + "gender"}
+	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
+	bts, err = json.Marshal(verifierSession)
+	require.NoError(t, err)
+	fmt.Println("verifierSession:", string(bts))
+	bts, err = json.Marshal(reqAttrMsg)
+	require.NoError(t, err)
+	fmt.Println("PresentationRequest:", string(bts))
+
+	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
+	require.NoError(t, err, "Could not disclose attributes")
+	bts, err = json.Marshal(disclosedAttr)
+	require.NoError(t, err)
+	fmt.Println("PresentationResponse:", string(bts))
+
+	_, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
+	require.NoError(t, err, "Could not verify attributes")
+	contents, ok := attr["contents"].(map[string]interface{})
+	require.True(t, ok, "should be a map")
+	require.Equal(t, claim.Contents["age"], contents["age"])
+	require.Equal(t, claim.CType, attr["ctype"])
+	require.Equal(t, claim.Contents["gender"], contents["gender"])
+	require.Equal(t, claim.Contents["special"], contents["special"])
+	require.Nil(t, attr["contents.name"])
 }
