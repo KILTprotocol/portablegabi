@@ -4,6 +4,7 @@ package wasm
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"syscall/js"
 
@@ -16,11 +17,13 @@ import (
 // attributes. This message takes a variable number of inputs. If no error
 // occurs a session object and a message for the claimer is returned.
 func RequestPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 3 {
+		return nil, errors.New("missing inputs")
+	}
 	var requestedAttributes []string
 	if err := json.Unmarshal([]byte(inputs[2].String()), &requestedAttributes); err != nil {
 		return nil, err
 	}
-
 	session, msg := credentials.RequestPresentation(SysParams, requestedAttributes, inputs[0].Bool(), (uint64)(inputs[1].Int()))
 
 	return map[string]interface{}{
@@ -30,6 +33,10 @@ func RequestPresentation(this js.Value, inputs []js.Value) (interface{}, error) 
 }
 
 func RequestCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 1 {
+		return nil, errors.New("missing inputs")
+	}
+
 	// first two inputs are check-revocation-flag and minimum required revocation index
 	var sessionArgs []credentials.PartialPresentationRequest
 
@@ -50,6 +57,10 @@ func RequestCombinedPresentation(this js.Value, inputs []js.Value) (interface{},
 // startVerificationSession) and the public key of the attester which attested
 // the claim
 func VerifyPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 3 {
+		return nil, errors.New("missing inputs")
+	}
+
 	proof := &credentials.PresentationResponse{}
 	session := &credentials.VerifierSession{}
 	attesterPubKey := &gabi.PublicKey{}
@@ -77,6 +88,10 @@ func VerifyPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 // startVerificationSession) and the public key of the attester which attested
 // the claim
 func VerifyCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 3 {
+		return nil, errors.New("missing inputs")
+	}
+	
 	proof := &credentials.CombinedPresentationResponse{}
 	session := &credentials.CombinedVerifierSession{}
 	attesterPubKeys := []*gabi.PublicKey{}

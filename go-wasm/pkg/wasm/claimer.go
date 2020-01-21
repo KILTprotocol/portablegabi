@@ -4,6 +4,7 @@ package wasm
 
 import (
 	"encoding/json"
+	"errors"
 	"syscall/js"
 
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
@@ -22,6 +23,9 @@ func GenKey(this js.Value, inputs []js.Value) (interface{}, error) {
 
 // KeyFromMnemonic derives a key from a given mnemonic
 func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 1 {
+		return nil, errors.New("missing inputs")
+	}
 	claimer, err := credentials.ClaimerFromMnemonic(SysParams, inputs[0].String(), inputs[1].String())
 	if err != nil {
 		return nil, err
@@ -35,6 +39,9 @@ func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
 // json encoded string containing the claim which should be attested, the
 // handshake message from the attester and the public key of the attester.
 func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 4 {
+		return nil, errors.New("missing inputs")
+	}
 	claimer := &credentials.Claimer{}
 	claim := &credentials.Claim{}
 	handshakeMsg := &credentials.StartSessionMsg{}
@@ -68,6 +75,9 @@ func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 // private key of the claimer, the session object created by requestAttestation
 // and the signature message send the attester.
 func BuildCredential(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 3 {
+		return nil, errors.New("missing inputs")
+	}
 	claimer := &credentials.Claimer{}
 	session := &credentials.UserIssuanceSession{}
 	signature := &gabi.IssueSignatureMessage{}
@@ -95,6 +105,9 @@ func BuildCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 // containing the requested attributes and the public key of the attester.
 // It returns a proof containing the values of the requested attributes.
 func BuildPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 4 {
+		return nil, errors.New("missing inputs")
+	}
 	claimer := &credentials.Claimer{}
 	credential := &credentials.AttestedClaim{}
 	request := &credentials.PresentationRequest{}
@@ -121,6 +134,9 @@ func BuildPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 }
 
 func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 4 {
+		return nil, errors.New("missing inputs")
+	}
 	claimer := &credentials.Claimer{}
 	creds := []*credentials.AttestedClaim{}
 	request := &credentials.CombinedPresentationRequest{}
@@ -148,6 +164,9 @@ func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, e
 
 // UpdateCredential updates the non revocation witness using the provided update.
 func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 4 {
+		return nil, errors.New("missing inputs")
+	}
 	claimer := &credentials.Claimer{}
 	credential := &credentials.AttestedClaim{}
 	update := &revocation.Update{}
