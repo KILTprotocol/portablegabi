@@ -17,91 +17,110 @@ yarn build:wasm
 
 ## Tests
 
-TODO
+```bash
+yarn test
+pushd go-wasm && go test ./... && popd
+```
 
 ## Example
 
 The complete process is showcased in the [example file](docs/example.ts). Note that the key generation `GabiAttester.buildFromScratch()` takes about 10 minutes due to finding huge prime numbers being very slow in WASM.
 
 ```javascript
-/** (1) Claim **/
+/* (1) Claimer Setup */
 
 // (1.1) Example claim
 const claim = {
-  contents: {
+contents: {
     name: 'Jasper',
     age: '42',
     city: 'Berlin',
     id: 'ed638ndke92902n29',
-  },
+},
 }
-const disclosedAttribues = ['contents.age', 'contents.city']
 
 // (1.2) Create claimer identity: Either from scratch or mnemonic seed
 const claimer = await GabiClaimer.buildFromScratch()
 const claimer = await GabiClaimer.buildFromMnemonic(
-  'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
+'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
 )
 
-/** (2) Attestation **/
+/* (2) Attester Setup */
 
-// (2.1) Create attester: Either from scratch or a keypair
-const attester = new GabiAttester.buildFromKeyPair(privKey, pubKey)
-const attester = new GabiAttester.buildFromScratch() // Takes very long due to finding huge prime numbers, ~10 minutes
+// (2.1) Create key pair and attester
+const attester = await GabiAttester.buildFromScratch() // Takes very long due to finding safe prime numbers, ~10 minutes
 
-// (2.2) Attester sends two nonces to claimer
+// (2.1) Create accumulator (for revocation)
+const update = await attester.createAccumulator()
+
+/* (3) Attestation */
+
+// (3.1) Attester sends two nonces to claimer
 const {
-  message: startAttestationMsg,
-  session: attesterSignSession,
-} = await gabiAttester.startAttestation()
+message: startAttestationMsg,
+session: AttesterAttestationSession,
+} = await attester.startAttestation()
 
-// (2.3) Claimer requests attestaion
+// (3.2) Claimer requests attestation
 const {
-  message: reqSignMsg,
-  session: claimerSignSession,
-} = await gabiClaimer.requestAttestation({
-  startAttestationMsg,
-  claim,
-  attesterPubKey: attester.getPubKey(),
+message: attestationRequest,
+session: claimerSignSession,
+} = await claimer.requestAttestation({
+startAttestationMsg,
+claim: JSON.stringify(claim),
+attesterPubKey: attester.getPubKey(),
 })
 
-// (2.4) Attester issues requested attestation
-const aSignature = await gabiAttester.issueAttestation({
-  attesterSignSession,
-  reqSignMsg,
+// (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
+const { attestation, witness } = await attester.issueAttestation({
+attestationSession: AttesterAttestationSession,
+attestationRequest,
+update,
 })
 
-// (2.5) Claimer builds credential from attester's signature
-const credential = await gabiClaimer.buildCredential({
-  claimerSignSession,
-  signature: aSignature,
+// (3.4) Claimer builds credential from attester's signature
+const credential = await claimer.buildCredential({
+claimerSignSession,
+attestation,
 })
 
-/** (3) Verification **/
+/* (4) Verification */
 
-// (3.1) Verifier sends two nonces to claimer
+// (4.1) Verifier sends two nonces to claimer
 const {
-  session: verifierSession,
-  message: reqRevealedAttrMsg,
-} = await GabiVerifier.startVerificationSession({ disclosedAttributes })
-
-// (3.2) Claimer reveals attributes
-const proof = await gabiClaimer.revealAttributes({
-  credential,
-  reqRevealedAttrMsg,
-  attesterPubKey,
+session: verifierSession,
+message: presentationReq,
+} = await GabiVerifier.requestPresentation({
+requestedAttributes: ['contents.age', 'contents.city'],
+requestNonRevocationProof: true,
+minIndex: 1,
 })
 
-// (3.3) Verifier verifies attributes
-const { claim: verifiedClaim, verified } = await GabiVerifier.verifyAttributes({
-  proof,
-  verifierSession,
-  attesterPubKey,
+// (4.2) Claimer reveals attributes
+const proof = await claimer.buildPresentation({
+credential,
+presentationReq,
+attesterPubKey: attester.getPubKey(),
 })
 
-/** (4) Revocation **/
+// (4.3) Verifier verifies attributes
+const {
+claim: verifiedClaim,
+verified,
+} = await GabiVerifier.verifyPresentation({
+proof,
+verifierSession,
+attesterPubKey: attester.getPubKey(),
+})
+
+/* (5) Revocation */
 // TODO
 
-/** (5) Close WASM Instance **/
+/* (6) Close WASM Instance */
 goWasmClose()
 ```
+
+## Limitations
+
+- all numbers inside a claim are handled as `float64`
+- arrays are handled as a single attribute. Disclosing a value inside an array is only possible if the whole array is disclosed.
