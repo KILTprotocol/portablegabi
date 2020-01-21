@@ -132,6 +132,7 @@ const verify = async (
   })
   console.timeEnd('Verifier verifies attributes')
   console.log('Verified claim: ', verifiedClaim)
+  console.log('Requested: ', disclosedAttributes)
   console.log('Claim verified?', verified)
 
   return false
@@ -265,7 +266,67 @@ const runCombinedWorkflow = async (): Promise<void> => {
   })
   console.timeEnd('verify combined presentation')
 
-  console.log('Verification:', verified, claims)
+  console.log('Verified:', verified, claims[0])
+  console.log('Verified:', verified, claims[1])
+}
+
+const runMixedVerification = async (): Promise<void> => {
+  const { disclosedAttributes, claim, privKey, pubKey } = testEnv1
+
+  console.time('build attester')
+  const gabiAttester = new GabiAttester(pubKey, privKey)
+  console.timeEnd('build attester')
+
+  console.time('Build claimer identity')
+  // const gabiClaimer = await GabiClaimer.buildFromMnemonic(mnemonic)
+  const gabiClaimer = await GabiClaimer.buildFromScratch()
+  console.timeEnd('Build claimer identity')
+
+  console.time('Build accumulator')
+  const update = await gabiAttester.createAccumulator()
+  console.timeEnd('Build accumulator')
+
+  const { credential } = await issuanceProcess(
+    gabiAttester,
+    gabiClaimer,
+    update,
+    claim
+  )
+
+  // should verify
+  console.time('Verifier requests attributes')
+  const { message: presentationReq } = await GabiVerifier.requestPresentation({
+    requestNonRevocationProof: true,
+    requestedAttributes: disclosedAttributes,
+    minIndex: 1,
+  })
+  console.timeEnd('Verifier requests attributes')
+  const { session: verifierSession2 } = await GabiVerifier.requestPresentation({
+    requestNonRevocationProof: true,
+    requestedAttributes: disclosedAttributes,
+    minIndex: 1,
+  })
+
+  console.time('Claimer reveals attributes')
+  const proof = await gabiClaimer.buildPresentation({
+    credential,
+    presentationReq,
+    attesterPubKey: gabiAttester.getPubKey(),
+  })
+  console.timeEnd('Claimer reveals attributes')
+
+  console.time('Verifier verifies attributes')
+  const {
+    claim: verifiedClaim,
+    verified,
+  } = await GabiVerifier.verifyPresentation({
+    proof,
+    verifierSession: verifierSession2,
+    attesterPubKey: gabiAttester.getPubKey(),
+  })
+  console.timeEnd('Verifier verifies attributes')
+  console.log('Verified claim: ', verifiedClaim)
+  console.log('Claim verified?', verified)
 }
 
 const runGabiExamples = async (): Promise<void> => {
@@ -276,10 +337,12 @@ const runGabiExamples = async (): Promise<void> => {
   console.time('>> Complete Gabi process <<')
   await runWorkflow()
   console.timeEnd('>> Complete Gabi process <<')
+
+  console.time('>> Complete mixed Gabi process <<')
+  await runMixedVerification()
+  console.timeEnd('>> Complete mixed Gabi process <<')
+
   await goWasmClose()
-  // process.exitCode = 0
-  // console.log('hi')
-  // process.exit(1337)
 }
 
 runGabiExamples()
