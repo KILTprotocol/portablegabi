@@ -2,7 +2,6 @@ package credentials
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
@@ -61,25 +60,6 @@ func RequestCombinedPresentation(sysParams *gabi.SystemParameters, partialReques
 			PartialRequests: partialRequests,
 			Nonce:           nonce,
 		}
-}
-
-func setNestedValue(m map[string]interface{}, key string, value interface{}) error {
-	parts := strings.Split(key, SEPARATOR)
-	for _, v := range parts[:len(parts)-1] {
-		if acc, ok := m[v]; ok {
-			if accMap, ok := acc.(map[string]interface{}); ok {
-				m = accMap
-			} else {
-				return errors.New("Could not set value (not a map)")
-			}
-		} else {
-			old := m
-			m = make(map[string]interface{})
-			old[v] = m
-		}
-	}
-	m[parts[len(parts)-1]] = value
-	return nil
 }
 
 func checkAccumulatorInProof(issuerPubK *gabi.PublicKey, minIndex uint64, proof *gabi.ProofD) bool {

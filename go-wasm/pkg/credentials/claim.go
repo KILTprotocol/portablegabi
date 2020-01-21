@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -144,6 +145,59 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 	sort.Sort(byName{attributes, values})
 
 	return attributes, values
+}
+
+func escapedSplit(s string, sep rune) []string {
+	backslash := '\\'
+	var slices []string
+	lastSplit := 0
+	backslashes := 0
+
+	if sep == backslash {
+		panic("sep must not equal '\\'")
+	}
+	for i, r := range s {
+		if r == sep && (backslashes == 0 || backslashes%2 == 0) {
+			// if the rune matches the separator and is not escaped create a new slice
+			slices = append(slices, s[lastSplit:i])
+			// i + 1 because we want to skip the `sep`
+			lastSplit = i + 1
+		} else if r == backslash {
+			// if we encountered a backslash, count it!
+			backslashes++
+		} else {
+			backslashes = 0
+		}
+	}
+	slices = append(slices, s[lastSplit:len(s)])
+	return slices
+}
+
+func unescape(s string, escaped rune) string {
+	newS := strings.ReplaceAll(s, `\`+string(escaped), string(escaped))
+	newS = strings.ReplaceAll(newS, `\\`, `\`)
+	return newS
+}
+
+func setNestedValue(m map[string]interface{}, key string, value interface{}) error {
+	parts := escapedSplit(key, []rune(SEPARATOR)[0])
+	for _, v := range parts[:len(parts)-1] {
+		key := unescape(v, []rune(SEPARATOR)[0])
+		if acc, ok := m[key]; ok {
+			if accMap, ok := acc.(map[string]interface{}); ok {
+				m = accMap
+			} else {
+				return errors.New("Could not set value (not a map)")
+			}
+		} else {
+			old := m
+			m = make(map[string]interface{})
+			old[key] = m
+		}
+	}
+	key = unescape(parts[len(parts)-1], []rune(SEPARATOR)[0])
+	m[key] = value
+	return nil
 }
 
 func reconstructClaim(disclosedAttributes map[int]*big.Int, attributes []*Attribute) (map[string]interface{}, error) {
