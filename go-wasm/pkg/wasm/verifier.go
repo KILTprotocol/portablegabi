@@ -4,7 +4,6 @@ package wasm
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"syscall/js"
 
@@ -17,17 +16,12 @@ import (
 // attributes. This message takes a variable number of inputs. If no error
 // occurs a session object and a message for the claimer is returned.
 func RequestPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
-
-	// ignore the first two values (ReqRevProof-Flag & min Accumulator index)
-	if len(inputs) < 3 {
-		return nil, errors.New("Require at least one requested attribute.")
-	}
-	attrs := make([]string, len(inputs)-2)
-	for i, v := range inputs[2:] {
-		attrs[i] = v.String()
+	var requestedAttributes []string
+	if err := json.Unmarshal([]byte(inputs[2].String()), &requestedAttributes); err != nil {
+		return nil, err
 	}
 
-	session, msg := credentials.RequestPresentation(SysParams, attrs, inputs[0].Bool(), (uint64)(inputs[1].Int()))
+	session, msg := credentials.RequestPresentation(SysParams, requestedAttributes, inputs[0].Bool(), (uint64)(inputs[1].Int()))
 
 	return map[string]interface{}{
 		"session": session,

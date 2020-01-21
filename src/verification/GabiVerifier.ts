@@ -23,7 +23,7 @@ export default class GabiVerifier {
   }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.requestPresentation,
-      [requestNonRevocationProof, minIndex, ...requestedAttributes]
+      [requestNonRevocationProof, minIndex, JSON.stringify(requestedAttributes)]
     )
     return {
       message: new PresentationRequest(message),
