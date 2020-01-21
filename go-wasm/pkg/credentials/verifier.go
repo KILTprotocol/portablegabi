@@ -1,11 +1,7 @@
 package credentials
 
 import (
-	"encoding/binary"
-	"encoding/hex"
 	"errors"
-	"fmt"
-	"math"
 	"strings"
 
 	"github.com/privacybydesign/gabi"
@@ -99,35 +95,6 @@ func checkAccumulatorInProof(issuerPubK *gabi.PublicKey, minIndex uint64, proof 
 		return minIndex <= acc.Index
 	}
 	return false
-}
-
-func reconstructClaim(disclosedAttributes map[int]*big.Int, attributes []*Attribute) (map[string]interface{}, error) {
-	claim := make(map[string]interface{})
-	for i, v := range disclosedAttributes {
-		// 0. attribute is private key of user and should never be disclosed
-		attr := attributes[i-1]
-		var err error
-		switch attr.Typename {
-		case "string":
-			err = setNestedValue(claim, attr.Name, string(v.Bytes()))
-		case "float":
-			bytes := v.Bytes()
-			// a float requires at least 8 bytes.
-			if len(bytes) < 8 {
-				return nil, fmt.Errorf("invalid big.Int for %q float value", attr.Name)
-			}
-			bits := binary.BigEndian.Uint64(bytes)
-			err = setNestedValue(claim, attr.Name, math.Float64frombits(bits))
-		case "bool":
-			err = setNestedValue(claim, attr.Name, v.Int64() != 0)
-		default:
-			err = setNestedValue(claim, attr.Name, hex.EncodeToString(v.Bytes()))
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
-	return claim, nil
 }
 
 // VerifyPresentation verifies the response of a claimer and returns the disclosed attributes.

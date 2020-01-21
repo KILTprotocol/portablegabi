@@ -3,7 +3,11 @@ package credentials
 import (
 	"container/list"
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"math"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -84,28 +88,45 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 		jsonObj := elem.Value.(*nestedObject)
 		for n, v := range jsonObj.content {
 			name := jsonObj.prefix + SEPARATOR + n
-			if f, ok := v.(map[string]interface{}); ok {
-				queue.PushBack(&nestedObject{
-					prefix:  name,
-					content: f,
+
+			reflected := reflect.ValueOf(v)
+			switch reflected.Kind() {
+			case reflect.Map:
+				if m, ok := v.(map[string]interface{}); ok {
+					queue.PushBack(&nestedObject{
+						prefix:  name,
+						content: m,
+					})
+				} else {
+					panic(fmt.Sprintf("unsupported map type %T", v))
+				}
+			case reflect.Slice, reflect.Array:
+				marshaledV, err := json.Marshal(v)
+				if err != nil {
+					panic("could not marshal array")
+				}
+				attributes = append(attributes, &Attribute{
+					name,
+					"array",
 				})
-			} else if str, ok := v.(string); ok {
+				values = append(values, new(big.Int).SetBytes([]byte(marshaledV)))
+			case reflect.String:
 				attributes = append(attributes, &Attribute{
 					name,
 					"string",
 				})
-				values = append(values, new(big.Int).SetBytes([]byte(str)))
-			} else if f, ok := v.(float64); ok {
+				values = append(values, new(big.Int).SetBytes([]byte(reflected.String())))
+			case reflect.Float32, reflect.Float64:
 				var buf [8]byte
-				binary.BigEndian.PutUint64(buf[:], math.Float64bits(f))
+				binary.BigEndian.PutUint64(buf[:], math.Float64bits(reflected.Float()))
 				attributes = append(attributes, &Attribute{
 					name,
 					"float",
 				})
 				values = append(values, new(big.Int).SetBytes(buf[:]))
-			} else if f, ok := v.(bool); ok {
+			case reflect.Bool:
 				var value *big.Int
-				if f {
+				if reflected.Bool() {
 					value = new(big.Int).SetInt64(1)
 				} else {
 					value = new(big.Int).SetInt64(0)
@@ -115,12 +136,47 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 					"bool",
 				})
 				values = append(values, value)
-			} else {
-				panic("Unknown type")
+			default:
+				panic(fmt.Sprintf("unknown type %T", v))
 			}
 		}
 	}
 	sort.Sort(byName{attributes, values})
 
 	return attributes, values
+}
+
+func reconstructClaim(disclosedAttributes map[int]*big.Int, attributes []*Attribute) (map[string]interface{}, error) {
+	claim := make(map[string]interface{})
+	for i, v := range disclosedAttributes {
+		// 0. attribute is private key of user and should never be disclosed
+		attr := attributes[i-1]
+		var err error
+		switch attr.Typename {
+		case "string":
+			err = setNestedValue(claim, attr.Name, string(v.Bytes()))
+		case "float":
+			bytes := v.Bytes()
+			// a float requires at least 8 bytes.
+			if len(bytes) < 8 {
+				return nil, fmt.Errorf("invalid big.Int for %q float value", attr.Name)
+			}
+			bits := binary.BigEndian.Uint64(bytes)
+			err = setNestedValue(claim, attr.Name, math.Float64frombits(bits))
+		case "bool":
+			err = setNestedValue(claim, attr.Name, v.Int64() != 0)
+		case "array":
+			var array []interface{}
+			err = json.Unmarshal(v.Bytes(), &array)
+			if err == nil {
+				err = setNestedValue(claim, attr.Name, array)
+			}
+		default:
+			err = setNestedValue(claim, attr.Name, hex.EncodeToString(v.Bytes()))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	return claim, nil
 }
