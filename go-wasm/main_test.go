@@ -9,6 +9,7 @@ import (
 
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
 	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/revocation"
 	"github.com/stretchr/testify/require"
 )
@@ -397,7 +398,6 @@ func TestMixingVerificationSessions(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, presentation)
 	require.False(t, verified)
-
 }
 
 func TestForgedCombinedPresentation(t *testing.T) {
@@ -483,4 +483,90 @@ func TestForgedCombinedPresentation(t *testing.T) {
 	verified, disclosedPresentations, err := credentials.VerifyCombinedPresentation([]*gabi.PublicKey{attester1.PublicKey, attester2.PublicKey}, combinedPresentation, verifierSession)
 	require.False(t, verified)
 	require.Nil(t, disclosedPresentations)
+}
+
+func TestPresentForgedAttributes(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	require.True(t, success, "Error in sysparams")
+
+	attester := &credentials.Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	err := json.Unmarshal(attesterPrivKey, attester.PrivateKey)
+	require.NoError(t, err)
+	err = json.Unmarshal(attesterPubKey, attester.PublicKey)
+	require.NoError(t, err)
+	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
+
+	update, err := attester.CreateAccumulator()
+	require.NoError(t, err, "Could not create update")
+
+	claimer, err := credentials.ClaimerFromMnemonic(sysParams, Mnemonic, "")
+	require.NoError(t, err, "Error in claimer key generation")
+
+	_, cred := buildCredential(t, sysParams, attester, claimer, update)
+
+	// change attribute
+	cred.Credential.Attributes[1] = (&big.Int{}).Add(cred.Credential.Attributes[1], big.NewInt(666))
+
+	requestedAttr := [4]string{"ctype", "contents" + credentials.SEPARATOR + "age", "contents" + credentials.SEPARATOR + "special", "contents" + credentials.SEPARATOR + "gender"}
+	_, reqAttrMsg1 := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
+	verifierSession2, _ := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
+	require.NotEqual(t, reqAttrMsg1.Nonce, verifierSession2.Nonce)
+
+	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg1)
+	require.NoError(t, err, "Could not disclose attributes")
+
+	verified, presentation, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession2)
+	require.NoError(t, err)
+	require.Nil(t, presentation)
+	require.False(t, verified)
+}
+
+func TestSwitchAttribute(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	require.True(t, success, "Error in sysparams")
+
+	attester := &credentials.Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	err := json.Unmarshal(attesterPrivKey, attester.PrivateKey)
+	require.NoError(t, err)
+	err = json.Unmarshal(attesterPubKey, attester.PublicKey)
+	require.NoError(t, err)
+	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
+
+	update, err := attester.CreateAccumulator()
+	require.NoError(t, err, "Could not create update")
+
+	claimer, err := credentials.ClaimerFromMnemonic(sysParams, Mnemonic, "")
+	require.NoError(t, err, "Error in claimer key generation")
+
+	claim, cred := buildCredential(t, sysParams, attester, claimer, update)
+
+	requestedAttr := [4]string{
+		"ctype",
+		"contents" + credentials.SEPARATOR + "age",
+		"contents" + credentials.SEPARATOR + "special",
+		"contents" + credentials.SEPARATOR + "likedNumbers",
+	}
+	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
+	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
+	require.NoError(t, err, "Could not disclose attributes")
+
+	// swap
+	disclosedAttr.Attributes[0].Name, disclosedAttr.Attributes[1].Name = disclosedAttr.Attributes[1].Name, disclosedAttr.Attributes[0].Name
+
+	_, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
+	require.NoError(t, err, "Could not verify attributes")
+	contents, ok := attr["contents"].(map[string]interface{})
+	require.True(t, ok, "should be a map")
+	require.Equal(t, claim.Contents["age"], contents["age"])
+	require.Equal(t, claim.CType, attr["ctype"])
+	require.Equal(t, claim.Contents["gender"], contents["gender"])
+	require.Equal(t, claim.Contents["likedNumbers"], contents["likedNumbers"])
+	require.Nil(t, attr["contents.name"])
+
 }
