@@ -435,11 +435,8 @@ describe('Test claimer functionality', () => {
         verifierSession, // from 1st session
         attesterPubKey: gabiAttester.getPubKey(),
       })
-      expect(verified).toBeTruthy() // FIXME: Remove after fix
-      expect(verifiedClaim).toBeNull() // FIXME: Remove after fix
-      // expect(verified).toBeFalsy() // FIXME: Should hold true @weichweich
-      // expect(spy.error).toHaveBeenCalledTimes(1) // FIXME: Should hold true
-      // expect(spy.error).toHaveBeenCalledWith('ecdsa signature was invalid') // FIXME: Should hold true
+      expect(verified).toBe(false)
+      expect(verifiedClaim).toBeNull()
     })
   })
 })

@@ -57,7 +57,7 @@ export default class GabiVerifier {
     attesterPubKey: AttesterPublicKey
   }): Promise<IVerifiedPresentation> {
     const response = await goWasmExec<{
-      verified: boolean
+      verified: string
       claim: string
     }>(WasmHooks.verifyPresentation, [
       proof.valueOf(),
@@ -65,7 +65,7 @@ export default class GabiVerifier {
       attesterPubKey.valueOf(),
     ])
     return {
-      verified: response.verified,
+      verified: response.verified === 'true',
       claim: JSON.parse(response.claim),
     }
   }
@@ -80,7 +80,7 @@ export default class GabiVerifier {
     attesterPubKeys: AttesterPublicKey[]
   }): Promise<IVerifiedCombinedPresentation> {
     const response = await goWasmExec<{
-      verified: boolean
+      verified: string
       claims: string
     }>(WasmHooks.verifyCombinedPresentation, [
       proof.valueOf(),
@@ -88,7 +88,7 @@ export default class GabiVerifier {
       `[${attesterPubKeys.join(',')}]`,
     ])
     return {
-      verified: response.verified,
+      verified: response.verified === 'true',
       claims: JSON.parse(response.claims),
     }
   }
