@@ -40,7 +40,7 @@ export interface IAttesterSignSession {
   context: string
 }
 
-export interface IClaimerSignSession {
+export interface IClaimerSession {
   cb: {
     Secret: string
     VPrime: string

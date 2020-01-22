@@ -1,7 +1,11 @@
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import GabiAttester from './GabiAttester'
 import { privKey, pubKey } from '../testSetup/testConfig'
-import runTestSetup from '../testSetup/testSetup'
+import {
+  initClaimerAttesterSetup,
+  attestationSetup,
+  mixedAttestationsSetup,
+} from '../testSetup/testSetup'
 import {
   Accumulator,
   InitiateAttestationRequest,
@@ -9,6 +13,8 @@ import {
   Attestation,
   Witness,
 } from '../types/Attestation'
+import GabiClaimer from '../claim/GabiClaimer'
+import { AttestationRequest } from '../types/Claim'
 
 afterAll(async () => {
   await goWasmClose()
@@ -16,11 +22,13 @@ afterAll(async () => {
 
 describe('Test attester', () => {
   let gabiAttester: GabiAttester
+  let gabiClaimer: GabiClaimer
   let update: Accumulator
   let update2: Accumulator
-  let startAttestationMsg: InitiateAttestationRequest
-  let attesterSignSession: AttesterAttestationSession
-  let aSignature: Attestation
+  let initiateAttestationReq: InitiateAttestationRequest
+  let attesterSession: AttesterAttestationSession
+  let attestationRequest: AttestationRequest
+  let attestation: Attestation
   let witness: Witness
   let witness2: Witness
   let mixedIssuedAttestations: {
@@ -30,17 +38,30 @@ describe('Test attester', () => {
     }
   }
   beforeAll(async () => {
+    ;({ gabiClaimer, gabiAttester, update } = await initClaimerAttesterSetup())
     ;({
-      gabiAttester,
-      update,
-      update2,
-      startAttestationMsg,
-      attesterSignSession,
-      aSignature,
+      initiateAttestationReq,
+      attesterSession,
+      attestationRequest,
+      attestation,
       witness,
+    } = await attestationSetup({
+      claimer: gabiClaimer,
+      attester: gabiAttester,
+      update,
+    }))
+    ;({
+      update2,
       witness2,
       mixedIssuedAttestations,
-    } = await runTestSetup())
+    } = await mixedAttestationsSetup({
+      gabiClaimer,
+      gabiAttester,
+      update,
+      initiateAttestationReq,
+      attesterSession,
+      attestationRequest,
+    }))
   })
   describe('Confirm valid data from runTestSetup', () => {
     it('Checks valid buildFromKeyPair for existing keys', async () => {
@@ -53,11 +74,11 @@ describe('Test attester', () => {
       expect(update.valueOf()).not.toStrictEqual(updateNew.valueOf())
     })
     it('Checks valid startAttestation', () => {
-      expect(startAttestationMsg).toBeDefined()
-      expect(attesterSignSession).toBeDefined()
+      expect(initiateAttestationReq).toBeDefined()
+      expect(attesterSession).toBeDefined()
     })
     it('Checks valid issueAttestation', async () => {
-      expect(aSignature).toBeDefined()
+      expect(attestation).toBeDefined()
       expect(witness).toBeDefined()
     })
   })

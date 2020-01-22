@@ -70,7 +70,7 @@ const issuanceProcess = async (
   console.time('Claimer requests attestation')
   const {
     message: attestationRequest,
-    session: claimerSignSession,
+    session: claimerSession,
   } = await claimer.requestAttestation({
     startAttestationMsg,
     claim,
@@ -88,7 +88,7 @@ const issuanceProcess = async (
 
   console.time('Claimer builds credential')
   const credential = await claimer.buildCredential({
-    claimerSignSession,
+    claimerSession,
     attestation,
   })
   console.timeEnd('Claimer builds credential')

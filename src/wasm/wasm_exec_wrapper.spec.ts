@@ -11,8 +11,7 @@ describe('Test WASM wrapper', () => {
     x =>
       x !== WasmHooks.genKeypair && // takes too much time
       x !== WasmHooks.genKey && // works
-      x !== WasmHooks.startAttestationSession && // issues
-      x !== WasmHooks.keyFromMnemonic // issues
+      x !== WasmHooks.keyFromMnemonic // FIXME: Uncaught Go Error panic: runtime error: index out of range [1] with length 1
   )
   beforeEach(() => {
     spy = {
@@ -22,6 +21,9 @@ describe('Test WASM wrapper', () => {
     }
   })
   afterEach(() => {
+    expect(spy.error).not.toHaveBeenCalled()
+    expect(spy.log).not.toHaveBeenCalled()
+    expect(spy.exit).not.toHaveBeenCalled()
     spy.exit.mockClear()
     spy.error.mockClear()
     spy.log.mockClear()
@@ -31,10 +33,9 @@ describe('Test WASM wrapper', () => {
     const wasmExitSpy: jest.SpyInstance = jest
       .spyOn(GoInstance, 'exit')
       .mockImplementation()
-    expect(spy.log).toHaveBeenCalledWith('Instantiating WASM...')
+    expect(GoInstance).toBeDefined()
     GoInstance.close()
     expect(wasmExitSpy).toHaveBeenCalledWith(0)
-    expect(spy.exit).not.toHaveBeenCalled()
   })
   it.each(hooksArr)(
     'Should throw calling %s without input',
@@ -42,27 +43,10 @@ describe('Test WASM wrapper', () => {
       await expect(goWasmExec(wasmHook as WasmHooks)).rejects.toThrow(
         goWasm.WasmError
       )
-      expect(spy.error).not.toHaveBeenCalled()
-      expect(spy.log).not.toBeCalledWith('Instantiating WASM...')
-      expect(spy.exit).not.toHaveBeenCalled()
     },
     1000
   )
   it('Should not throw calling genKey without input', async () => {
     await goWasmExec(WasmHooks.genKey)
-    expect(spy.log).not.toBeCalledWith('Instantiating WASM...')
-    expect(spy.exit).not.toHaveBeenCalled()
-    expect(spy.error).not.toHaveBeenCalled()
   })
-  // For unknown reasons these tests dont terminate in any timeout
-  //   it('Should throw on calling startVerificationSession without input', async () => {
-  //     await goWasmExec(WasmHooks.startVerificationSession, [])
-  //     expect(spy.log).not.toBeCalledWith('Instantiating WASM...')
-  //     expect(spy.error).toHaveBeenCalled()
-  //   }, 20000)
-  // it('Should throw on calling keyFromMnemonic without input', async () => {
-  //   await goWasmExec(WasmHooks.keyFromMnemonic)
-  //   expect(spy.log).not.toBeCalledWith('Instantiating WASM...')
-  //   expect(spy.error).toHaveBeenCalled()
-  // })
 })

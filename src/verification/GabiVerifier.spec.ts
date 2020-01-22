@@ -1,8 +1,14 @@
-import runTestSetup, {
-  verifySetup,
-  issuanceSetup,
+import {
+  initClaimerAttesterSetup,
+  attestationSetup,
+  presentationSetup,
 } from '../testSetup/testSetup'
-import { disclosedAttributes, claim } from '../testSetup/testConfig'
+import {
+  disclosedAttributes,
+  claim,
+  pubKey2,
+  privKey2,
+} from '../testSetup/testConfig'
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import { VerificationSession, PresentationRequest } from '../types/Verification'
 import { ICredential, IProof } from '../testSetup/testTypes'
@@ -16,9 +22,8 @@ afterAll(async () => {
   await goWasmClose()
 })
 
-function expectFailure(verified: boolean, verifiedClaim: any): void {
-  expect(verifiedClaim).toBeNull()
-  expect(verified).toBeFalsy()
+function expectFailure(verified: boolean, presentationClaim: any): void {
+  expect(presentationClaim).toBeNull()
   expect(verified).toBe(false)
 }
 async function expectVerificationFailed(
@@ -27,24 +32,21 @@ async function expectVerificationFailed(
   credential: Credential,
   requestedAttributes: string[],
   index: number
-): Promise<{ verified: boolean; verifiedClaim: any }> {
-  const { verified, verifiedClaim } = await verifySetup(
+): Promise<{ verified: boolean; presentationClaim: any }> {
+  const { verified, claim: presentationClaim } = await presentationSetup({
     claimer,
     attester,
     credential,
     requestedAttributes,
-    index
-  )
-  expect(verifiedClaim).toBeNull()
-  expect(verified).toBeFalsy()
+    minIndex: index,
+  })
+  expect(presentationClaim).toBeNull()
   expect(verified).toBe(false)
-  return { verified, verifiedClaim }
+  return { verified, presentationClaim }
 }
 
-function expectSuccess(verified: boolean, verifiedClaim: any): void {
-  expect(verifiedClaim).not.toBeNull()
-  expect(verifiedClaim).toBeDefined()
-  expect(verified).toBeTruthy()
+function expectSuccess(verified: boolean, presentationClaim: any): void {
+  expect(presentationClaim).toEqual(expect.anything())
   expect(verified).toBe(true)
 }
 
@@ -54,19 +56,17 @@ async function expectVerificationSucceeded(
   credential: Credential,
   requestedAttributes: string[],
   index: number
-): Promise<{ verified: boolean; verifiedClaim: any }> {
-  const { verified, verifiedClaim } = await verifySetup(
+): Promise<{ verified: boolean; presentationClaim: any }> {
+  const { verified, claim: presentationClaim } = await presentationSetup({
     claimer,
     attester,
     credential,
     requestedAttributes,
-    index
-  )
-  expect(verifiedClaim).not.toBeNull()
-  expect(verifiedClaim).toBeDefined()
-  expect(verified).toBeTruthy()
+    minIndex: index,
+  })
+  expect(presentationClaim).toEqual(expect.anything())
   expect(verified).toBe(true)
-  return { verified, verifiedClaim }
+  return { verified, presentationClaim }
 }
 
 describe('Test verifier functionality', () => {
@@ -77,22 +77,28 @@ describe('Test verifier functionality', () => {
   let credential: Credential
   let verifierSession: VerificationSession
   let presentationReq: PresentationRequest
-  let proof: Presentation
-  let verifiedClaim: any
+  let presentation: Presentation
+  let presentedClaim: any
   let verified: boolean
   beforeAll(async () => {
-    ;({
-      gabiClaimer,
-      gabiAttester,
-      gabiAttester2,
+    ;({ gabiClaimer, gabiAttester, update } = await initClaimerAttesterSetup())
+    gabiAttester2 = new GabiAttester(pubKey2, privKey2)
+    ;({ credential } = await attestationSetup({
+      claimer: gabiClaimer,
+      attester: gabiAttester,
       update,
-      credential,
+    }))
+    ;({
       verifierSession,
       presentationReq,
-      proof,
-      verifiedClaim,
+      presentation,
       verified,
-    } = await runTestSetup())
+      claim: presentedClaim,
+    } = await presentationSetup({
+      claimer: gabiClaimer,
+      attester: gabiAttester,
+      credential,
+    }))
   }, 10000)
   describe('Checks valid data', () => {
     it('Checks valid startVerficiationSession', async () => {
@@ -109,16 +115,16 @@ describe('Test verifier functionality', () => {
       // TODO: add more?
     })
     it('Checks valid verifyPresentation', () => {
-      expectSuccess(verified, verifiedClaim)
-      expect(verifiedClaim).not.toStrictEqual(claim)
-      expect(verifiedClaim).toHaveProperty('contents', {
+      expectSuccess(verified, presentedClaim)
+      expect(presentedClaim).not.toStrictEqual(claim)
+      expect(presentedClaim).toHaveProperty('contents', {
         id: claim.contents.id,
         picture: { DATA: claim.contents.picture.DATA },
         eyeColor: claim.contents.eyeColor,
       })
       // TODO: add more?
     })
-    it('Verifies verifySetup works as intended', async () => {
+    it('Verifies presentationSetup works as intended', async () => {
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
@@ -221,8 +227,8 @@ describe('Test verifier functionality', () => {
 
       // pairwise comparison
       let checkValues: any[]
-      const proofArr: IProof[] = [proof, proof2, proof3].map(presentation =>
-        JSON.parse(presentation.valueOf())
+      const proofArr: IProof[] = [presentation, proof2, proof3].map(proof =>
+        JSON.parse(proof.valueOf())
       )
       // start to compare prev = proofArr[2] with curr = proofArr[0], then set prev[i+1] to curr[i] and curr[i+1] to proofArr[i+1]
       proofArr.reduce((prevProof, currProof) => {
@@ -291,12 +297,11 @@ describe('Test verifier functionality', () => {
     it("Should increase attester's accumulator index (post-revocation)", async () => {
       // index === 1 due to test 'Verifies current accumulator index is 1 for imported gabiAttester'
       // attester attests new credential
-      const { credential: cred2, witness: witness2 } = await issuanceSetup(
-        gabiClaimer,
-        gabiAttester,
+      const { credential: cred2, witness: witness2 } = await attestationSetup({
+        claimer: gabiClaimer,
+        attester: gabiAttester,
         update,
-        JSON.stringify({ id: 1 })
-      )
+      })
       // attester revokes credential to increase accumulator index
       const revUpdate = new Accumulator(
         await gabiAttester.revokeAttestation({
@@ -328,7 +333,13 @@ describe('Test verifier functionality', () => {
     // TODO: Change after @weichweich's hotfix
     it('Should throw on empty requested/disclosed attributes array', async () => {
       await expect(
-        verifySetup(gabiClaimer, gabiAttester, credential, [], 0)
+        presentationSetup({
+          claimer: gabiClaimer,
+          attester: gabiAttester,
+          credential,
+          requestedAttributes: [],
+          minIndex: 0,
+        })
       ).rejects.toThrow('attribute not found')
     })
     it('Should not verify after tampering with attributes data (post-attestation)', async () => {
@@ -407,7 +418,7 @@ describe('Test verifier functionality', () => {
         claim: verifiedClaim3,
         verified: verified3,
       } = await GabiVerifier.verifyPresentation({
-        proof, // from 1st session
+        proof: presentation, // from 1st session
         verifierSession: verifierSession2, // from 2nd session
         attesterPubKey: gabiAttester.getPubKey(),
       })
@@ -416,20 +427,19 @@ describe('Test verifier functionality', () => {
     it('Should not verify when using incorrect attester key', async () => {
       // use gabiAttester2.getPubKey in buildPresentation + verifyPresentation
       await expect(
-        verifySetup(
-          gabiClaimer,
-          gabiAttester2,
+        presentationSetup({
+          claimer: gabiClaimer,
+          attester: gabiAttester2,
           credential,
-          disclosedAttributes,
-          1
-        )
+          requestedAttributes: disclosedAttributes,
+        })
       ).rejects.toThrow('ecdsa signature was invalid')
       // use gabiAttester2.getPubKey in verifyPresentation
       const {
         claim: verifiedClaim2,
         verified: verified2,
       } = await GabiVerifier.verifyPresentation({
-        proof,
+        proof: presentation,
         verifierSession,
         attesterPubKey: gabiAttester2.getPubKey(),
       })
@@ -455,13 +465,12 @@ describe('Test verifier functionality', () => {
     it.skip('Should throw when a requested attribute is missing', async () => {
       const requestedAttributes = [...disclosedAttributes, 'thisDoesNotExit']
       await expect(
-        verifySetup(
-          gabiClaimer,
-          gabiAttester,
+        presentationSetup({
+          claimer: gabiClaimer,
+          attester: gabiAttester,
           credential,
           requestedAttributes,
-          1
-        )
+        })
       ).rejects.toThrow('index out of range [-1]')
     })
     // TODO: Change + enable after @weichweich's hotfix
@@ -496,4 +505,5 @@ describe('Test verifier functionality', () => {
       )
     })
   })
+  // describe('Tests combined presentation', () => {})
 })

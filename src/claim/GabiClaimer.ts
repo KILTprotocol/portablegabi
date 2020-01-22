@@ -71,16 +71,16 @@ export default class GabiClaimer implements IGabiClaimer {
   }
 
   public async buildCredential({
-    claimerSignSession,
+    claimerSession,
     attestation,
   }: {
-    claimerSignSession: ClaimerAttestationSession
+    claimerSession: ClaimerAttestationSession
     attestation: Attestation
   }): Promise<Credential> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.buildCredential, [
         this.secret,
-        claimerSignSession.valueOf(),
+        claimerSession.valueOf(),
         attestation.valueOf(),
       ])
     )
