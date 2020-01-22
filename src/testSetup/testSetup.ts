@@ -25,7 +25,104 @@ import {
   Credential,
 } from '../types/Claim'
 
-async function runTestSetup(): Promise<{
+export async function attestationSetup({
+  claimer,
+  attester,
+  update,
+}: {
+  claimer: GabiClaimer
+  attester: GabiAttester
+  update: Accumulator
+}): Promise<{
+  credential: Credential
+  witness: Witness
+  attestation: Attestation
+  claimerSession: ClaimerAttestationSession
+  attesterSession: AttesterAttestationSession
+  initiateAttestationReq: InitiateAttestationRequest
+}> {
+  const {
+    message: initiateAttestationReq,
+    session: attesterSession,
+  } = await attester.startAttestation()
+  // Claimer requests attestation
+  const {
+    message: attestationRequest,
+    session: claimerSession,
+  } = await claimer.requestAttestation({
+    startAttestationMsg: initiateAttestationReq,
+    claim: JSON.stringify(claim),
+    attesterPubKey: attester.getPubKey(),
+  })
+  // Attester issues attestation
+  const { attestation, witness } = await attester.issueAttestation({
+    attestationSession: attesterSession,
+    attestationRequest,
+    update,
+  })
+  // Claimer builds credential
+  const credential = await claimer.buildCredential({
+    attestation,
+    claimerSignSession: claimerSession,
+  })
+  return {
+    initiateAttestationReq,
+    claimerSession,
+    attesterSession,
+    attestation,
+    witness,
+    credential,
+  }
+}
+
+export async function presentationSetup({
+  claimer,
+  attester,
+  credential,
+  requestedAttributes,
+}: {
+  claimer: GabiClaimer
+  attester: GabiAttester
+  credential: Credential
+  requestedAttributes: string[]
+}): Promise<{
+  verifierSession: VerificationSession
+  presentationReq: PresentationRequest
+  presentation: Presentation
+  verified: boolean
+  claim: any
+}> {
+  // request
+  const {
+    session: verifierSession,
+    message: presentationReq,
+  } = await GabiVerifier.requestPresentation({
+    requestedAttributes,
+    requestNonRevocationProof: true,
+    minIndex: 1,
+  })
+  // response
+  const presentation = await claimer.buildPresentation({
+    credential,
+    attesterPubKey: attester.getPubKey(),
+    presentationReq,
+  })
+  // verify
+  const { verified, claim: aClaim } = await GabiVerifier.verifyPresentation({
+    proof: presentation,
+    verifierSession,
+    attesterPubKey: attester.getPubKey(),
+  })
+  return {
+    verifierSession,
+    presentationReq,
+    presentation,
+    verified,
+    claim: aClaim,
+  }
+}
+
+export async function runTestSetup(): Promise<{
   gabiClaimer: GabiClaimer
   gabiAttester: GabiAttester
   gabiAttester2: GabiAttester

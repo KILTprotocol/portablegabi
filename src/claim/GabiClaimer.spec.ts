@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
-import runTestSetup from '../testSetup/testSetup'
+import { runTestSetup, attestationSetup } from '../testSetup/testSetup'
 import GabiClaimer from './GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
 import {
@@ -30,6 +30,7 @@ import {
 } from '../types/Claim'
 import GabiVerifier from '../verification/GabiVerifier'
 import { VerificationSession, PresentationRequest } from '../types/Verification'
+import CombinedRequestBuilder from '../verification/CombinedRequestBuilder'
 
 async function buildCredentialError(
   claimer: GabiClaimer,
@@ -238,6 +239,43 @@ describe('Test claimer functionality', () => {
       expect(proofObj.proof.A).not.toEqual(sigObj.signature.A)
       expect(proofObj.proof.e_response).not.toEqual(sigObj.proof.e_response)
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)
+    })
+    it('Test build combined presentation', async () => {
+      const { credential: credential2 } = await attestationSetup({
+        attester: gabiAttester,
+        claimer: gabiClaimer,
+        update,
+      })
+      expect(credential2).not.toBe('undefined')
+
+      const { message: req, session } = await new CombinedRequestBuilder()
+        .requestPresentation({
+          requestedAttributes: disclosedAttributes,
+          requestNonRevocationProof: true,
+          minIndex: 1,
+        })
+        .requestPresentation({
+          requestedAttributes: disclosedAttributes,
+          requestNonRevocationProof: true,
+          minIndex: 1,
+        })
+        .finalise()
+      const combPresentation = await gabiClaimer.buildCombinedPresentation({
+        credentials: [credential, credential2],
+        combinedPresentationReq: req,
+        attesterPubKeys: [gabiAttester.getPubKey(), gabiAttester.getPubKey()],
+      })
+      expect(combPresentation).toBeDefined()
+      const {
+        verified,
+        claims,
+      } = await GabiVerifier.verifyCombinedPresentation({
+        proof: combPresentation,
+        attesterPubKeys: [gabiAttester.getPubKey(), gabiAttester.getPubKey()],
+        verifierSession: session,
+      })
+      expect(verified).toBe(true)
+      expect(claims.length).toBe(2)
     })
     it('Updates credential and compares both versions (without revoking)', async () => {
       const timeBeforeUpdate = new Date().getTime()
