@@ -121,7 +121,7 @@ func TestCredential(t *testing.T) {
 	verify(t, attester, claimer, cred, claim, 2)
 }
 
-func TestCombinedCredential(t *testing.T) {
+func TestCombinedPresentation(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
 
@@ -361,6 +361,8 @@ func TestFullWorkflow(t *testing.T) {
 	require.Nil(t, attr["contents.name"])
 }
 
+// -------- negative tests --------
+
 func TestMixingVerificationSessions(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
@@ -396,4 +398,89 @@ func TestMixingVerificationSessions(t *testing.T) {
 	require.Nil(t, presentation)
 	require.False(t, verified)
 
+}
+
+func TestForgedCombinedPresentation(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	require.True(t, success, "Error in sysparams")
+
+	attester1, err := credentials.NewAttester(sysParams, 6, OneYear)
+	gabi.GenerateRevocationKeypair(attester1.PrivateKey, attester1.PublicKey)
+	require.NoError(t, err, "Error in attester key generation")
+	update1, err := attester1.CreateAccumulator()
+	require.NoError(t, err, "Could not create update")
+
+	attester2, err := credentials.NewAttester(sysParams, 6, OneYear)
+	gabi.GenerateRevocationKeypair(attester2.PrivateKey, attester2.PublicKey)
+	require.NoError(t, err, "Error in attester key generation")
+	update2, err := attester2.CreateAccumulator()
+	require.NoError(t, err, "Could not create update")
+
+	claimer, err := credentials.ClaimerFromMnemonic(sysParams, Mnemonic, "")
+	require.NoError(t, err, "Error in claimer key generation")
+
+	claim, cred := buildCredential(t, sysParams, attester1, claimer, update1)
+	verify(t, attester1, claimer, cred, claim, 1)
+
+	_, cred2 := buildCredential(t, sysParams, attester2, claimer, update2)
+	verify(t, attester2, claimer, cred2, claim, 1)
+
+	requestedAttrs := [4]string{
+		"ctype",
+		"contents" + credentials.SEPARATOR + "age",
+		"contents" + credentials.SEPARATOR + "special",
+		"contents" + credentials.SEPARATOR + "likedNumbers",
+	}
+	requestPresentation := [2]credentials.PartialPresentationRequest{
+		credentials.PartialPresentationRequest{
+			RequestedAttributes:   requestedAttrs[:],
+			ReqNonRevocationProof: true,
+			ReqMinIndex:           1,
+		},
+		credentials.PartialPresentationRequest{
+			RequestedAttributes:   requestedAttrs[2:],
+			ReqNonRevocationProof: true,
+			ReqMinIndex:           1,
+		},
+	}
+	// combined request
+	verifierSession, reqAttrMsg := credentials.RequestCombinedPresentation(attester1.PublicKey.Params, requestPresentation[:])
+	require.NotNil(t, verifierSession)
+	require.NotNil(t, reqAttrMsg)
+
+	// split the request into two
+	req1 := &credentials.PresentationRequest{
+		PartialPresentationRequest: &reqAttrMsg.PartialRequests[0],
+		Context:                    reqAttrMsg.Context,
+		Nonce:                      reqAttrMsg.Nonce,
+	}
+
+	req2 := &credentials.PresentationRequest{
+		PartialPresentationRequest: &reqAttrMsg.PartialRequests[1],
+		Context:                    reqAttrMsg.Context,
+		Nonce:                      reqAttrMsg.Nonce,
+	}
+
+	// create a separate proof for each request
+	presentation1, err := claimer.BuildPresentation(attester1.PublicKey, cred, req1)
+	require.NoError(t, err)
+	require.NotNil(t, presentation1)
+
+	presentation2, err := claimer.BuildPresentation(attester2.PublicKey, cred2, req2)
+	require.NoError(t, err)
+	require.NotNil(t, presentation2)
+
+	// merge proofs again
+	combinedPresentation := &credentials.CombinedPresentationResponse{
+		Proof: &gabi.ProofList{presentation1.Proof, presentation2.Proof},
+		Attributes: []credentials.PartialPresentationResponse{
+			presentation1.Attributes,
+			presentation2.Attributes,
+		},
+	}
+
+	// verify
+	verified, disclosedPresentations, err := credentials.VerifyCombinedPresentation([]*gabi.PublicKey{attester1.PublicKey, attester2.PublicKey}, combinedPresentation, verifierSession)
+	require.False(t, verified)
+	require.Nil(t, disclosedPresentations)
 }
