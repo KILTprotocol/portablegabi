@@ -3,7 +3,7 @@ export type Spy<T extends SpyKeys | ''> = {
   [key in Exclude<SpyKeys, T>]: jest.SpyInstance
 }
 
-export type ReqSignMsg = {
+export interface IAttestationRequest {
   commitMsg: {
     U: string
     n_2: string
@@ -14,7 +14,7 @@ export type ReqSignMsg = {
   values: string[]
 }
 
-export type AttesterSignSession = {
+export interface IAttesterSignSession {
   //   GabiIssuer: {
   //     Sk: {
   //       XMLName: { Space: string; Local: string }
@@ -97,5 +97,36 @@ export interface ICredential<Claim> {
     attributes: string[]
     nonrevWitness: IIssueAttestation['nonrev']
     signature: IIssueAttestation['signature']
+  }
+}
+
+export interface IProof {
+  attributes: string[]
+  proof: {
+    A: 'string'
+    a_disclosed: {
+      [key: number]: string
+    }
+    a_responses: {
+      [key: number]: string
+    }
+    c: string
+    e_response: string
+    nonrev_proof: {
+      C_r: string
+      C_u: string
+      responses: {
+        beta: string
+        delta: string
+        epsilon: string
+        zeta: string
+      }
+      sacc: {
+        data: string
+        pk: number
+      }
+    }
+    nonrev_response: string
+    v_response: string
   }
 }

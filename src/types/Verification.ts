@@ -1,4 +1,5 @@
-// eslint-disable-next-line max-classes-per-file
+/* eslint-disable @typescript-eslint/ban-ts-ignore */
+/* eslint-disable-next-line max-classes-per-file */
 export interface IPresentationRequest {
   requestedAttributes: string[]
   requestNonRevocationProof: boolean
@@ -15,7 +16,19 @@ export interface IVerifiedCombinedPresentation {
   claims: any[]
 }
 
-export class VerificationSession extends String {}
-export class PresentationRequest extends String {}
-export class CombinedVerificationSession extends String {}
-export class CombinedPresentationRequest extends String {}
+export class VerificationSession extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}
+export class PresentationRequest extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}
+export class CombinedVerificationSession extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}
+export class CombinedPresentationRequest extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}

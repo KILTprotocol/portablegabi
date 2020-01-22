@@ -26,8 +26,8 @@ export default class GabiVerifier {
       [requestNonRevocationProof, minIndex, ...requestedAttributes]
     )
     return {
-      message: message as PresentationRequest,
-      session: session as VerificationSession,
+      message: new PresentationRequest(message),
+      session: new VerificationSession(session),
     }
   }
 
@@ -37,9 +37,14 @@ export default class GabiVerifier {
     message: CombinedPresentationRequest
     session: CombinedVerificationSession
   }> {
-    return goWasmExec<IGabiMsgSession>(WasmHooks.requestCombinedPresentation, [
-      JSON.stringify(presentationReqs),
-    ])
+    const { message, session } = await goWasmExec<IGabiMsgSession>(
+      WasmHooks.requestCombinedPresentation,
+      [JSON.stringify(presentationReqs)]
+    )
+    return {
+      message: new CombinedPresentationRequest(message),
+      session: new CombinedVerificationSession(session),
+    }
   }
 
   public static async verifyPresentation({

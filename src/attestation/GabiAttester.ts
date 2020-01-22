@@ -35,7 +35,7 @@ export default class GabiAttester implements IGabiAttester {
   }
 
   public getPubKey(): AttesterPublicKey {
-    return this.publicKey as AttesterPublicKey
+    return new AttesterPublicKey(this.publicKey)
   }
 
   // start attestation
@@ -43,17 +43,23 @@ export default class GabiAttester implements IGabiAttester {
     message: InitiateAttestationRequest
     session: AttesterAttestationSession
   }> {
-    return goWasmExec<IGabiMsgSession>(WasmHooks.startAttestationSession, [
-      this.privateKey,
-      this.publicKey,
-    ])
+    const { message, session } = await goWasmExec<IGabiMsgSession>(
+      WasmHooks.startAttestationSession,
+      [this.privateKey, this.publicKey]
+    )
+    return {
+      message: new InitiateAttestationRequest(message),
+      session: new AttesterAttestationSession(session),
+    }
   }
 
   public async createAccumulator(): Promise<Accumulator> {
-    return goWasmExec<string>(WasmHooks.createAccumulator, [
-      this.privateKey,
-      this.publicKey,
-    ])
+    return new Accumulator(
+      await goWasmExec<string>(WasmHooks.createAccumulator, [
+        this.privateKey,
+        this.publicKey,
+      ])
+    )
   }
 
   // issue attestation
@@ -69,7 +75,7 @@ export default class GabiAttester implements IGabiAttester {
     attestation: Attestation
     witness: Witness
   }> {
-    return goWasmExec<{
+    const { attestation, witness } = await goWasmExec<{
       attestation: string
       witness: string
     }>(WasmHooks.issueAttestation, [
@@ -79,6 +85,11 @@ export default class GabiAttester implements IGabiAttester {
       attestationRequest.valueOf(),
       update.valueOf(),
     ])
+
+    return {
+      attestation: new Attestation(attestation),
+      witness: new Witness(witness),
+    }
   }
 
   // revoke attestation

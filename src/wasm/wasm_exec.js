@@ -511,6 +511,8 @@ class Go {
   }
 }
 
+class WasmError extends Error {}
+
 class GoWasm extends Go {
   static async init() {
     const go = new Go()
@@ -557,7 +559,7 @@ class GoWasm extends Go {
           resolve(...messages)
         })
       }).catch(e => {
-        console.error(e)
+        throw new WasmError(e)
       })
     }
     throw new Error(`Function ${fn} missing in WASM`)
@@ -569,3 +571,4 @@ class GoWasm extends Go {
   }
 }
 module.exports.GoWasm = GoWasm
+module.exports.WasmError = WasmError

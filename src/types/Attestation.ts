@@ -1,4 +1,5 @@
-// eslint-disable-next-line max-classes-per-file
+/* eslint-disable @typescript-eslint/ban-ts-ignore */
+/* eslint-disable-next-line max-classes-per-file */
 export interface IGabiMsgSession {
   message: string
   session: string
@@ -12,9 +13,27 @@ export default interface IGabiAttester {
   createAccumulator: Function
 }
 
-export class AttesterPublicKey extends String {}
-export class AttesterAttestationSession extends String {}
-export class InitiateAttestationRequest extends String {}
-export class Accumulator extends String {}
-export class Witness extends String {}
-export class Attestation extends String {}
+export class AttesterPublicKey extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}
+export class AttesterAttestationSession extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}
+export class InitiateAttestationRequest extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}
+export class Accumulator extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}
+export class Witness extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}
+export class Attestation extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: any
+}

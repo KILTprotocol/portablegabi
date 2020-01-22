@@ -15,6 +15,7 @@ import {
   Attestation,
   Witness,
   AttesterAttestationSession,
+  Accumulator,
 } from '../types/Attestation'
 import { VerificationSession, PresentationRequest } from '../types/Verification'
 import {
@@ -24,24 +25,27 @@ import {
   Credential,
 } from '../types/Claim'
 
-const runTestSetup = async (): Promise<{
+async function runTestSetup(): Promise<{
   gabiClaimer: GabiClaimer
   gabiAttester: GabiAttester
   gabiAttester2: GabiAttester
+  update: Accumulator
+  update2: Accumulator
   startAttestationMsg: InitiateAttestationRequest
   attesterSignSession: AttesterAttestationSession
-  reqSignMsg: AttestationRequest
+  attestationRequest: AttestationRequest
   aSignature: Attestation
+  witness: Witness
   aSignature2: Attestation
-  claimerSignSession: ClaimerAttestationSession // IClaimerSignSession
+  claimerSignSession: ClaimerAttestationSession
   startAttestationMsg2: InitiateAttestationRequest
   attesterSignSession2: AttesterAttestationSession
-  reqSignMsg2: AttestationRequest
-  reqSignMsgE12: AttestationRequest
-  reqSignMsgE21: AttestationRequest
-  claimerSignSession2: ClaimerAttestationSession // IClaimerSignSession
-  claimerSignSessionE12: ClaimerAttestationSession // IClaimerSignSession
-  claimerSignSessionE21: ClaimerAttestationSession // IClaimerSignSession
+  attestationRequest2: AttestationRequest
+  attestationRequestE12: AttestationRequest
+  attestationRequestE21: AttestationRequest
+  claimerSignSession2: ClaimerAttestationSession
+  claimerSignSessionE12: ClaimerAttestationSession
+  claimerSignSessionE21: ClaimerAttestationSession
   invalidAttestationResponses: {
     [key: number]: {
       attestation: Attestation
@@ -49,20 +53,22 @@ const runTestSetup = async (): Promise<{
     }
   }
   invalidSignatures: Attestation[]
+  validSignatureBuildCredential: {
+    attestation: Attestation
+    claimerSignSession: ClaimerAttestationSession
+  }
   credential: Credential
   verifierSession: VerificationSession
-  reqRevealedAttrMsg: PresentationRequest
+  presentationReq: PresentationRequest
   proof: Presentation
-  verifiedClaim: string
+  verifiedClaim: any
   verified: boolean
-}> => {
+}> {
   const gabiAttester = new GabiAttester(pubKey, privKey)
   const gabiAttester2 = new GabiAttester(pubKeyRevo2, privKeyRevo2)
   const gabiClaimer = await GabiClaimer.buildFromScratch()
   const update = await gabiAttester.createAccumulator()
   const update2 = await gabiAttester2.createAccumulator()
-  // TODO: add update2
-  // const update2 = await gabiAttester2.createAccumulator()
 
   const {
     message: startAttestationMsg,
@@ -70,7 +76,7 @@ const runTestSetup = async (): Promise<{
   } = await gabiAttester.startAttestation()
   // Claimer requests attestation
   const {
-    message: reqSignMsg,
+    message: attestationRequest,
     session: claimerSignSession,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg,
@@ -78,9 +84,12 @@ const runTestSetup = async (): Promise<{
     attesterPubKey: gabiAttester.getPubKey(),
   })
   // Attester issues claim
-  const { attestation: aSignature } = await gabiAttester.issueAttestation({
+  const {
+    attestation: aSignature,
+    witness,
+  } = await gabiAttester.issueAttestation({
     attestationSession: attesterSignSession,
-    attestationRequest: reqSignMsg,
+    attestationRequest,
     update,
   })
 
@@ -96,7 +105,7 @@ const runTestSetup = async (): Promise<{
   // Attester1: Correct (already defined in beforeEach)
   // Attester2: Correct
   const {
-    message: reqSignMsg2,
+    message: attestationRequest2,
     session: claimerSignSession2,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
@@ -105,7 +114,7 @@ const runTestSetup = async (): Promise<{
   })
   // E12: Incorrect data, should use startAttestationMsg2
   const {
-    message: reqSignMsgE12,
+    message: attestationRequestE12,
     session: claimerSignSessionE12,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg,
@@ -114,7 +123,7 @@ const runTestSetup = async (): Promise<{
   })
   // E21: Incorrect data, should use gabiAttester2.getPubKey()
   const {
-    message: reqSignMsgE21,
+    message: attestationRequestE21,
     session: claimerSignSessionE21,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
@@ -125,50 +134,54 @@ const runTestSetup = async (): Promise<{
   // (3) Issue attestation
   const { attestation: aSignature2 } = await gabiAttester2.issueAttestation({
     attestationSession: attesterSignSession2,
-    attestationRequest: reqSignMsg2,
+    attestationRequest: attestationRequest2,
     update: update2,
   })
   const invalidAttestationResponses = {
     1112_2221: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession, // 1
-      attestationRequest: reqSignMsgE12, // 12
+      attestationRequest: attestationRequestE12, // 12
       update,
     }),
     1122_2211: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession, // 1
-      attestationRequest: reqSignMsg2, // 22
+      attestationRequest: attestationRequest2, // 22
       update,
     }),
     1222_2111: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession2, // 2
-      attestationRequest: reqSignMsg2, // 22
+      attestationRequest: attestationRequest2, // 22
       update,
     }),
     1211_2122: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession2, // 1
-      attestationRequest: reqSignMsg, // 11
+      attestationRequest, // 11
       update,
     }),
     1121_2212: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession, // 1
-      attestationRequest: reqSignMsgE21, // 21
+      attestationRequest: attestationRequestE21, // 21
+      update,
+    }),
+    1221_2112: await gabiAttester.issueAttestation({
+      attestationSession: attesterSignSession2, // 1
+      attestationRequest: attestationRequestE21, // 21
       update,
     }),
     // this is a correct signature when called from gabiAttester since the pk matches
-    1221_2112: await gabiAttester.issueAttestation({
-      attestationSession: attesterSignSession2, // 1
-      attestationRequest: reqSignMsgE21, // 21
-      update,
-    }),
     1212_2121: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession2, // 2
-      attestationRequest: reqSignMsgE12, // 12
+      attestationRequest: attestationRequestE12, // 12
       update,
     }),
   }
   const invalidSignatures = Object.values(invalidAttestationResponses).map(
     response => response.attestation
   )
+  const validSignatureBuildCredential = {
+    attestation: invalidAttestationResponses[1212_2121].attestation,
+    claimerSignSession: claimerSignSessionE21,
+  }
 
   const credential = await gabiClaimer.buildCredential({
     claimerSignSession,
@@ -178,7 +191,7 @@ const runTestSetup = async (): Promise<{
   // verification
   const {
     session: verifierSession,
-    message: reqRevealedAttrMsg,
+    message: presentationReq,
   } = await GabiVerifier.requestPresentation({
     requestNonRevocationProof: true,
     requestedAttributes: disclosedAttributes,
@@ -187,7 +200,7 @@ const runTestSetup = async (): Promise<{
 
   const proof = await gabiClaimer.buildPresentation({
     credential,
-    presentationReq: reqRevealedAttrMsg,
+    presentationReq,
     attesterPubKey: gabiAttester.getPubKey(),
   })
 
@@ -206,47 +219,51 @@ const runTestSetup = async (): Promise<{
     gabiAttester2,
     startAttestationMsg,
     attesterSignSession,
-    reqSignMsg,
+    attestationRequest,
     aSignature,
+    witness,
+    update,
+    update2,
     aSignature2,
     claimerSignSession,
     startAttestationMsg2,
     attesterSignSession2,
-    reqSignMsg2,
-    reqSignMsgE12,
-    reqSignMsgE21,
+    attestationRequest2,
+    attestationRequestE12,
+    attestationRequestE21,
     claimerSignSession2,
     claimerSignSessionE12,
     claimerSignSessionE21,
     invalidAttestationResponses,
     invalidSignatures,
+    validSignatureBuildCredential,
     credential,
     verifierSession,
-    reqRevealedAttrMsg,
+    presentationReq,
     proof,
     verifiedClaim,
     verified,
   }
 }
 
-export const verifySetup = async (
+export async function verifySetup(
   claimer: GabiClaimer,
   attester: GabiAttester,
-  credential: string,
-  disclosedAttributesInput: string[],
+  credential: Credential,
+  requestedAttributes: string[],
   index: number
-): Promise<{ verified: boolean; verifiedClaim: string }> => {
+): Promise<{ verified: boolean; verifiedClaim: any }> {
   const {
     session: verifierSession,
-    message: reqRevealedAttrMsg,
+    message: presentationReq,
   } = await GabiVerifier.requestPresentation({
     requestNonRevocationProof: true,
-    requestedAttributes: disclosedAttributesInput,
+    requestedAttributes,
     minIndex: index,
   })
   const proof = await claimer.buildPresentation({
     credential,
-    presentationReq: reqRevealedAttrMsg,
+    presentationReq,
     attesterPubKey: attester.getPubKey(),
   })
   const {
@@ -259,5 +276,5 @@ export const verifySetup = async (
   })
   return { verified, verifiedClaim }
 }
-String(Boolean)
+
 export default runTestSetup

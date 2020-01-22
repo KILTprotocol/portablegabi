@@ -24,5 +24,9 @@ export const claim = {
     eyeColor: true,
   },
 }
-export const disclosedAttributes = ['contents.picture.DATA', 'contents.id']
+export const disclosedAttributes = [
+  'contents.id',
+  'contents.picture.DATA',
+  'contents.eyeColor',
+]
 export const numOfClaimKeys = 5

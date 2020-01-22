@@ -39,8 +39,10 @@ describe('Test WASM wrapper', () => {
   it.each(hooksArr)(
     'Should throw calling %s without input',
     async wasmHook => {
-      await goWasmExec(wasmHook as WasmHooks)
-      expect(spy.error).toHaveBeenCalled()
+      await expect(goWasmExec(wasmHook as WasmHooks)).rejects.toThrow(
+        goWasm.WasmError
+      )
+      expect(spy.error).not.toHaveBeenCalled()
       expect(spy.log).not.toBeCalledWith('Instantiating WASM...')
       expect(spy.exit).not.toHaveBeenCalled()
     },

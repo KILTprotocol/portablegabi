@@ -172,7 +172,9 @@ const runWorkflow = async (): Promise<void> => {
   await verify(gabiClaimer, gabiAttester, credential, disclosedAttributes, 2)
 
   console.time('revoke attestation')
-  update = await gabiAttester.revokeAttestation({ update, witness: witness2 })
+  update = new Accumulator(
+    await gabiAttester.revokeAttestation({ update, witness: witness2 })
+  )
   console.timeEnd('revoke attestation')
 
   console.time('update credential')
@@ -274,8 +276,10 @@ const runGabiExamples = async (): Promise<void> => {
   console.time('>> Complete Gabi process <<')
   await runWorkflow()
   console.timeEnd('>> Complete Gabi process <<')
-
-  goWasmClose()
+  await goWasmClose()
+  // process.exitCode = 0
+  // console.log('hi')
+  // process.exit(1337)
 }
 
 runGabiExamples()
