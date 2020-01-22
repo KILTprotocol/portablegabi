@@ -16,6 +16,10 @@ import (
 // returns a list containing the private key as the fist element and the public
 // key as the second element. If the key generation fails, an error is returned.
 func GenKeypair(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 2 {
+		return nil, errors.New("missing inputs")
+	}
+
 	attester, err := credentials.NewAttester(SysParams, inputs[0].Int(), int64(inputs[1].Int()))
 	if err != nil {
 		return nil, err
@@ -31,6 +35,10 @@ func GenKeypair(this js.Value, inputs []js.Value) (interface{}, error) {
 // method returns a session object, which must be used as an argument for
 // issueAttestation and a message for the claimer
 func StartAttestationSession(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 2 {
+		return nil, errors.New("missing inputs")
+	}
+
 	attester := &credentials.Attester{
 		PrivateKey: &gabi.PrivateKey{},
 		PublicKey:  &gabi.PublicKey{},
@@ -57,6 +65,10 @@ func StartAttestationSession(this js.Value, inputs []js.Value) (interface{}, err
 // startAttestationSession method) is expected and the fourth input is the
 // request for attestion which is was send to the attester by the claimer.
 func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 5 {
+		return nil, errors.New("missing inputs")
+	}
+
 	attester := &credentials.Attester{
 		PrivateKey: &gabi.PrivateKey{},
 		PublicKey:  &gabi.PublicKey{},
@@ -92,6 +104,10 @@ func IssueAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 // CreateAccumulator creates a new accumulator which can be used to revoke
 // attestations
 func CreateAccumulator(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 2 {
+		return nil, errors.New("missing inputs")
+	}
+
 	attester := &credentials.Attester{
 		PrivateKey: &gabi.PrivateKey{},
 		PublicKey:  &gabi.PublicKey{},
@@ -107,6 +123,10 @@ func CreateAccumulator(this js.Value, inputs []js.Value) (interface{}, error) {
 
 // RevokeAttestation removes the attestation witness from the given accumulator.
 func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 4 {
+		return nil, errors.New("missing inputs")
+	}
+
 	attester := &credentials.Attester{
 		PrivateKey: &gabi.PrivateKey{},
 		PublicKey:  &gabi.PublicKey{},

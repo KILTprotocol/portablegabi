@@ -3,7 +3,12 @@ package credentials
 import (
 	"container/list"
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"math"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -84,28 +89,45 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 		jsonObj := elem.Value.(*nestedObject)
 		for n, v := range jsonObj.content {
 			name := jsonObj.prefix + SEPARATOR + n
-			if f, ok := v.(map[string]interface{}); ok {
-				queue.PushBack(&nestedObject{
-					prefix:  name,
-					content: f,
+
+			reflected := reflect.ValueOf(v)
+			switch reflected.Kind() {
+			case reflect.Map:
+				if m, ok := v.(map[string]interface{}); ok {
+					queue.PushBack(&nestedObject{
+						prefix:  name,
+						content: m,
+					})
+				} else {
+					panic(fmt.Sprintf("unsupported map type %T", v))
+				}
+			case reflect.Slice, reflect.Array:
+				marshaledV, err := json.Marshal(v)
+				if err != nil {
+					panic("could not marshal array")
+				}
+				attributes = append(attributes, &Attribute{
+					name,
+					"array",
 				})
-			} else if str, ok := v.(string); ok {
+				values = append(values, new(big.Int).SetBytes([]byte(marshaledV)))
+			case reflect.String:
 				attributes = append(attributes, &Attribute{
 					name,
 					"string",
 				})
-				values = append(values, new(big.Int).SetBytes([]byte(str)))
-			} else if f, ok := v.(float64); ok {
+				values = append(values, new(big.Int).SetBytes([]byte(reflected.String())))
+			case reflect.Float32, reflect.Float64:
 				var buf [8]byte
-				binary.BigEndian.PutUint64(buf[:], math.Float64bits(f))
+				binary.BigEndian.PutUint64(buf[:], math.Float64bits(reflected.Float()))
 				attributes = append(attributes, &Attribute{
 					name,
 					"float",
 				})
 				values = append(values, new(big.Int).SetBytes(buf[:]))
-			} else if f, ok := v.(bool); ok {
+			case reflect.Bool:
 				var value *big.Int
-				if f {
+				if reflected.Bool() {
 					value = new(big.Int).SetInt64(1)
 				} else {
 					value = new(big.Int).SetInt64(0)
@@ -115,12 +137,100 @@ func (claim *Claim) ToAttributes() ([]*Attribute, []*big.Int) {
 					"bool",
 				})
 				values = append(values, value)
-			} else {
-				panic("Unknown type")
+			default:
+				panic(fmt.Sprintf("unknown type %T", v))
 			}
 		}
 	}
 	sort.Sort(byName{attributes, values})
 
 	return attributes, values
+}
+
+func escapedSplit(s string, sep rune) []string {
+	backslash := '\\'
+	var slices []string
+	lastSplit := 0
+	backslashes := 0
+
+	if sep == backslash {
+		panic("sep must not equal '\\'")
+	}
+	for i, r := range s {
+		if r == sep && (backslashes == 0 || backslashes%2 == 0) {
+			// if the rune matches the separator and is not escaped create a new slice
+			slices = append(slices, s[lastSplit:i])
+			// i + 1 because we want to skip the `sep`
+			lastSplit = i + 1
+		} else if r == backslash {
+			// if we encountered a backslash, count it!
+			backslashes++
+		} else {
+			backslashes = 0
+		}
+	}
+	slices = append(slices, s[lastSplit:len(s)])
+	return slices
+}
+
+func unescape(s string, escaped rune) string {
+	newS := strings.ReplaceAll(s, `\`+string(escaped), string(escaped))
+	newS = strings.ReplaceAll(newS, `\\`, `\`)
+	return newS
+}
+
+func setNestedValue(m map[string]interface{}, key string, value interface{}) error {
+	parts := escapedSplit(key, []rune(SEPARATOR)[0])
+	for _, v := range parts[:len(parts)-1] {
+		key := unescape(v, []rune(SEPARATOR)[0])
+		if acc, ok := m[key]; ok {
+			if accMap, ok := acc.(map[string]interface{}); ok {
+				m = accMap
+			} else {
+				return errors.New("Could not set value (not a map)")
+			}
+		} else {
+			old := m
+			m = make(map[string]interface{})
+			old[key] = m
+		}
+	}
+	key = unescape(parts[len(parts)-1], []rune(SEPARATOR)[0])
+	m[key] = value
+	return nil
+}
+
+func reconstructClaim(disclosedAttributes map[int]*big.Int, attributes []*Attribute) (map[string]interface{}, error) {
+	claim := make(map[string]interface{})
+	for i, v := range disclosedAttributes {
+		// 0. attribute is private key of user and should never be disclosed
+		attr := attributes[i-1]
+		var err error
+		switch attr.Typename {
+		case "string":
+			err = setNestedValue(claim, attr.Name, string(v.Bytes()))
+		case "float":
+			bytes := v.Bytes()
+			// a float requires at least 8 bytes.
+			if len(bytes) < 8 {
+				return nil, fmt.Errorf("invalid big.Int for %q float value", attr.Name)
+			}
+			bits := binary.BigEndian.Uint64(bytes)
+			err = setNestedValue(claim, attr.Name, math.Float64frombits(bits))
+		case "bool":
+			err = setNestedValue(claim, attr.Name, v.Int64() != 0)
+		case "array":
+			var array []interface{}
+			err = json.Unmarshal(v.Bytes(), &array)
+			if err == nil {
+				err = setNestedValue(claim, attr.Name, array)
+			}
+		default:
+			err = setNestedValue(claim, attr.Name, hex.EncodeToString(v.Bytes()))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	return claim, nil
 }
