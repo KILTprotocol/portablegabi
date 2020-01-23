@@ -35,8 +35,8 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
-func buildCredential(t *testing.T, sysParams *gabi.SystemParameters, attester *credentials.Attester, claimer *credentials.Claimer, update *revocation.Update) (*credentials.Claim, *credentials.AttestedClaim) {
-	claim := &credentials.Claim{
+func buildCredential(t *testing.T, sysParams *gabi.SystemParameters, attester *credentials.Attester, claimer *credentials.Claimer, update *revocation.Update) (credentials.Claim, *credentials.AttestedClaim) {
+	claim := credentials.Claim{
 		"ctype": "0xDEADBEEFCOFEE",
 		"contents": map[string]interface{}{
 			"age":          34., // use float here, json will always parse numbers to float64
@@ -64,7 +64,7 @@ func buildCredential(t *testing.T, sysParams *gabi.SystemParameters, attester *c
 	return claim, cred
 }
 
-func verify(t *testing.T, attester *credentials.Attester, claimer *credentials.Claimer, cred *credentials.AttestedClaim, claim *credentials.Claim, accI uint64) {
+func verify(t *testing.T, attester *credentials.Attester, claimer *credentials.Claimer, cred *credentials.AttestedClaim, claim credentials.Claim, accI uint64) {
 	requestedAttr := [4]string{
 		"ctype",
 		"contents" + credentials.SEPARATOR + "age",
@@ -79,10 +79,10 @@ func verify(t *testing.T, attester *credentials.Attester, claimer *credentials.C
 	require.NoError(t, err, "Could not verify attributes")
 	contents, ok := attr["contents"].(map[string]interface{})
 	require.True(t, ok, "should be a map")
-	shouldContents, ok := (*claim)["contents"].(map[string]interface{})
+	shouldContents, ok := claim["contents"].(map[string]interface{})
 	require.True(t, ok, "should be a map")
 	require.Equal(t, shouldContents["age"], contents["age"])
-	require.Equal(t, (*claim)["ctype"], attr["ctype"])
+	require.Equal(t, claim["ctype"], attr["ctype"])
 	require.Equal(t, shouldContents["gender"], contents["gender"])
 	require.Equal(t, shouldContents["likedNumbers"], contents["likedNumbers"])
 	require.Nil(t, attr["contents.name"])
@@ -127,9 +127,16 @@ func TestCombinedPresentation(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
 
-	attester1, err := credentials.NewAttester(sysParams, 6, OneYear)
+	attester1 := &credentials.Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	err := json.Unmarshal(attesterPrivKey, attester1.PrivateKey)
+	require.NoError(t, err)
+	err = json.Unmarshal(attesterPubKey, attester1.PublicKey)
+	require.NoError(t, err)
 	gabi.GenerateRevocationKeypair(attester1.PrivateKey, attester1.PublicKey)
-	require.NoError(t, err, "Error in attester key generation")
+
 	update1, err := attester1.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
@@ -203,17 +210,17 @@ func TestBigCredential(t *testing.T) {
 	user, err := credentials.NewClaimer(sysParams)
 	require.NoError(t, err, "Error in user key generation")
 
-	claim := &credentials.Claim{
+	claim := credentials.Claim{
 		"ctype": "0xDEADBEEFCOFEE",
 		"contents": map[string]interface{}{
 			"age":     34., // use float here, json will always parse numbers to float64
-			"name":    RandStringRunes(1024 * 1024 * 1024),
+			"name":    RandStringRunes(1024 * 1024),
 			"gender":  "female",
 			"special": true,
 		},
 	}
 
-	attributes := (*claim).ToAttributes()
+	attributes := claim.ToAttributes()
 	require.Equal(t, len(attributes), 5, "Expected 6 attributes")
 
 	attesterSession, startSignMsg, err := attester.InitiateAttestation()
@@ -237,7 +244,7 @@ func TestBigCredential(t *testing.T) {
 
 	_, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
 	require.NoError(t, err, "Could not verify attributes")
-	require.Equal(t, (*claim)["ctype"], attr["ctype"], "ctype changed!")
+	require.Equal(t, claim["ctype"], attr["ctype"], "ctype changed!")
 
 	contents, ok := attr["contents"].(map[string]interface{})
 	require.True(t, ok, "should be a map")
@@ -274,7 +281,7 @@ func TestFullWorkflow(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Println("Claimer:", string(bts))
 
-	claim := &credentials.Claim{
+	claim := credentials.Claim{
 		"ctype": "0xDEADBEEFCOFEE",
 		"contents": map[string]interface{}{
 			"age": 34., // use float here, json will always parse numbers to float64
@@ -287,7 +294,7 @@ func TestFullWorkflow(t *testing.T) {
 		},
 	}
 
-	attributes := (*claim).ToAttributes()
+	attributes := claim.ToAttributes()
 	require.Equal(t, len(attributes), 5)
 
 	attesterSession, startSignMsg, err := attester.InitiateAttestation()
@@ -413,9 +420,16 @@ func TestForgedCombinedPresentation(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
 
-	attester1, err := credentials.NewAttester(sysParams, 6, OneYear)
+	attester1 := &credentials.Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	err := json.Unmarshal(attesterPrivKey, attester1.PrivateKey)
+	require.NoError(t, err)
+	err = json.Unmarshal(attesterPubKey, attester1.PublicKey)
+	require.NoError(t, err)
 	gabi.GenerateRevocationKeypair(attester1.PrivateKey, attester1.PublicKey)
-	require.NoError(t, err, "Error in attester key generation")
+
 	update1, err := attester1.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 

@@ -51,7 +51,7 @@ func TestReconstructClaim(t *testing.T) {
 	for i, v := range disclosedAttr {
 		attr[i] = v
 	}
-	claim, err := reconstructClaim(attr)
+	claim, err := claimFromBigInts(attr)
 	require.NoError(t, err)
 	require.Contains(t, claim, "ctype")
 	require.Contains(t, claim, "contents")
@@ -69,7 +69,7 @@ func TestReconstructClaimFailed(t *testing.T) {
 	err := json.Unmarshal(byteDisclosedAttr, &disclosedAttr)
 	require.NoError(t, err)
 
-	claim, err := reconstructClaim(disclosedAttr)
+	claim, err := claimFromBigInts(disclosedAttr)
 	require.Error(t, err)
 	require.Nil(t, claim)
 }
@@ -84,7 +84,7 @@ func TestReconstructClaimArray(t *testing.T) {
 	for i, v := range disclosedAttr {
 		attr[i] = v
 	}
-	claim, err := reconstructClaim(attr)
+	claim, err := claimFromBigInts(attr)
 	require.NoError(t, err)
 	require.Contains(t, claim, "ctype")
 	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
@@ -100,7 +100,7 @@ func TestReconstructClaimFloat(t *testing.T) {
 	for i, v := range disclosedAttr {
 		attr[i] = v
 	}
-	claim, err := reconstructClaim(attr)
+	claim, err := claimFromBigInts(attr)
 	require.NoError(t, err)
 	require.Contains(t, claim, "ctype")
 	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
@@ -116,46 +116,12 @@ func TestReconstructClaimString(t *testing.T) {
 	for i, v := range disclosedAttr {
 		attr[i] = v
 	}
-	claim, err := reconstructClaim(attr)
+	claim, err := claimFromBigInts(attr)
 	require.NoError(t, err)
 	require.Contains(t, claim, "ctype")
 	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
 }
 
-func TestEscapedSplit(t *testing.T) {
-	a := "asdfasdf"
-	b := "oipoi23o"
-	c := "界a界世" // hopefully not an insult!
-
-	seq := escapedSplit(a+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a, b, c}, seq)
-
-	seq = escapedSplit(a+"\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\" + SEPARATOR + b, c}, seq)
-
-	seq = escapedSplit(a+"\\\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\\\", b, c}, seq)
-
-	seq = escapedSplit(a+"\\\\\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\\\\\" + SEPARATOR + b, c}, seq)
-
-	seq = escapedSplit(a+"\t\t\t\t"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\t\t\t\t", b, c}, seq)
-
-	seq = escapedSplit(a+"\\t\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\t\\" + SEPARATOR + b, c}, seq)
-
-	seq = escapedSplit(SEPARATOR+SEPARATOR+c+SEPARATOR, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{"", "", c, ""}, seq)
-
-	seq = escapedSplit(SEPARATOR+c+SEPARATOR+SEPARATOR, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{"", c, "", ""}, seq)
-}
-
-func TestSeparator(t *testing.T) {
-	// SEPARATOR must be exactly one char long
-	require.Equal(t, 1, len([]rune(SEPARATOR)))
-}
 
 func TestGetAttributeIndices(t *testing.T) {
 	cred := &AttestedClaim{}

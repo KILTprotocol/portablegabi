@@ -14,7 +14,7 @@ import (
 // the attestation of claims
 type UserIssuanceSession struct {
 	Cb    *gabi.CredentialBuilder `json:"cb"`
-	Claim *Claim                  `json:"claim"`
+	Claim Claim                   `json:"claim"`
 }
 
 // Claimer contains information about the claimer.
@@ -45,7 +45,7 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 
 // RequestAttestationForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
 // The request should be send to the attester.
-func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *AttestedClaimRequest, error) {
+func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim Claim) (*UserIssuanceSession, *AttestedClaimRequest, error) {
 	nonce, err := common.RandomBigInt(attesterPubK.Params.Lstatzk)
 	if err != nil {
 		return nil, nil, err
@@ -58,7 +58,7 @@ func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, st
 			claim,
 		}, &AttestedClaimRequest{
 			CommitMsg: commitMsg,
-			Claim:     *claim,
+			Claim:     claim,
 		}, nil
 }
 

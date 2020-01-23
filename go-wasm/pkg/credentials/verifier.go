@@ -82,7 +82,7 @@ func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *Presentati
 	success := !session.ReqNonRevocationProof || checkAccumulatorInProof(issuerPubK, session.ReqMinIndex, &signedAttributes.Proof)
 	success = success && signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false)
 	if success {
-		claim, err := reconstructClaim(signedAttributes.Proof.ADisclosed)
+		claim, err := claimFromBigInts(signedAttributes.Proof.ADisclosed)
 		if err != nil {
 			return false, nil, err
 		}
@@ -102,7 +102,7 @@ func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, combinedPrese
 		// check each proof: revocation has to be ok and accumulator fresh enough
 		if proofD, ok := genericP.(*gabi.ProofD); ok {
 			partialReq := session.PartialRequests[i]
-			claim, err := reconstructClaim(proofD.ADisclosed)
+			claim, err := claimFromBigInts(proofD.ADisclosed)
 			claims[i] = claim
 			if err != nil {
 				return false, nil, err

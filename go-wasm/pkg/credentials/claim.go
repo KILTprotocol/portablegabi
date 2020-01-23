@@ -22,6 +22,17 @@ const SEPARATOR = "."
 type (
 	// Claim contains the attributes the claimer claims to possess. Contents should
 	// be structures according to the specified ctype.
+	//
+	// A claim represents any valid json data. Claims are represented using a
+	// map[string]interface{}. In order to build a credential from a claim, the
+	// claim needs to be transformed into an array of attributes. This is done using
+	// the following scheme:
+	// 1. go through the claim (map[string]interface{})
+	//    for each simple time or array: transform the value into bytes and store
+	//    it together with type and path (inside the json "tree").
+	//    We receive a list of attributes
+	// 2. transform each of these attributes into a big.Int
+	//    big.Int := bytes(Len(Name)|Name|len(Type)|type|len(value)|value)
 	Claim map[string]interface{}
 
 	// Attribute describes an attribute. It specifies the name and the type of the
@@ -37,18 +48,42 @@ type (
 	// disclose specific attributes to the verifier.
 	AttestedClaim struct {
 		Credential *gabi.Credential `json:"credential"`
-		Claim      *Claim           `json:"claim"`
+		Claim      Claim            `json:"claim"`
 	}
 
 	// nestedObject is used to describe a nested object inside a claim.
 	nestedObject struct {
 		prefix  string
-		content *Claim
+		content Claim
 	}
 )
 
+func (credential *AttestedClaim) getAttributeIndices(reqAttributes []string) ([]int, error) {
+	// make sure attributes are unique
+	reqAttributes, _ = sortRemoveDuplicates(reqAttributes)
+
+	indices := make([]int, len(reqAttributes))
+	attributes := credential.Claim.ToAttributes()
+	i := 0
+
+	// assert: attestedClaim.Attributes and reqAttributes are sorted!
+	for attrI, v := range attributes {
+		if i < len(reqAttributes) && strings.Compare(reqAttributes[i], v.Name) == 0 {
+			// first attribute inside the credential is the secret key.
+			// the real attributes start at index 1
+			indices[i] = attrI + 1
+			i++
+		}
+	}
+
+	if i < len(reqAttributes) {
+		return nil, fmt.Errorf("could not find attribute with name '%s'", reqAttributes[i])
+	}
+	return indices, nil
+}
+
 // ToAttributes transforms a claim struct to a list of attributes. The returned list is sorted by name.
-func (claim *Claim) ToAttributes() []*Attribute {
+func (claim Claim) ToAttributes() []*Attribute {
 	var attributes []*Attribute
 
 	queue := list.New()
@@ -61,7 +96,7 @@ func (claim *Claim) ToAttributes() []*Attribute {
 		elem := queue.Front()
 		queue.Remove(elem)
 		jsonObj := elem.Value.(*nestedObject)
-		for n, v := range *jsonObj.content {
+		for n, v := range jsonObj.content {
 			var name string
 			n = escape(n, []rune(SEPARATOR)[0])
 			if jsonObj.prefix != "" {
@@ -76,12 +111,12 @@ func (claim *Claim) ToAttributes() []*Attribute {
 				if m, ok := v.(Claim); ok {
 					queue.PushBack(&nestedObject{
 						prefix:  name,
-						content: &m,
+						content: m,
 					})
 				} else if m, ok := v.(map[string]interface{}); ok {
 					queue.PushBack(&nestedObject{
 						prefix:  name,
-						content: (*Claim)(&m),
+						content: (Claim)(m),
 					})
 				} else {
 					panic(fmt.Sprintf("unsupported map type %T", v))
@@ -149,7 +184,7 @@ func (claim *Claim) toBigInts() ([]*big.Int, error) {
 	return ints, nil
 }
 
-func reconstructClaim(disclosedAttributes map[int]*big.Int) (Claim, error) {
+func claimFromBigInts(disclosedAttributes map[int]*big.Int) (Claim, error) {
 	claim := make(Claim)
 	for _, v := range disclosedAttributes {
 		// 0. attribute is private key of user and should never be disclosed
@@ -251,53 +286,6 @@ func (p *Attribute) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func escapedSplit(s string, sep rune) []string {
-	slices := escapedSplitBytes([]byte(s), (byte)(sep))
-	strSlices := make([]string, len(slices))
-	for i, s := range slices {
-		strSlices[i] = string(s)
-	}
-	return strSlices
-}
-
-func escapedSplitBytes(s []byte, sep byte) [][]byte {
-	backslash := `\`[0]
-	var slices [][]byte
-	lastSplit := 0
-	backslashes := 0
-
-	if sep == backslash {
-		panic("sep must not equal '\\'")
-	}
-	for i, r := range s {
-		if r == sep && (backslashes == 0 || backslashes%2 == 0) {
-			// if the rune matches the separator and is not escaped create a new slice
-			slices = append(slices, s[lastSplit:i])
-			// i + 1 because we want to skip the `sep`
-			lastSplit = i + 1
-		} else if r == backslash {
-			// if we encountered a backslash, count it!
-			backslashes++
-		} else {
-			backslashes = 0
-		}
-	}
-	slices = append(slices, s[lastSplit:len(s)])
-	return slices
-}
-
-func unescape(s string, escaped rune) string {
-	newS := strings.ReplaceAll(s, `\`+string(escaped), string(escaped))
-	newS = strings.ReplaceAll(newS, `\\`, `\`)
-	return newS
-}
-
-func escape(s string, escaped rune) string {
-	newS := strings.ReplaceAll(s, `\`, `\\`)
-	newS = strings.ReplaceAll(newS, string(escaped), `\`+string(escaped))
-	return newS
-}
-
 func setNestedValue(m map[string]interface{}, key string, value interface{}) error {
 	parts := escapedSplit(key, []rune(SEPARATOR)[0])
 	for _, v := range parts[:len(parts)-1] {
@@ -335,28 +323,4 @@ func sortRemoveDuplicates(slice []string) ([]string, bool) {
 		}
 	}
 	return slice[:n], wasUnique
-}
-
-func (credential *AttestedClaim) getAttributeIndices(reqAttributes []string) ([]int, error) {
-	// make sure attributes are unique
-	reqAttributes, _ = sortRemoveDuplicates(reqAttributes)
-
-	indices := make([]int, len(reqAttributes))
-	attributes := credential.Claim.ToAttributes()
-	i := 0
-
-	// assert: attestedClaim.Attributes and reqAttributes are sorted!
-	for attrI, v := range attributes {
-		if i < len(reqAttributes) && strings.Compare(reqAttributes[i], v.Name) == 0 {
-			// first attribute inside the credential is the secret key.
-			// the real attributes start at index 1
-			indices[i] = attrI + 1
-			i++
-		}
-	}
-
-	if i < len(reqAttributes) {
-		return nil, fmt.Errorf("could not find attribute with name '%s'", reqAttributes[i])
-	}
-	return indices, nil
 }

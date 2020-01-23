@@ -41,7 +41,7 @@ func TestRequestSignature(t *testing.T) {
 	err = json.Unmarshal(attesterPubKey, publicKey)
 	require.NoError(t, err)
 
-	claim := &Claim{
+	claim := Claim{
 		"ctype": "0xDEADBEEFCOFEE",
 		"contents": map[string]interface{}{
 			"age":     34., // use float here, json will always parse numbers to float64
