@@ -1,13 +1,9 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
-import runTestSetup from '../testSetup/testSetup'
+import runTestSetup, { issuanceSetup } from '../testSetup/testSetup'
 import GabiClaimer from './GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
-import {
-  claim,
-  numOfClaimKeys,
-  disclosedAttributes,
-} from '../testSetup/testConfig'
+import { claim, numOfClaimKeys } from '../testSetup/testConfig'
 import {
   ICredential,
   IIssueAttestation,
@@ -28,8 +24,7 @@ import {
   Credential,
   Presentation,
 } from '../types/Claim'
-import GabiVerifier from '../verification/GabiVerifier'
-import { VerificationSession, PresentationRequest } from '../types/Verification'
+import { PresentationRequest } from '../types/Verification'
 
 async function buildCredentialError(
   claimer: GabiClaimer,
@@ -44,8 +39,6 @@ async function buildCredentialError(
       claimerSignSession,
     })
   ).rejects.toThrowError('Proof of correctness on signature does not verify')
-  expect(spy.error).not.toHaveBeenCalled()
-  expect(spy.exit).not.toHaveBeenCalled()
   return errCount + 1
 }
 
@@ -63,7 +56,7 @@ describe('Test claimer creation', () => {
     const claimer = await GabiClaimer.buildFromScratch()
     expect(claimer).toHaveProperty('secret')
     expect(gabiClaimer).toHaveProperty('secret')
-    expect(claimer).not.toMatchObject(gabiClaimer)
+    expect(claimer).not.toBe(gabiClaimer)
   })
   it('Builds claimer from empty mnemonic seed', async () => {
     const claimer = await GabiClaimer.buildFromMnemonic('')
@@ -71,7 +64,7 @@ describe('Test claimer creation', () => {
       'secret',
       '{"MasterSecret":"HdWjkfn17XNA/01FE6q5zORPlJel5+2F/YGIdrbrQC4="}'
     )
-    expect(claimer).not.toMatchObject(gabiClaimer)
+    expect(claimer).not.toBe(gabiClaimer)
   })
   it('Builds claimer from non-empty mnemonic seed', async () => {
     const claimer = await GabiClaimer.buildFromMnemonic(
@@ -81,7 +74,7 @@ describe('Test claimer creation', () => {
       'secret',
       '{"MasterSecret":"ZaWdr/rKSi4/cZNZbsZlMtx71K1foTFbp/QUJXMsrbk="}'
     )
-    expect(claimer).not.toMatchObject(gabiClaimer)
+    expect(claimer).not.toBe(gabiClaimer)
   })
 })
 
@@ -109,7 +102,6 @@ describe('Test claimer functionality', () => {
   }
   let aSignature2: Attestation
   let credential: Credential
-  let verifierSession: VerificationSession
   let presentationReq: PresentationRequest
   let proof: Presentation
 
@@ -136,9 +128,6 @@ describe('Test claimer functionality', () => {
       credential,
       proof,
       presentationReq,
-      verifierSession,
-      // verifiedClaim,
-      // verified,
     } = await runTestSetup())
     claimerSessions = [
       claimerSignSession,
@@ -156,6 +145,8 @@ describe('Test claimer functionality', () => {
     }
   })
   afterEach(() => {
+    expect(spy.exit).not.toHaveBeenCalled()
+    expect(spy.error).not.toHaveBeenCalled()
     spy.error.mockRestore()
     spy.exit.mockRestore()
   })
@@ -185,8 +176,6 @@ describe('Test claimer functionality', () => {
         claimerSignSession,
       })
       expect(cred).toBeDefined()
-      expect(spy.error).not.toHaveBeenCalled()
-      expect(spy.exit).not.toHaveBeenCalled()
     })
     it('Should build credential for gabiAttester2', async () => {
       const cred = await gabiClaimer.buildCredential({
@@ -194,8 +183,6 @@ describe('Test claimer functionality', () => {
         claimerSignSession: claimerSignSession2,
       })
       expect(cred).toBeDefined()
-      expect(spy.error).not.toHaveBeenCalled()
-      expect(spy.exit).not.toHaveBeenCalled()
     })
     it('Checks for correct data in buildCredential', async () => {
       const cred = await gabiClaimer.buildCredential({
@@ -234,7 +221,6 @@ describe('Test claimer functionality', () => {
       const proofObj: IProof = JSON.parse(proof.valueOf())
       const sigObj: IIssueAttestation = JSON.parse(aSignature.valueOf())
       expect(proofObj.attributes).toHaveLength(numOfClaimKeys)
-      // TODO: verify this
       expect(proofObj.proof.A).not.toEqual(sigObj.signature.A)
       expect(proofObj.proof.e_response).not.toEqual(sigObj.proof.e_response)
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)
@@ -257,7 +243,6 @@ describe('Test claimer functionality', () => {
       )
       const { Updated: nonUpdatedDate } = credObj.credential.nonrevWitness
       const { Updated: updatedDate } = cred2Obj.credential.nonrevWitness
-
       expect(nonUpdatedDate).not.toStrictEqual(updatedDate)
       expect(new Date(nonUpdatedDate).getTime()).toBeLessThan(
         new Date(updatedDate).getTime()
@@ -287,67 +272,65 @@ describe('Test claimer functionality', () => {
           update: new Accumulator(revUpdate),
         })
       ).rejects.toThrowError('revoked')
-      // try {
-      //   await gabiClaimer.updateCredential({
-      //     credential,
-      //     attesterPubKey: gabiAttester.getPubKey(),
-      //     update: new Accumulator(revUpdate),
-      //   })
-      // } catch (e) {
-      //   expect(e.message).toBe('revoked')
-      // }
-      // const updatedCredential = await gabiClaimer.updateCredential({
-      //   credential,
-      //   attesterPubKey: gabiAttester.getPubKey(),
-      //   update: new Accumulator(revUpdate),
-      // })
-      // console.log('hi')
-
-      // expect(updatedCredential).toBeUndefined()
-      // console.log(updatedCredential)
-      // const {
-      //   verified: revVerified,
-      //   verifiedClaim: revVerifiedClaim,
-      // } = await verifySetup(
-      //   gabiClaimer,
-      //   gabiAttester,
-      //   new Credential(updatedCredential),
-      //   disclosedAttributes,
-      //   1
-      // )
-      // console.log('hi')
-      // expect(revVerified).toBeFalsy()
-      // expect(revVerifiedClaim).toBeUndefined()
+    })
+    it('Should not throw when two claimers interchange credential', async () => {
+      // reason: credential is a secret one should not share
+      const gabiClaimer2 = await GabiClaimer.buildFromScratch()
+      const sameCredFromOtherClaimer = await gabiClaimer2.buildCredential({
+        claimerSignSession,
+        attestation: aSignature,
+      })
+      expect(sameCredFromOtherClaimer).toEqual(expect.anything())
+      const { credential: diffCredFromOtherClaimer } = await issuanceSetup(
+        gabiClaimer2,
+        gabiAttester,
+        update,
+        JSON.stringify(claim)
+      )
+      expect(diffCredFromOtherClaimer).toEqual(expect.anything())
+      await expect(
+        gabiClaimer.updateCredential({
+          credential: diffCredFromOtherClaimer,
+          attesterPubKey: gabiAttester.getPubKey(),
+          update,
+        })
+      ).resolves.toEqual(expect.anything())
     })
   })
 
   // run tests on invalid data
-  describe('Checks invalid data', () => {
-    it('Should throw for signature from wrong attester (gabiAttester)', () => {
+  describe('Checks invalid/tampered data', () => {
+    it('Should throw in buildCredential for incorrect (session, signature) combination', async () => {
+      await buildCredentialError(
+        gabiClaimer,
+        aSignature, // attester 1
+        claimerSignSession2, // attester 2
+        spy
+      )
       return buildCredentialError(
         gabiClaimer,
-        aSignature,
-        claimerSignSession2,
+        aSignature2, // attester 2
+        claimerSignSession, // attester 1
         spy
       )
     })
-    it('Should throw for signature from wrong attester (gabiAttester2)', () => {
-      return buildCredentialError(
-        gabiClaimer,
-        aSignature2,
-        claimerSignSession,
-        spy
-      )
-    })
-    it('Should throw', async () => {
+    it('Should throw for 27 of all 28 instances of mixed signatures', async () => {
       let errCounter = 1
       for (const attestation of invalidSignatures) {
         for (const session of claimerSessions) {
+          // there is exactly one possiblity to build a credential from the sessions and signatures
           if (
-            attestation !== validSignatureBuildCredential.attestation &&
-            claimerSessions[3] !==
-              validSignatureBuildCredential.claimerSignSession
+            attestation === validSignatureBuildCredential.attestation &&
+            session === validSignatureBuildCredential.claimerSignSession
           ) {
+            const validCred = await gabiClaimer.buildCredential({
+              attestation: validSignatureBuildCredential.attestation,
+              claimerSignSession:
+                validSignatureBuildCredential.claimerSignSession,
+            })
+            expect(validCred).toBeDefined()
+            expect(validCred.length).toBeGreaterThan(10)
+          } else {
             errCounter = await buildCredentialError(
               gabiClaimer,
               attestation,
@@ -356,51 +339,8 @@ describe('Test claimer functionality', () => {
               errCounter
             )
           }
-          // TODO: why does this throw an error here but not when ignoring the if-case?
-          // else {
-          //   const validCred = await gabiClaimer.buildCredential({
-          //     attestation: validSignatureBuildCredential.attestation,
-          //     claimerSignSession:
-          //       validSignatureBuildCredential.claimerSignSession,
-          //   })
-          //   expect(validCred).toBeDefined()
-          //   expect(validCred.length).toBeGreaterThan(10)
-          // }
         }
       }
-    })
-    it.todo('incorrect buildPresentation')
-    it.todo('incorrect updateCredential')
-    it('Should throw on updateCredential with pubkey from different attester', async () => {
-      await expect(
-        gabiClaimer.updateCredential({
-          credential,
-          attesterPubKey: gabiAttester2.getPubKey(),
-          update,
-        })
-      ).rejects.toThrow('ecdsa signature was invalid')
-      // ).rejects.toThrow('Could not update credential')
-      expect(spy.error).toHaveBeenCalledTimes(0)
-    })
-    it('Should throw on updateCredential with update from different attester', async () => {
-      await expect(
-        gabiClaimer.updateCredential({
-          credential,
-          attesterPubKey: gabiAttester.getPubKey(),
-          update: update2,
-        })
-      ).rejects.toThrow('ecdsa signature was invalid')
-      expect(spy.error).toHaveBeenCalledTimes(0)
-    })
-    it('Should throw on updateCredential with update + pubkey from different attester', async () => {
-      await expect(
-        gabiClaimer.updateCredential({
-          credential,
-          attesterPubKey: gabiAttester2.getPubKey(),
-          update: update2,
-        })
-      ).rejects.toThrow('ecdsa signature was invalid')
-      expect(spy.error).toHaveBeenCalledTimes(0)
     })
     it('Should throw on buildPresentation with pubkey from different attester', async () => {
       await expect(
@@ -410,36 +350,33 @@ describe('Test claimer functionality', () => {
           attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
         })
       ).rejects.toThrow('ecdsa signature was invalid')
-      expect(spy.error).toHaveBeenCalledTimes(0)
     })
-    it('Should throw on verifyPresentation with mixed requestPresentations', async () => {
-      // session 2
-      const {
-        message: presentationReq2,
-      } = await GabiVerifier.requestPresentation({
-        requestedAttributes: disclosedAttributes,
-        requestNonRevocationProof: true,
-        minIndex: 1,
-      })
-      const proof2 = await gabiClaimer.buildPresentation({
-        credential,
-        presentationReq: presentationReq2, // from 2nd session
-        attesterPubKey: gabiAttester.getPubKey(),
-      })
-      expect(proof2).toBeDefined()
-      const {
-        claim: verifiedClaim,
-        verified,
-      } = await GabiVerifier.verifyPresentation({
-        proof: proof2, // from 2nd session
-        verifierSession, // from 1st session
-        attesterPubKey: gabiAttester.getPubKey(),
-      })
-      expect(verified).toBeTruthy() // FIXME: Remove after fix
-      expect(verifiedClaim).toBeNull() // FIXME: Remove after fix
-      // expect(verified).toBeFalsy() // FIXME: Should hold true @weichweich
-      // expect(spy.error).toHaveBeenCalledTimes(1) // FIXME: Should hold true
-      // expect(spy.error).toHaveBeenCalledWith('ecdsa signature was invalid') // FIXME: Should hold true
+    it('Should throw on updateCredential with pubkey from different attester', async () => {
+      await expect(
+        gabiClaimer.updateCredential({
+          credential,
+          attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
+          update,
+        })
+      ).rejects.toThrow('ecdsa signature was invalid')
+    })
+    it('Should throw on updateCredential with update from different attester', async () => {
+      await expect(
+        gabiClaimer.updateCredential({
+          credential,
+          attesterPubKey: gabiAttester.getPubKey(),
+          update: update2, // should be gabiAttester to be valid
+        })
+      ).rejects.toThrow('ecdsa signature was invalid')
+    })
+    it('Should throw on updateCredential with update + pubkey from different attester', async () => {
+      await expect(
+        gabiClaimer.updateCredential({
+          credential,
+          attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
+          update: update2, // should be gabiAttester to be valid
+        })
+      ).rejects.toThrow('ecdsa signature was invalid')
     })
   })
 })
