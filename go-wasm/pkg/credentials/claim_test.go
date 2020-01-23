@@ -36,44 +36,90 @@ func TestSetNestedValueFailed(t *testing.T) {
 }
 
 func TestReconstructClaim(t *testing.T) {
-	byteDisclosedAttr := []byte(`{"1":"QEEAAAAAAAA=","2":"ZmVtYWxl","4":"AQ==","5":"MHhERUFEQkVFRkNPRkVF"}`)
-	byteAttr := []byte(`[{"name":"contents.a\\.g\\\\e","typename":"float"},{"name":"contents.gender","typename":"string"},{"name":"contents.name","typename":"string"},{"name":"contents.special","typename":"bool"},{"name":"ctype","typename":"string"}]`)
-
-	disclosedAttr := make(map[int]*big.Int)
-	err := json.Unmarshal(byteDisclosedAttr, &disclosedAttr)
+	oldClaim := &Claim{
+		"ctype": "0xDEADBEEFCOFEE",
+		"contents": map[string]interface{}{
+			"a.g\\e":       34., // use float here, json will always parse numbers to float64
+			"name":         "Berta",
+			"special":      true,
+			"likedNumbers": []interface{}{1., 2., 3.},
+		},
+	}
+	disclosedAttr, err := oldClaim.toBigInts()
 	require.NoError(t, err)
-
-	attr := []*Attribute{}
-	err = json.Unmarshal(byteAttr, &attr)
-	require.NoError(t, err)
-
-	claim, err := reconstructClaim(disclosedAttr, attr)
+	attr := make(map[int]*big.Int)
+	for i, v := range disclosedAttr {
+		attr[i] = v
+	}
+	claim, err := reconstructClaim(attr)
 	require.NoError(t, err)
 	require.Contains(t, claim, "ctype")
 	require.Contains(t, claim, "contents")
 	require.Contains(t, claim["contents"], "a.g\\e")
-	require.Contains(t, claim["contents"], "gender")
 	content, ok := claim["contents"].(map[string]interface{})
 	require.True(t, ok)
-	require.Equal(t, content["a.g\\e"], 34.)
-	require.Equal(t, content["gender"], "female")
+	require.Equal(t, 34., content["a.g\\e"])
+	require.Equal(t, true, content["special"])
 }
 
 func TestReconstructClaimFailed(t *testing.T) {
-	byteDisclosedAttr := []byte(`{"1":"QEEAAAA=","2":"ZmVtYWxl","4":"AQ==","5":"MHhERUFEQkVFRkNPRkVF"}`)
-	byteAttr := []byte(`[{"name":"contents.age","typename":"float"},{"name":"contents.gender","typename":"string"},{"name":"contents.name","typename":"string"},{"name":"contents.special","typename":"bool"},{"name":"ctype","typename":"string"}]`)
+	byteDisclosedAttr := []byte(`{"1":"DGNvbnRlbnRzLmFnZQAAAAAAAAAFZmxvYXQAAAAAAAAACEBBAAAAAAAA","2":"D2NvbnRlbnRzLmdlbmRlcgAAAAAAAAAGc3RyaW5nAAAAAAAAAAZmZW1hbGU=","3":"DWNvbnRlbnRzLm5hbWUAAAAAAAAABWFycmF5AAAAAAAAABNbeyJhIjoxLCJiIjoyfSwyLDNd","4":"EGNvbnRlbnRzLnNwZWNpYWwAAAAAAAAABGJvb2wAAAAAAAAAAQE="}`)
 
 	disclosedAttr := make(map[int]*big.Int)
 	err := json.Unmarshal(byteDisclosedAttr, &disclosedAttr)
 	require.NoError(t, err)
 
-	attr := []*Attribute{}
-	err = json.Unmarshal(byteAttr, &attr)
-	require.NoError(t, err)
-
-	claim, err := reconstructClaim(disclosedAttr, attr)
+	claim, err := reconstructClaim(disclosedAttr)
 	require.Error(t, err)
 	require.Nil(t, claim)
+}
+
+func TestReconstructClaimArray(t *testing.T) {
+	oldClaim := &Claim{
+		"ctype": []interface{}{1., 2., 3.},
+	}
+	disclosedAttr, err := oldClaim.toBigInts()
+	require.NoError(t, err)
+	attr := make(map[int]*big.Int)
+	for i, v := range disclosedAttr {
+		attr[i] = v
+	}
+	claim, err := reconstructClaim(attr)
+	require.NoError(t, err)
+	require.Contains(t, claim, "ctype")
+	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
+}
+
+func TestReconstructClaimFloat(t *testing.T) {
+	oldClaim := &Claim{
+		"ctype": 9999.9,
+	}
+	disclosedAttr, err := oldClaim.toBigInts()
+	require.NoError(t, err)
+	attr := make(map[int]*big.Int)
+	for i, v := range disclosedAttr {
+		attr[i] = v
+	}
+	claim, err := reconstructClaim(attr)
+	require.NoError(t, err)
+	require.Contains(t, claim, "ctype")
+	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
+}
+
+func TestReconstructClaimString(t *testing.T) {
+	oldClaim := &Claim{
+		"ctype": "9999.9",
+	}
+	disclosedAttr, err := oldClaim.toBigInts()
+	require.NoError(t, err)
+	attr := make(map[int]*big.Int)
+	for i, v := range disclosedAttr {
+		attr[i] = v
+	}
+	claim, err := reconstructClaim(attr)
+	require.NoError(t, err)
+	require.Contains(t, claim, "ctype")
+	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
 }
 
 func TestEscapedSplit(t *testing.T) {
@@ -109,4 +155,78 @@ func TestEscapedSplit(t *testing.T) {
 func TestSeparator(t *testing.T) {
 	// SEPARATOR must be exactly one char long
 	require.Equal(t, 1, len([]rune(SEPARATOR)))
+}
+
+func TestGetAttributeIndices(t *testing.T) {
+	cred := &AttestedClaim{}
+	err := json.Unmarshal(byteCredentials, cred)
+	require.NoError(t, err)
+
+	indice, err := cred.getAttributeIndices([]string{
+		"ctype",
+		"contents.age",
+		"contents.gender",
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, []int{1, 2, 5}, indice)
+}
+
+func TestMissingAttribute(t *testing.T) {
+	req := &PartialPresentationRequest{
+		ReqNonRevocationProof: true,
+		ReqMinIndex:           1,
+		RequestedAttributes: []string{
+			"ctype",
+			"contents.age",
+			"contents.gesdfer",
+		},
+	}
+
+	cred := &AttestedClaim{}
+	err := json.Unmarshal(byteUserSession, cred)
+	require.NoError(t, err)
+
+	indice, err := cred.getAttributeIndices(req.RequestedAttributes)
+	assert.Error(t, err)
+	assert.Nil(t, indice)
+}
+
+func TestSortRemoveDuplicates(t *testing.T) {
+	sliceA := []string{"a", "c", "b"}
+	sorted, unique := sortRemoveDuplicates(sliceA)
+	assert.True(t, unique)
+	assert.Equal(t, []string{"a", "b", "c"}, sorted)
+	sorted, unique = sortRemoveDuplicates(append(sliceA, sliceA...))
+	assert.False(t, unique)
+	assert.Equal(t, []string{"a", "b", "c"}, sorted)
+}
+
+func TestMarshallAttribute(t *testing.T) {
+	attr := Attribute{
+		Name:     "alsfjölkajsdöf",
+		Typename: "界a界世",
+		Value:    big.NewInt(8218926378).Bytes(),
+	}
+	bytes, err := attr.MarshalBinary()
+	require.NoError(t, err)
+	buildAttr := Attribute{}
+	err = buildAttr.UnmarshalBinary(bytes)
+	require.NoError(t, err)
+	require.Equal(t, attr, buildAttr)
+}
+
+func TestMarshallAttributeBigInt(t *testing.T) {
+	attr := Attribute{
+		Name:     "alsfjölkajsdöf",
+		Typename: "界a界世",
+		Value:    big.NewInt(8218926378).Bytes(),
+	}
+	bytes, err := attr.MarshalBinary()
+	require.NoError(t, err)
+	bInt := new(big.Int).SetBytes(bytes)
+	require.Equal(t, bytes, bInt.Bytes())
+	buildAttr := Attribute{}
+	err = buildAttr.UnmarshalBinary(bInt.Bytes())
+	require.NoError(t, err)
+	require.Equal(t, attr, buildAttr)
 }

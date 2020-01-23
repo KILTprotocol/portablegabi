@@ -17,7 +17,7 @@ type (
 	// to the StartSessionMsg. It contains the values which should get attested.
 	AttestedClaimRequest struct {
 		CommitMsg *gabi.IssueCommitmentMessage `json:"commitMsg"`
-		Values    []*big.Int                   `json:"values"`
+		Claim     Claim                        `json:"claim"`
 	}
 
 	// PresentationRequest is send from the verifier to the claimer. The
@@ -42,21 +42,15 @@ type (
 		Nonce           *big.Int                     `json:"nonce"`
 	}
 
-	// PartialPresentationResponse contains a description of all disclosed attributes
-	PartialPresentationResponse []*Attribute
-
 	// PresentationResponse represents the message that is send from the claimer to the verifier in order to disclose attributes.
 	// All disclosed attributes are inside the Proof. There should be no attributes elsewhere.
 	PresentationResponse struct {
-		Proof      *gabi.ProofD                `json:"proof"`
-		Attributes PartialPresentationResponse `json:"attributes"`
+		Proof gabi.ProofD `json:"proof"`
 	}
 
-	// CombinedPresentationResponse contains a list of proofs and a list of
-	// partialPresentationResponses. It can be used to reconstruct multiple
-	// claims.
+	// CombinedPresentationResponse contains a list of proofs. It can be used to
+	// reconstruct multiple claims.
 	CombinedPresentationResponse struct {
-		Proof      *gabi.ProofList               `json:"prooflist"`
-		Attributes []PartialPresentationResponse `json:"partialPresentations"`
+		Proof gabi.ProofList `json:"prooflist"`
 	}
 )

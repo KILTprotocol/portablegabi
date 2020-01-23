@@ -79,10 +79,10 @@ func checkAccumulatorInProof(issuerPubK *gabi.PublicKey, minIndex uint64, proof 
 
 // VerifyPresentation verifies the response of a claimer and returns the disclosed attributes.
 func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *PresentationResponse, session *VerifierSession) (bool, map[string]interface{}, error) {
-	success := !session.ReqNonRevocationProof || checkAccumulatorInProof(issuerPubK, session.ReqMinIndex, signedAttributes.Proof)
+	success := !session.ReqNonRevocationProof || checkAccumulatorInProof(issuerPubK, session.ReqMinIndex, &signedAttributes.Proof)
 	success = success && signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false)
 	if success {
-		claim, err := reconstructClaim(signedAttributes.Proof.ADisclosed, signedAttributes.Attributes)
+		claim, err := reconstructClaim(signedAttributes.Proof.ADisclosed)
 		if err != nil {
 			return false, nil, err
 		}
@@ -97,12 +97,12 @@ func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, combinedPrese
 	if !success {
 		return false, nil, nil
 	}
-	claims := make([]map[string]interface{}, len(combinedPresentation.Attributes))
-	for i, genericP := range *combinedPresentation.Proof {
+	claims := make([]map[string]interface{}, len(combinedPresentation.Proof))
+	for i, genericP := range combinedPresentation.Proof {
 		// check each proof: revocation has to be ok and accumulator fresh enough
 		if proofD, ok := genericP.(*gabi.ProofD); ok {
 			partialReq := session.PartialRequests[i]
-			claim, err := reconstructClaim(proofD.ADisclosed, combinedPresentation.Attributes[i])
+			claim, err := reconstructClaim(proofD.ADisclosed)
 			claims[i] = claim
 			if err != nil {
 				return false, nil, err
