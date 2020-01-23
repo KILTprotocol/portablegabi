@@ -36,6 +36,7 @@ async function runTestSetup(): Promise<{
   attestationRequest: AttestationRequest
   aSignature: Attestation
   witness: Witness
+  witness2: Witness
   aSignature2: Attestation
   claimerSignSession: ClaimerAttestationSession
   startAttestationMsg2: InitiateAttestationRequest
@@ -46,7 +47,7 @@ async function runTestSetup(): Promise<{
   claimerSignSession2: ClaimerAttestationSession
   claimerSignSessionE12: ClaimerAttestationSession
   claimerSignSessionE21: ClaimerAttestationSession
-  invalidAttestationResponses: {
+  mixedIssuedAttestations: {
     [key: number]: {
       attestation: Attestation
       witness: Witness
@@ -132,12 +133,15 @@ async function runTestSetup(): Promise<{
   })
 
   // (3) Issue attestation
-  const { attestation: aSignature2 } = await gabiAttester2.issueAttestation({
+  const {
+    attestation: aSignature2,
+    witness: witness2,
+  } = await gabiAttester2.issueAttestation({
     attestationSession: attesterSignSession2,
     attestationRequest: attestationRequest2,
     update: update2,
   })
-  const invalidAttestationResponses = {
+  const mixedIssuedAttestations = {
     1112_2221: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession, // 1
       attestationRequest: attestationRequestE12, // 12
@@ -163,23 +167,23 @@ async function runTestSetup(): Promise<{
       attestationRequest: attestationRequestE21, // 21
       update,
     }),
-    1221_2112: await gabiAttester.issueAttestation({
-      attestationSession: attesterSignSession2, // 1
-      attestationRequest: attestationRequestE21, // 21
-      update,
-    }),
-    // this is a correct signature when called from gabiAttester since the pk matches
     1212_2121: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession2, // 2
       attestationRequest: attestationRequestE12, // 12
       update,
     }),
+    // this is a correct signature when called from gabiAttester since the pk matches
+    1221_2112: await gabiAttester.issueAttestation({
+      attestationSession: attesterSignSession2, // 1
+      attestationRequest: attestationRequestE21, // 21
+      update,
+    }),
   }
-  const invalidSignatures = Object.values(invalidAttestationResponses).map(
+  const invalidSignatures = Object.values(mixedIssuedAttestations).map(
     response => response.attestation
   )
   const validSignatureBuildCredential = {
-    attestation: invalidAttestationResponses[1212_2121].attestation,
+    attestation: mixedIssuedAttestations[1221_2112].attestation,
     claimerSignSession: claimerSignSessionE21,
   }
 
@@ -222,6 +226,7 @@ async function runTestSetup(): Promise<{
     attestationRequest,
     aSignature,
     witness,
+    witness2,
     update,
     update2,
     aSignature2,
@@ -234,7 +239,7 @@ async function runTestSetup(): Promise<{
     claimerSignSession2,
     claimerSignSessionE12,
     claimerSignSessionE21,
-    invalidAttestationResponses,
+    mixedIssuedAttestations,
     invalidSignatures,
     validSignatureBuildCredential,
     credential,
@@ -244,6 +249,42 @@ async function runTestSetup(): Promise<{
     verifiedClaim,
     verified,
   }
+}
+
+export async function issuanceSetup(
+  claimer: GabiClaimer,
+  attester: GabiAttester,
+  update: Accumulator,
+  claimInput: string
+): Promise<{
+  credential: Credential
+  witness: Witness
+}> {
+  const {
+    message: startAttestationMsg,
+    session: attestationSession,
+  } = await attester.startAttestation()
+
+  const {
+    message: attestationRequest,
+    session: claimerSignSession,
+  } = await claimer.requestAttestation({
+    startAttestationMsg,
+    claim: claimInput,
+    attesterPubKey: attester.getPubKey(),
+  })
+
+  const { attestation, witness } = await attester.issueAttestation({
+    attestationSession,
+    attestationRequest,
+    update,
+  })
+
+  const credential = await claimer.buildCredential({
+    claimerSignSession,
+    attestation,
+  })
+  return { credential, witness }
 }
 
 export async function verifySetup(
