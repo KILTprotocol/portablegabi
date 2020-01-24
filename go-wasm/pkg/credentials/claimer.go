@@ -2,8 +2,7 @@ package credentials
 
 import (
 	"errors"
-	"sort"
-	"strings"
+	"fmt"
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
@@ -16,7 +15,7 @@ import (
 // the attestation of claims
 type UserIssuanceSession struct {
 	Cb    *gabi.CredentialBuilder `json:"cb"`
-	Claim *Claim                  `json:"claim"`
+	Claim Claim                   `json:"claim"`
 }
 
 // Claimer contains information about the claimer.
@@ -47,9 +46,7 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 
 // RequestAttestationForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
 // The request should be send to the attester.
-func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim *Claim) (*UserIssuanceSession, *AttestedClaimRequest, error) {
-	_, values := claim.ToAttributes()
-
+func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim Claim) (*UserIssuanceSession, *AttestedClaimRequest, error) {
 	nonce, err := common.RandomBigInt(attesterPubK.Params.Lstatzk)
 	if err != nil {
 		return nil, nil, err
@@ -62,20 +59,16 @@ func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, st
 			claim,
 		}, &AttestedClaimRequest{
 			CommitMsg: commitMsg,
-			Values:    values,
+			Claim:     claim,
 		}, nil
 }
 
 // BuildCredential uses the signature provided by the attester to build a
 // new credential.
 func (user *Claimer) BuildCredential(signature *gabi.IssueSignatureMessage, session *UserIssuanceSession) (*AttestedClaim, error) {
-	_, values := session.Claim.ToAttributes()
+	attributes := session.Claim.ToAttributes()
 
-	cred, err := session.Cb.ConstructCredential(signature, values)
-	if err != nil {
-		return nil, err
-	}
-	return &AttestedClaim{cred, session.Claim}, nil
+	return NewAttestedClaim(session.Cb, attributes, signature)
 }
 
 // UpdateCredential updates the non revocation witness using the provided update.
@@ -115,33 +108,12 @@ func ensureAccumulator(pk *gabi.PublicKey, witness *revocation.Witness) error {
 	return nil
 }
 
-func attributeIndicesFromPresentationRequest(req *PartialPresentationRequest,
-	credential *AttestedClaim) ([]int, []*Attribute, error) {
-	sort.Slice(req.RequestedAttributes[:], func(i, j int) bool {
-		return strings.Compare(req.RequestedAttributes[i], req.RequestedAttributes[j]) < 0
-	})
-
-	attrIndexes := make([]int, len(req.RequestedAttributes))
-	attributes, _ := credential.Claim.ToAttributes()
-	i := 0
-
-	// assert: attestedClaim.Attributes and req.RequestedAttributes are sorted!
-	for attrI, v := range attributes {
-		if i < len(req.RequestedAttributes) && strings.Compare(req.RequestedAttributes[i], v.Name) == 0 {
-			attrIndexes[i] = attrI + 1
-			i++
-		}
-		attributes[attrI] = v
-	}
-	if i == 0 {
-		return nil, nil, errors.New("attribute not found")
-	}
-	return attrIndexes, attributes, nil
-}
-
 // BuildPresentation reveals the attributes which are requested by the verifier.
 func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *PresentationRequest) (*PresentationResponse, error) {
 	partialReq := reqAttributes.PartialPresentationRequest
+	if len(partialReq.RequestedAttributes) < 1 {
+		return nil, errors.New("requested attributes should not be empty")
+	}
 	if partialReq.ReqNonRevocationProof {
 		witness := attestedClaim.Credential.NonRevocationWitness
 		err := ensureAccumulator(pk, witness)
@@ -149,7 +121,7 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 			return nil, err
 		}
 	}
-	attrIndices, attributes, err := attributeIndicesFromPresentationRequest(partialReq, attestedClaim)
+	attrIndices, err := attestedClaim.GetAttributeIndices(partialReq.RequestedAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -159,12 +131,12 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 	if err != nil {
 		return nil, err
 	}
-	return &PresentationResponse{
-		Proof:      proof,
-		Attributes: attributes,
-	}, nil
+	return &PresentationResponse{Proof: *proof}, nil
 }
 
+// BuildCombinedPresentation combines multiple credentials and builds a combined
+// proof for all credentials. Only credentials which contain the same secret can
+// be combined.
 func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credentials []*AttestedClaim,
 	reqAttributes *CombinedPresentationRequest) (*CombinedPresentationResponse, error) {
 	if len(pubKs) != len(reqAttributes.PartialRequests) {
@@ -173,8 +145,11 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 		return nil, errors.New("wrong amount of attested claims")
 	}
 	proofBuilder := make([]gabi.ProofBuilder, len(reqAttributes.PartialRequests))
-	partialResponses := make([]PartialPresentationResponse, len(reqAttributes.PartialRequests))
+
 	for i, partialReq := range reqAttributes.PartialRequests {
+		if len(partialReq.RequestedAttributes) < 1 {
+			return nil, fmt.Errorf("requested attributes should not be empty for the %d. credential", i)
+		}
 		cred := credentials[i].Credential
 		cred.Pk = pubKs[i]
 		if partialReq.ReqNonRevocationProof {
@@ -184,7 +159,7 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 				return nil, err
 			}
 		}
-		attrIndices, attributes, err := attributeIndicesFromPresentationRequest(&partialReq, credentials[i])
+		attrIndices, err := credentials[i].GetAttributeIndices(partialReq.RequestedAttributes)
 		if err != nil {
 			return nil, err
 		}
@@ -192,13 +167,9 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 		if err != nil {
 			return nil, err
 		}
-		partialResponses[i] = attributes
 	}
 	builders := gabi.ProofBuilderList(proofBuilder)
 	prooflist := builders.BuildProofList(reqAttributes.Context, reqAttributes.Nonce, false)
 
-	return &CombinedPresentationResponse{
-		Proof:      &prooflist,
-		Attributes: partialResponses,
-	}, nil
+	return &CombinedPresentationResponse{Proof: prooflist}, nil
 }

@@ -232,8 +232,6 @@ describe('Test verifier functionality', () => {
       )
       // start to compare prev = proofArr[2] with curr = proofArr[0], then set prev[i+1] to curr[i] and curr[i+1] to proofArr[i+1]
       proofArr.reduce((prevProof, currProof) => {
-        // attributes
-        expect(currProof.attributes).toStrictEqual(prevProof.attributes)
         // proof.A
         expect(currProof.proof.A).not.toStrictEqual(prevProof.proof.A)
         // proof.a_discloses
@@ -330,7 +328,6 @@ describe('Test verifier functionality', () => {
     })
   })
   describe('Checks invalid/tampered data', () => {
-    // TODO: Change after @weichweich's hotfix
     it('Should throw on empty requested/disclosed attributes array', async () => {
       await expect(
         presentationSetup({
@@ -340,7 +337,7 @@ describe('Test verifier functionality', () => {
           requestedAttributes: [],
           minIndex: 0,
         })
-      ).rejects.toThrow('attribute not found')
+      ).rejects.toThrow('requested attributes should not be empty')
     })
     it('Should not verify after tampering with attributes data (post-attestation)', async () => {
       const tamperedCredential: ICredential<typeof claim> = JSON.parse(
@@ -381,13 +378,15 @@ describe('Test verifier functionality', () => {
         attesterPubKey: gabiAttester.getPubKey(),
         update,
       })
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        uCred,
-        disclosedAttributes,
-        1
-      )
+      await expect(
+        expectVerificationFailed(
+          gabiClaimer,
+          gabiAttester,
+          uCred,
+          disclosedAttributes,
+          1
+        )
+      ).rejects.toThrow('missing magic byte')
     })
     it('Should not verify with mixed requestPresentation sessions', async () => {
       // create 2nd session
@@ -461,9 +460,9 @@ describe('Test verifier functionality', () => {
         -1 // should be non negative
       )
     })
-    // TODO: enable after @weichweich's hotfix
-    it.skip('Should throw when a requested attribute is missing', async () => {
-      const requestedAttributes = [...disclosedAttributes, 'thisDoesNotExit']
+    it('Should throw when a requested attribute is missing', async () => {
+      const addedAttribute = 'thisDoesNotExit'
+      const requestedAttributes = [...disclosedAttributes, addedAttribute]
       await expect(
         presentationSetup({
           claimer: gabiClaimer,
@@ -471,24 +470,17 @@ describe('Test verifier functionality', () => {
           credential,
           requestedAttributes,
         })
-      ).rejects.toThrow('index out of range [-1]')
+      ).rejects.toThrow(
+        `could not find attribute with name '${addedAttribute}'`
+      )
     })
-    // TODO: Change + enable after @weichweich's hotfix
-    it.skip('Should not verify when changing claim keys', async () => {
+    it('Should not affect the credential when tampering data post-attestation pre-verification', async () => {
       const credObj: ICredential<typeof claim> = JSON.parse(
-          credential.valueOf()
-        )
-        // credObj.claim = {
-        //   anythingButCtype: credObj.claim.contents,
-        //   contents: {
-        //     anythingButId: credObj.claim.contents.id,
-        //     picture: {
-        //       DATA: credObj.claim.contents.picture.URL,
-        //       URL: credObj.claim.contents.picture.DATA,
-        //     },
-        //     anythingButEyeColor: credObj.claim.contents.eyeColor,
-        //   },
-        // } as any
+        credential.valueOf()
+      )
+      const credObj2: ICredential<typeof claim> = JSON.parse(
+        credential.valueOf()
+      )
       ;[
         credObj.claim.contents.picture.DATA,
         credObj.claim.contents.picture.URL,
@@ -496,14 +488,35 @@ describe('Test verifier functionality', () => {
         credObj.claim.contents.picture.URL,
         credObj.claim.contents.picture.DATA,
       ]
-      await expectVerificationFailed(
+      await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         new Credential(JSON.stringify(credObj)),
         disclosedAttributes,
         1
       )
+      credObj2.claim = {
+        anythingButCtype: credObj.claim.contents,
+        contents: {
+          anythingButId: credObj.claim.contents.id,
+          picture: {
+            DATA: credObj.claim.contents.picture.URL,
+            URL: credObj.claim.contents.picture.DATA,
+          },
+          anythingButEyeColor: credObj.claim.contents.eyeColor,
+        },
+      } as any
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        new Credential(JSON.stringify(credObj2)),
+        disclosedAttributes,
+        1
+      )
     })
   })
   // describe('Tests combined presentation', () => {})
+  it.todo(
+    'Revoke but require index 1 should result in successfull verification'
+  )
 })

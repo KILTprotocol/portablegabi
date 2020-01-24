@@ -9,9 +9,163 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGetAttributeIndices(t *testing.T) {
+	cred := &AttestedClaim{}
+	err := json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	indice, err := cred.GetAttributeIndices([]string{
+		"ctype",
+		"contents.age",
+		"contents.gender",
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, []int{1, 2, 5}, indice)
+}
+
+func TestGetMissingAttribute(t *testing.T) {
+	req := &PartialPresentationRequest{
+		ReqNonRevocationProof: true,
+		ReqMinIndex:           1,
+		RequestedAttributes: []string{
+			"ctype",
+			"contents.age",
+			"contents.gesdfer",
+		},
+	}
+
+	cred := &AttestedClaim{}
+	err := json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	indice, err := cred.GetAttributeIndices(req.RequestedAttributes)
+	assert.Error(t, err)
+	assert.Nil(t, indice)
+}
+
+func TestReconstructClaim(t *testing.T) {
+	oldClaim := Claim{
+		"ctype": "0xDEADBEEFCOFEE",
+		"contents": map[string]interface{}{
+			"a.g\\e":       34., // use float here, json will always parse numbers to float64
+			"name":         "Berta",
+			"special":      true,
+			"likedNumbers": []interface{}{1., 2., 3.},
+		},
+	}
+	attributes := oldClaim.ToAttributes()
+
+	claim, err := NewClaimFromAttribute(attributes)
+	require.NoError(t, err)
+	require.Equal(t, oldClaim, claim)
+}
+
+func TestReconstructClaimFull(t *testing.T) {
+	oldClaim := Claim{
+		"ctype": "0xDEADBEEFCOFEE",
+		"contents": map[string]interface{}{
+			"a.g\\e":       34., // use float here, json will always parse numbers to float64
+			"name":         "Berta",
+			"special":      true,
+			"likedNumbers": []interface{}{1., 2., 3.},
+		},
+	}
+	oldAttributes := oldClaim.ToAttributes()
+	bigInts, err := AttributesToBigInts(oldAttributes)
+	require.NoError(t, err)
+
+	attributes, err := BigIntsToAttributes(bigInts)
+	require.NoError(t, err)
+	claim, err := NewClaimFromAttribute(attributes)
+	require.NoError(t, err)
+	require.Equal(t, oldClaim, claim)
+}
+
+func TestReconstructFail(t *testing.T) {
+	// should fail becaise Peter is set to strange type and peter.name will try
+	// to handle peter as a map[string]interface{}
+	attributes := []*Attribute{
+		&Attribute{
+			Name:     "Peter.name",
+			Typename: "string",
+			Value:    []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+		},
+		&Attribute{
+			Name:     "Peter",
+			Typename: "float",
+			Value:    []byte{0, 1, 2, 3, 4, 5, 6, 7},
+		},
+		&Attribute{
+			Name:     "界a界.世",
+			Typename: "string",
+			Value:    make([]byte, 1024*1024),
+		},
+	}
+
+	claim, err := NewClaimFromAttribute(attributes)
+	require.Error(t, err)
+	require.Nil(t, claim)
+}
+
+func TestAttributesToInts(t *testing.T) {
+	attributes := []*Attribute{
+		&Attribute{
+			Name:     "Peter",
+			Typename: "string",
+			Value:    []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+		},
+		&Attribute{
+			Name:     "Peter",
+			Typename: "界a界世",
+			Value:    []byte{},
+		},
+		&Attribute{
+			Name:     "界a界世",
+			Typename: "string",
+			Value:    make([]byte, 1024*1024),
+		},
+	}
+	ints, err := AttributesToBigInts(attributes)
+	require.NoError(t, err)
+	backAttributes, err := BigIntsToAttributes(ints)
+	require.NoError(t, err)
+	require.Equal(t, attributes, backAttributes)
+}
+
+func TestIntsToAttributeFailed(t *testing.T) {
+	attributes, err := BigIntsToAttributes([]*big.Int{
+		new(big.Int).SetInt64(928347502983475),
+		new(big.Int).SetInt64(234),
+		new(big.Int).SetInt64(928347502983475),
+	})
+	require.Error(t, err)
+	require.Nil(t, attributes)
+}
+
+func TestMarshallAttribute(t *testing.T) {
+	attr := Attribute{
+		Name:     "alsfjölkajsdöf",
+		Typename: "界a界世",
+		Value:    big.NewInt(8218926378).Bytes(),
+	}
+	bytes, err := attr.MarshalBinary()
+	require.NoError(t, err)
+	buildAttr := Attribute{}
+	err = buildAttr.UnmarshalBinary(bytes)
+	require.NoError(t, err)
+	require.Equal(t, attr, buildAttr)
+}
+
+func TestUnarshallAttributeFail(t *testing.T) {
+	bytes := []byte{0, 0, 0, 0, 0, 0, 0, 1, 12, 123, 123, 123, 123, 122}
+	buildAttr := Attribute{}
+	err := buildAttr.UnmarshalBinary(bytes)
+	require.Error(t, err)
+}
+
 func TestSetNestedValue(t *testing.T) {
 	testMap := make(map[string]interface{})
-	setNestedValue(testMap, "test"+SEPARATOR+"test"+SEPARATOR+"test", 1)
+	setNestedValue(testMap, "test"+Separator+"test"+Separator+"test", 1)
 
 	v1, ok := testMap["test"]
 	require.True(t, ok, "not found")
@@ -31,82 +185,20 @@ func TestSetNestedValue(t *testing.T) {
 func TestSetNestedValueFailed(t *testing.T) {
 	testMap := make(map[string]interface{})
 	testMap["1"] = 1
-	err := setNestedValue(testMap, "1"+SEPARATOR+"1", 1)
+	err := setNestedValue(testMap, "1"+Separator+"1", 1)
 	require.Error(t, err)
 }
 
-func TestReconstructClaim(t *testing.T) {
-	byteDisclosedAttr := []byte(`{"1":"QEEAAAAAAAA=","2":"ZmVtYWxl","4":"AQ==","5":"MHhERUFEQkVFRkNPRkVF"}`)
-	byteAttr := []byte(`[{"name":"contents.a\\.g\\\\e","typename":"float"},{"name":"contents.gender","typename":"string"},{"name":"contents.name","typename":"string"},{"name":"contents.special","typename":"bool"},{"name":"ctype","typename":"string"}]`)
-
-	disclosedAttr := make(map[int]*big.Int)
-	err := json.Unmarshal(byteDisclosedAttr, &disclosedAttr)
-	require.NoError(t, err)
-
-	attr := []*Attribute{}
-	err = json.Unmarshal(byteAttr, &attr)
-	require.NoError(t, err)
-
-	claim, err := reconstructClaim(disclosedAttr, attr)
-	require.NoError(t, err)
-	require.Contains(t, claim, "ctype")
-	require.Contains(t, claim, "contents")
-	require.Contains(t, claim["contents"], "a.g\\e")
-	require.Contains(t, claim["contents"], "gender")
-	content, ok := claim["contents"].(map[string]interface{})
-	require.True(t, ok)
-	require.Equal(t, content["a.g\\e"], 34.)
-	require.Equal(t, content["gender"], "female")
-}
-
-func TestReconstructClaimFailed(t *testing.T) {
-	byteDisclosedAttr := []byte(`{"1":"QEEAAAA=","2":"ZmVtYWxl","4":"AQ==","5":"MHhERUFEQkVFRkNPRkVF"}`)
-	byteAttr := []byte(`[{"name":"contents.age","typename":"float"},{"name":"contents.gender","typename":"string"},{"name":"contents.name","typename":"string"},{"name":"contents.special","typename":"bool"},{"name":"ctype","typename":"string"}]`)
-
-	disclosedAttr := make(map[int]*big.Int)
-	err := json.Unmarshal(byteDisclosedAttr, &disclosedAttr)
-	require.NoError(t, err)
-
-	attr := []*Attribute{}
-	err = json.Unmarshal(byteAttr, &attr)
-	require.NoError(t, err)
-
-	claim, err := reconstructClaim(disclosedAttr, attr)
-	require.Error(t, err)
-	require.Nil(t, claim)
-}
-
-func TestEscapedSplit(t *testing.T) {
-	a := "asdfasdf"
-	b := "oipoi23o"
-	c := "界a界世" // hopefully not an insult!
-
-	seq := escapedSplit(a+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a, b, c}, seq)
-
-	seq = escapedSplit(a+"\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\" + SEPARATOR + b, c}, seq)
-
-	seq = escapedSplit(a+"\\\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\\\", b, c}, seq)
-
-	seq = escapedSplit(a+"\\\\\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\\\\\" + SEPARATOR + b, c}, seq)
-
-	seq = escapedSplit(a+"\t\t\t\t"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\t\t\t\t", b, c}, seq)
-
-	seq = escapedSplit(a+"\\t\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\t\\" + SEPARATOR + b, c}, seq)
-
-	seq = escapedSplit(SEPARATOR+SEPARATOR+c+SEPARATOR, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{"", "", c, ""}, seq)
-
-	seq = escapedSplit(SEPARATOR+c+SEPARATOR+SEPARATOR, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{"", c, "", ""}, seq)
-}
-
-func TestSeparator(t *testing.T) {
-	// SEPARATOR must be exactly one char long
-	require.Equal(t, 1, len([]rune(SEPARATOR)))
+func TestSortRemoveDuplicates(t *testing.T) {
+	sliceEmpty := []string{}
+	sorted, unique := SortRemoveDuplicates((sliceEmpty))
+	assert.True(t, unique)
+	assert.Equal(t, sliceEmpty, sorted)
+	sliceA := []string{"a", "c", "b"}
+	sorted, unique = SortRemoveDuplicates(sliceA)
+	assert.True(t, unique)
+	assert.Equal(t, []string{"a", "b", "c"}, sorted)
+	sorted, unique = SortRemoveDuplicates(append(sliceA, sliceA...))
+	assert.False(t, unique)
+	assert.Equal(t, []string{"a", "b", "c"}, sorted)
 }

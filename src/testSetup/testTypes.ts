@@ -66,7 +66,7 @@ export interface IClaimerSession {
     ProofPcomm: string | null
   }
   claim: {
-    cType: string
+    ctype: string
     contents: any
   }
 }
@@ -101,7 +101,6 @@ export interface ICredential<Claim> {
 }
 
 export interface IProof {
-  attributes: string[]
   proof: {
     A: 'string'
     a_disclosed: {

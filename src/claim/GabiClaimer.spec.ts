@@ -8,11 +8,7 @@ import {
 } from '../testSetup/testSetup'
 import GabiClaimer from './GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
-import {
-  claim,
-  numOfClaimKeys,
-  disclosedAttributes,
-} from '../testSetup/testConfig'
+import { claim, disclosedAttributes } from '../testSetup/testConfig'
 import {
   ICredential,
   IIssueAttestation,
@@ -240,18 +236,11 @@ describe('Test claimer functionality', () => {
         credObj.credential.signature
       )
       expect(aSigObj.nonrev).toStrictEqual(credObj.credential.nonrevWitness)
-      // compare attributes
-      expect(credObj.credential.attributes).toHaveLength(numOfClaimKeys + 1)
-      const parsedReq = JSON.parse(attestationRequest.valueOf())
-      parsedReq.values.map((val: any) =>
-        expect(credObj.credential.attributes).toContain(val)
-      )
     })
     it('Checks for correct data in buildPresentation', () => {
       expect(presentation).not.toBe('undefined')
       const proofObj: IProof = JSON.parse(presentation.valueOf())
       const sigObj: IIssueAttestation = JSON.parse(attestation.valueOf())
-      expect(proofObj.attributes).toHaveLength(numOfClaimKeys)
       expect(proofObj.proof.A).not.toEqual(sigObj.signature.A)
       expect(proofObj.proof.e_response).not.toEqual(sigObj.proof.e_response)
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)

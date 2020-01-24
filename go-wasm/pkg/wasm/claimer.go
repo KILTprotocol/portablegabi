@@ -43,14 +43,14 @@ func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, errors.New("missing inputs")
 	}
 	claimer := &credentials.Claimer{}
-	claim := &credentials.Claim{}
+	claim := credentials.Claim{}
 	handshakeMsg := &credentials.StartSessionMsg{}
 	issuerPubKey := &gabi.PublicKey{}
 
 	if err := json.Unmarshal([]byte(inputs[0].String()), claimer); err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(inputs[1].String()), claim); err != nil {
+	if err := json.Unmarshal([]byte(inputs[1].String()), &claim); err != nil {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), handshakeMsg); err != nil {
