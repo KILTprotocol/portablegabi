@@ -16,10 +16,21 @@ import (
 	"github.com/privacybydesign/gabi/big"
 )
 
-// SEPARATOR is used to separate JSON keys from each other.
-const SEPARATOR = "."
+// Separator is used to separate JSON keys from each other.
+const Separator = "."
+
+// MagicByte is used to prevent a big.Int to truncate leading zeros.
+const MagicByte = byte(0xFF)
 
 type (
+
+	// AttestedClaim contains the Claim and the gabi.Credential. It can be used to
+	// disclose specific attributes to the verifier.
+	AttestedClaim struct {
+		Credential *gabi.Credential `json:"credential"`
+		Claim      Claim            `json:"claim"`
+	}
+
 	// Claim contains the attributes the claimer claims to possess. Contents should
 	// be structures according to the specified ctype.
 	//
@@ -44,13 +55,6 @@ type (
 		Value    []byte `json:"value"`
 	}
 
-	// AttestedClaim contains the Claim and the gabi.Credential. It can be used to
-	// disclose specific attributes to the verifier.
-	AttestedClaim struct {
-		Credential *gabi.Credential `json:"credential"`
-		Claim      Claim            `json:"claim"`
-	}
-
 	// nestedObject is used to describe a nested object inside a claim.
 	nestedObject struct {
 		prefix  string
@@ -58,18 +62,41 @@ type (
 	}
 )
 
-func (credential *AttestedClaim) getAttributeIndices(reqAttributes []string) ([]int, error) {
+// NewAttestedClaim instantiates a new AttestedClaim.
+func NewAttestedClaim(cb *gabi.CredentialBuilder, attributes []*Attribute, signature *gabi.IssueSignatureMessage) (*AttestedClaim, error) {
+	claim, err := NewClaimFromAttribute(attributes)
+	if err != nil {
+		return nil, err
+	}
+	bInts, err := AttributesToBigInts(attributes)
+	if err != nil {
+		return nil, err
+	}
+	cred, err := cb.ConstructCredential(signature, bInts)
+	if err != nil {
+		return nil, err
+	}
+	return &AttestedClaim{
+		Credential: cred,
+		Claim:      claim,
+	}, nil
+}
+
+func (attestedClaim *AttestedClaim) GetAttributeIndices(reqAttributes []string) ([]int, error) {
 	// make sure attributes are unique
-	reqAttributes, _ = sortRemoveDuplicates(reqAttributes)
+	reqAttributes, _ = SortRemoveDuplicates(reqAttributes)
 
 	indices := make([]int, len(reqAttributes))
-	attributes := credential.Claim.ToAttributes()
-	i := 0
+	attributes, err := attestedClaim.GetAttributes()
+	if err != nil {
+		return nil, err
+	}
 
+	i := 0
 	// assert: attestedClaim.Attributes and reqAttributes are sorted!
 	for attrI, v := range attributes {
 		if i < len(reqAttributes) && strings.Compare(reqAttributes[i], v.Name) == 0 {
-			// first attribute inside the credential is the secret key.
+			// first attribute inside the attestedClaim is the secret key.
 			// the real attributes start at index 1
 			indices[i] = attrI + 1
 			i++
@@ -80,6 +107,62 @@ func (credential *AttestedClaim) getAttributeIndices(reqAttributes []string) ([]
 		return nil, fmt.Errorf("could not find attribute with name '%s'", reqAttributes[i])
 	}
 	return indices, nil
+}
+
+// GetRawAttributes returns a list of all attributes stored inside the credential.
+func (attestedClaim *AttestedClaim) GetRawAttributes() []*big.Int {
+	return attestedClaim.Credential.Attributes[1:]
+}
+
+// GetAttributes returns a list of all attributes stored inside the credential.
+func (attestedClaim *AttestedClaim) GetAttributes() ([]*Attribute, error) {
+	bInts := attestedClaim.GetRawAttributes()
+	attributes, err := BigIntsToAttributes(bInts)
+	if err != nil {
+		return nil, err
+	}
+	sorted := sort.SliceIsSorted(attributes, func(p, q int) bool {
+		return strings.Compare(attributes[p].Name, attributes[q].Name) < 0
+	})
+	if !sorted {
+		return nil, errors.New("expected attributes inside credential to be sorted")
+	}
+	return attributes, nil
+}
+
+func NewClaimFromAttribute(attributes []*Attribute) (Claim, error) {
+	claim := make(Claim)
+	for _, attr := range attributes {
+		var err error
+		switch attr.Typename {
+		case "string":
+			err = setNestedValue(claim, attr.Name, string(attr.Value))
+		case "float":
+			bytes := attr.Value
+			// a float requires at least 8 bytes.
+			if len(bytes) < 8 {
+				return nil, fmt.Errorf("invalid big.Int for %q float value", attr.Name)
+			}
+			bits := binary.BigEndian.Uint64(bytes)
+			err = setNestedValue(claim, attr.Name, math.Float64frombits(bits))
+		case "bool":
+			err = setNestedValue(claim, attr.Name, attr.Value[0] != byte(0))
+		case "array":
+			var array []interface{}
+			// skip first byte which is only for big ints. trailing 0 are
+			// truncated...
+			err = json.Unmarshal(attr.Value[1:], &array)
+			if err == nil {
+				err = setNestedValue(claim, attr.Name, array)
+			}
+		default:
+			err = setNestedValue(claim, attr.Name, hex.EncodeToString(attr.Value))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	return claim, nil
 }
 
 // ToAttributes transforms a claim struct to a list of attributes. The returned list is sorted by name.
@@ -98,9 +181,9 @@ func (claim Claim) ToAttributes() []*Attribute {
 		jsonObj := elem.Value.(*nestedObject)
 		for n, v := range jsonObj.content {
 			var name string
-			n = escape(n, []rune(SEPARATOR)[0])
+			n = escape(n, []rune(Separator)[0])
 			if jsonObj.prefix != "" {
-				name = jsonObj.prefix + SEPARATOR + n
+				name = jsonObj.prefix + Separator + n
 			} else {
 				name = n
 			}
@@ -127,7 +210,7 @@ func (claim Claim) ToAttributes() []*Attribute {
 					panic("could not marshal array")
 				}
 				// for big ints prepend with non null byte
-				marshaledV = append([]byte{0xFF}, marshaledV...)
+				marshaledV = append([]byte{MagicByte}, marshaledV...)
 				attributes = append(attributes, &Attribute{
 					Name:     name,
 					Typename: "array",
@@ -171,57 +254,34 @@ func (claim Claim) ToAttributes() []*Attribute {
 	return attributes
 }
 
-func (claim *Claim) toBigInts() ([]*big.Int, error) {
-	attributes := claim.ToAttributes()
-	ints := make([]*big.Int, len(attributes))
-	for i, a := range attributes {
-		b, err := a.MarshalBinary()
-		if err != nil {
+// BigIntsToAttributes takes an array of big ints and unmarshals them into an
+// array of attributes.
+func BigIntsToAttributes(encodedAttributes []*big.Int) ([]*Attribute, error) {
+	attributes := make([]*Attribute, len(encodedAttributes))
+	i := 0
+	for _, bInt := range encodedAttributes {
+		attributes[i] = &Attribute{}
+		if err := attributes[i].UnmarshalBinary(bInt.Bytes()); err != nil {
 			return nil, err
 		}
-		ints[i] = new(big.Int).SetBytes(b)
+		i++
 	}
-	return ints, nil
+	return attributes, nil
 }
 
-func claimFromBigInts(disclosedAttributes map[int]*big.Int) (Claim, error) {
-	claim := make(Claim)
-	for _, v := range disclosedAttributes {
-		// 0. attribute is private key of user and should never be disclosed
+// AttributesToBigInts takes an array of attributes and marshals them into an
+// array of big.ints.
+func AttributesToBigInts(attributes []*Attribute) ([]*big.Int, error) {
+	bInts := make([]*big.Int, len(attributes))
+	for i, attribute := range attributes {
+		bytes, err := attribute.MarshalBinary()
+		if err != nil {
+			return nil, err
+		}
+		bInts[i] = new(big.Int).SetBytes(bytes)
 
-		attr := Attribute{}
-		err := attr.UnmarshalBinary(v.Bytes())
-		if err != nil {
-			return nil, err
-		}
-		switch attr.Typename {
-		case "string":
-			err = setNestedValue(claim, attr.Name, string(attr.Value))
-		case "float":
-			bytes := attr.Value
-			// a float requires at least 8 bytes.
-			if len(bytes) < 8 {
-				return nil, fmt.Errorf("invalid big.Int for %q float value", attr.Name)
-			}
-			bits := binary.BigEndian.Uint64(bytes)
-			err = setNestedValue(claim, attr.Name, math.Float64frombits(bits))
-		case "bool":
-			err = setNestedValue(claim, attr.Name, v.Int64() != 0)
-		case "array":
-			var array []interface{}
-			// skip first byte which is only for big ints
-			err = json.Unmarshal(attr.Value[1:], &array)
-			if err == nil {
-				err = setNestedValue(claim, attr.Name, array)
-			}
-		default:
-			err = setNestedValue(claim, attr.Name, hex.EncodeToString(attr.Value))
-		}
-		if err != nil {
-			return nil, err
-		}
 	}
-	return claim, nil
+	return bInts, nil
 }
 
 // MarshalBinary writes the attributes into a byte array
@@ -232,7 +292,7 @@ func (p Attribute) MarshalBinary() ([]byte, error) {
 
 	b := make([]byte, len(byteName)+len(byteTypename)+len(p.Value)+3*8+1)
 	// leading zeros are striped from big.Ints...
-	b[0] = 0xFF
+	b[0] = MagicByte
 	index := 1
 
 	binary.BigEndian.PutUint64(b[index:index+8], (uint64)(len(byteName)))
@@ -254,7 +314,7 @@ func (p Attribute) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary parse a byte array into an attributes
 func (p *Attribute) UnmarshalBinary(data []byte) error {
 	// good old [length|field] encoding. length is an uint64
-	if data[0] != 0xFF {
+	if data[0] != MagicByte {
 		return errors.New("missing magic byte")
 	}
 	if 8 >= (uint64)(len(data)) {
@@ -287,9 +347,9 @@ func (p *Attribute) UnmarshalBinary(data []byte) error {
 }
 
 func setNestedValue(m map[string]interface{}, key string, value interface{}) error {
-	parts := escapedSplit(key, []rune(SEPARATOR)[0])
+	parts := escapedSplit(key, []rune(Separator)[0])
 	for _, v := range parts[:len(parts)-1] {
-		key := unescape(v, []rune(SEPARATOR)[0])
+		key := unescape(v, []rune(Separator)[0])
 		if acc, ok := m[key]; ok {
 			if accMap, ok := acc.(map[string]interface{}); ok {
 				m = accMap
@@ -310,7 +370,7 @@ func setNestedValue(m map[string]interface{}, key string, value interface{}) err
 	return nil
 }
 
-func sortRemoveDuplicates(slice []string) ([]string, bool) {
+func SortRemoveDuplicates(slice []string) ([]string, bool) {
 	sort.Slice(slice[:], func(i, j int) bool {
 		return strings.Compare(slice[i], slice[j]) < 0
 	})

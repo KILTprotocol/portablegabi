@@ -65,16 +65,9 @@ func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, st
 // BuildCredential uses the signature provided by the attester to build a
 // new credential.
 func (user *Claimer) BuildCredential(signature *gabi.IssueSignatureMessage, session *UserIssuanceSession) (*AttestedClaim, error) {
-	attributes, err := session.Claim.toBigInts()
-	if err != nil {
-		return nil, err
-	}
+	attributes := session.Claim.ToAttributes()
 
-	cred, err := session.Cb.ConstructCredential(signature, attributes)
-	if err != nil {
-		return nil, err
-	}
-	return &AttestedClaim{cred, session.Claim}, nil
+	return NewAttestedClaim(session.Cb, attributes, signature)
 }
 
 // UpdateCredential updates the non revocation witness using the provided update.
@@ -124,7 +117,7 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 			return nil, err
 		}
 	}
-	attrIndices, err := attestedClaim.getAttributeIndices(partialReq.RequestedAttributes)
+	attrIndices, err := attestedClaim.GetAttributeIndices(partialReq.RequestedAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +152,7 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 				return nil, err
 			}
 		}
-		attrIndices, err := credentials[i].getAttributeIndices(partialReq.RequestedAttributes)
+		attrIndices, err := credentials[i].GetAttributeIndices(partialReq.RequestedAttributes)
 		if err != nil {
 			return nil, err
 		}

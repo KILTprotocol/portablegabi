@@ -77,12 +77,27 @@ func checkAccumulatorInProof(issuerPubK *gabi.PublicKey, minIndex uint64, proof 
 	return false
 }
 
+func getValues(m map[int]*big.Int) []*big.Int {
+	a := make([]*big.Int, len(m))
+	i := 0
+	for _, v := range m {
+		a[i] = v
+		i++
+	}
+	return a
+}
+
 // VerifyPresentation verifies the response of a claimer and returns the disclosed attributes.
-func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *PresentationResponse, session *VerifierSession) (bool, map[string]interface{}, error) {
+func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *PresentationResponse, session *VerifierSession) (bool, Claim, error) {
 	success := !session.ReqNonRevocationProof || checkAccumulatorInProof(issuerPubK, session.ReqMinIndex, &signedAttributes.Proof)
 	success = success && signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false)
 	if success {
-		claim, err := claimFromBigInts(signedAttributes.Proof.ADisclosed)
+
+		attributes, err := BigIntsToAttributes(getValues(signedAttributes.Proof.ADisclosed))
+		if err != nil {
+			return false, nil, err
+		}
+		claim, err := NewClaimFromAttribute(attributes)
 		if err != nil {
 			return false, nil, err
 		}
@@ -92,17 +107,24 @@ func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *Presentati
 }
 
 // VerifyCombinedPresentation verifies the response of a claimer and returns the presentations provided by the user.
-func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, combinedPresentation *CombinedPresentationResponse, session *CombinedVerifierSession) (bool, []map[string]interface{}, error) {
+func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, combinedPresentation *CombinedPresentationResponse, session *CombinedVerifierSession) (bool, []Claim, error) {
 	success := combinedPresentation.Proof.Verify(attesterPubKeys, session.Context, session.Nonce, false, nil)
 	if !success {
 		return false, nil, nil
 	}
-	claims := make([]map[string]interface{}, len(combinedPresentation.Proof))
+	claims := make([]Claim, len(combinedPresentation.Proof))
 	for i, genericP := range combinedPresentation.Proof {
 		// check each proof: revocation has to be ok and accumulator fresh enough
 		if proofD, ok := genericP.(*gabi.ProofD); ok {
 			partialReq := session.PartialRequests[i]
-			claim, err := claimFromBigInts(proofD.ADisclosed)
+			attributes, err := BigIntsToAttributes(getValues(proofD.ADisclosed))
+			if err != nil {
+				return false, nil, err
+			}
+			claim, err := NewClaimFromAttribute(attributes)
+			if err != nil {
+				return false, nil, err
+			}
 			claims[i] = claim
 			if err != nil {
 				return false, nil, err

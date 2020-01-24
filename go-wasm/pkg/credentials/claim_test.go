@@ -9,9 +9,163 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGetAttributeIndices(t *testing.T) {
+	cred := &AttestedClaim{}
+	err := json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	indice, err := cred.GetAttributeIndices([]string{
+		"ctype",
+		"contents.age",
+		"contents.gender",
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, []int{1, 2, 5}, indice)
+}
+
+func TestGetMissingAttribute(t *testing.T) {
+	req := &PartialPresentationRequest{
+		ReqNonRevocationProof: true,
+		ReqMinIndex:           1,
+		RequestedAttributes: []string{
+			"ctype",
+			"contents.age",
+			"contents.gesdfer",
+		},
+	}
+
+	cred := &AttestedClaim{}
+	err := json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	indice, err := cred.GetAttributeIndices(req.RequestedAttributes)
+	assert.Error(t, err)
+	assert.Nil(t, indice)
+}
+
+func TestReconstructClaim(t *testing.T) {
+	oldClaim := Claim{
+		"ctype": "0xDEADBEEFCOFEE",
+		"contents": map[string]interface{}{
+			"a.g\\e":       34., // use float here, json will always parse numbers to float64
+			"name":         "Berta",
+			"special":      true,
+			"likedNumbers": []interface{}{1., 2., 3.},
+		},
+	}
+	attributes := oldClaim.ToAttributes()
+
+	claim, err := NewClaimFromAttribute(attributes)
+	require.NoError(t, err)
+	require.Equal(t, oldClaim, claim)
+}
+
+func TestReconstructClaimFull(t *testing.T) {
+	oldClaim := Claim{
+		"ctype": "0xDEADBEEFCOFEE",
+		"contents": map[string]interface{}{
+			"a.g\\e":       34., // use float here, json will always parse numbers to float64
+			"name":         "Berta",
+			"special":      true,
+			"likedNumbers": []interface{}{1., 2., 3.},
+		},
+	}
+	oldAttributes := oldClaim.ToAttributes()
+	bigInts, err := AttributesToBigInts(oldAttributes)
+	require.NoError(t, err)
+
+	attributes, err := BigIntsToAttributes(bigInts)
+	require.NoError(t, err)
+	claim, err := NewClaimFromAttribute(attributes)
+	require.NoError(t, err)
+	require.Equal(t, oldClaim, claim)
+}
+
+func TestReconstructFail(t *testing.T) {
+	// should fail becaise Peter is set to strange type and peter.name will try
+	// to handle peter as a map[string]interface{}
+	attributes := []*Attribute{
+		&Attribute{
+			Name:     "Peter.name",
+			Typename: "string",
+			Value:    []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+		},
+		&Attribute{
+			Name:     "Peter",
+			Typename: "float",
+			Value:    []byte{0, 1, 2, 3, 4, 5, 6, 7},
+		},
+		&Attribute{
+			Name:     "界a界.世",
+			Typename: "string",
+			Value:    make([]byte, 1024*1024),
+		},
+	}
+
+	claim, err := NewClaimFromAttribute(attributes)
+	require.Error(t, err)
+	require.Nil(t, claim)
+}
+
+func TestAttributesToInts(t *testing.T) {
+	attributes := []*Attribute{
+		&Attribute{
+			Name:     "Peter",
+			Typename: "string",
+			Value:    []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+		},
+		&Attribute{
+			Name:     "Peter",
+			Typename: "界a界世",
+			Value:    []byte{},
+		},
+		&Attribute{
+			Name:     "界a界世",
+			Typename: "string",
+			Value:    make([]byte, 1024*1024),
+		},
+	}
+	ints, err := AttributesToBigInts(attributes)
+	require.NoError(t, err)
+	backAttributes, err := BigIntsToAttributes(ints)
+	require.NoError(t, err)
+	require.Equal(t, attributes, backAttributes)
+}
+
+func TestIntsToAttributeFailed(t *testing.T) {
+	attributes, err := BigIntsToAttributes([]*big.Int{
+		new(big.Int).SetInt64(928347502983475),
+		new(big.Int).SetInt64(234),
+		new(big.Int).SetInt64(928347502983475),
+	})
+	require.Error(t, err)
+	require.Nil(t, attributes)
+}
+
+func TestMarshallAttribute(t *testing.T) {
+	attr := Attribute{
+		Name:     "alsfjölkajsdöf",
+		Typename: "界a界世",
+		Value:    big.NewInt(8218926378).Bytes(),
+	}
+	bytes, err := attr.MarshalBinary()
+	require.NoError(t, err)
+	buildAttr := Attribute{}
+	err = buildAttr.UnmarshalBinary(bytes)
+	require.NoError(t, err)
+	require.Equal(t, attr, buildAttr)
+}
+
+func TestUnarshallAttributeFail(t *testing.T) {
+	bytes := []byte{0, 0, 0, 0, 0, 0, 0, 1, 12, 123, 123, 123, 123, 122}
+	buildAttr := Attribute{}
+	err := buildAttr.UnmarshalBinary(bytes)
+	require.Error(t, err)
+}
+
 func TestSetNestedValue(t *testing.T) {
 	testMap := make(map[string]interface{})
-	setNestedValue(testMap, "test"+SEPARATOR+"test"+SEPARATOR+"test", 1)
+	setNestedValue(testMap, "test"+Separator+"test"+Separator+"test", 1)
 
 	v1, ok := testMap["test"]
 	require.True(t, ok, "not found")
@@ -31,168 +185,16 @@ func TestSetNestedValue(t *testing.T) {
 func TestSetNestedValueFailed(t *testing.T) {
 	testMap := make(map[string]interface{})
 	testMap["1"] = 1
-	err := setNestedValue(testMap, "1"+SEPARATOR+"1", 1)
+	err := setNestedValue(testMap, "1"+Separator+"1", 1)
 	require.Error(t, err)
-}
-
-func TestReconstructClaim(t *testing.T) {
-	oldClaim := &Claim{
-		"ctype": "0xDEADBEEFCOFEE",
-		"contents": map[string]interface{}{
-			"a.g\\e":       34., // use float here, json will always parse numbers to float64
-			"name":         "Berta",
-			"special":      true,
-			"likedNumbers": []interface{}{1., 2., 3.},
-		},
-	}
-	disclosedAttr, err := oldClaim.toBigInts()
-	require.NoError(t, err)
-	attr := make(map[int]*big.Int)
-	for i, v := range disclosedAttr {
-		attr[i] = v
-	}
-	claim, err := claimFromBigInts(attr)
-	require.NoError(t, err)
-	require.Contains(t, claim, "ctype")
-	require.Contains(t, claim, "contents")
-	require.Contains(t, claim["contents"], "a.g\\e")
-	content, ok := claim["contents"].(map[string]interface{})
-	require.True(t, ok)
-	require.Equal(t, 34., content["a.g\\e"])
-	require.Equal(t, true, content["special"])
-}
-
-func TestReconstructClaimFailed(t *testing.T) {
-	byteDisclosedAttr := []byte(`{"1":"DGNvbnRlbnRzLmFnZQAAAAAAAAAFZmxvYXQAAAAAAAAACEBBAAAAAAAA","2":"D2NvbnRlbnRzLmdlbmRlcgAAAAAAAAAGc3RyaW5nAAAAAAAAAAZmZW1hbGU=","3":"DWNvbnRlbnRzLm5hbWUAAAAAAAAABWFycmF5AAAAAAAAABNbeyJhIjoxLCJiIjoyfSwyLDNd","4":"EGNvbnRlbnRzLnNwZWNpYWwAAAAAAAAABGJvb2wAAAAAAAAAAQE="}`)
-
-	disclosedAttr := make(map[int]*big.Int)
-	err := json.Unmarshal(byteDisclosedAttr, &disclosedAttr)
-	require.NoError(t, err)
-
-	claim, err := claimFromBigInts(disclosedAttr)
-	require.Error(t, err)
-	require.Nil(t, claim)
-}
-
-func TestReconstructClaimArray(t *testing.T) {
-	oldClaim := &Claim{
-		"ctype": []interface{}{1., 2., 3.},
-	}
-	disclosedAttr, err := oldClaim.toBigInts()
-	require.NoError(t, err)
-	attr := make(map[int]*big.Int)
-	for i, v := range disclosedAttr {
-		attr[i] = v
-	}
-	claim, err := claimFromBigInts(attr)
-	require.NoError(t, err)
-	require.Contains(t, claim, "ctype")
-	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
-}
-
-func TestReconstructClaimFloat(t *testing.T) {
-	oldClaim := &Claim{
-		"ctype": 9999.9,
-	}
-	disclosedAttr, err := oldClaim.toBigInts()
-	require.NoError(t, err)
-	attr := make(map[int]*big.Int)
-	for i, v := range disclosedAttr {
-		attr[i] = v
-	}
-	claim, err := claimFromBigInts(attr)
-	require.NoError(t, err)
-	require.Contains(t, claim, "ctype")
-	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
-}
-
-func TestReconstructClaimString(t *testing.T) {
-	oldClaim := &Claim{
-		"ctype": "9999.9",
-	}
-	disclosedAttr, err := oldClaim.toBigInts()
-	require.NoError(t, err)
-	attr := make(map[int]*big.Int)
-	for i, v := range disclosedAttr {
-		attr[i] = v
-	}
-	claim, err := claimFromBigInts(attr)
-	require.NoError(t, err)
-	require.Contains(t, claim, "ctype")
-	require.Equal(t, (*oldClaim)["ctype"], claim["ctype"])
-}
-
-
-func TestGetAttributeIndices(t *testing.T) {
-	cred := &AttestedClaim{}
-	err := json.Unmarshal(byteCredentials, cred)
-	require.NoError(t, err)
-
-	indice, err := cred.getAttributeIndices([]string{
-		"ctype",
-		"contents.age",
-		"contents.gender",
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, []int{1, 2, 5}, indice)
-}
-
-func TestMissingAttribute(t *testing.T) {
-	req := &PartialPresentationRequest{
-		ReqNonRevocationProof: true,
-		ReqMinIndex:           1,
-		RequestedAttributes: []string{
-			"ctype",
-			"contents.age",
-			"contents.gesdfer",
-		},
-	}
-
-	cred := &AttestedClaim{}
-	err := json.Unmarshal(byteUserSession, cred)
-	require.NoError(t, err)
-
-	indice, err := cred.getAttributeIndices(req.RequestedAttributes)
-	assert.Error(t, err)
-	assert.Nil(t, indice)
 }
 
 func TestSortRemoveDuplicates(t *testing.T) {
 	sliceA := []string{"a", "c", "b"}
-	sorted, unique := sortRemoveDuplicates(sliceA)
+	sorted, unique := SortRemoveDuplicates(sliceA)
 	assert.True(t, unique)
 	assert.Equal(t, []string{"a", "b", "c"}, sorted)
-	sorted, unique = sortRemoveDuplicates(append(sliceA, sliceA...))
+	sorted, unique = SortRemoveDuplicates(append(sliceA, sliceA...))
 	assert.False(t, unique)
 	assert.Equal(t, []string{"a", "b", "c"}, sorted)
-}
-
-func TestMarshallAttribute(t *testing.T) {
-	attr := Attribute{
-		Name:     "alsfjölkajsdöf",
-		Typename: "界a界世",
-		Value:    big.NewInt(8218926378).Bytes(),
-	}
-	bytes, err := attr.MarshalBinary()
-	require.NoError(t, err)
-	buildAttr := Attribute{}
-	err = buildAttr.UnmarshalBinary(bytes)
-	require.NoError(t, err)
-	require.Equal(t, attr, buildAttr)
-}
-
-func TestMarshallAttributeBigInt(t *testing.T) {
-	attr := Attribute{
-		Name:     "alsfjölkajsdöf",
-		Typename: "界a界世",
-		Value:    big.NewInt(8218926378).Bytes(),
-	}
-	bytes, err := attr.MarshalBinary()
-	require.NoError(t, err)
-	bInt := new(big.Int).SetBytes(bytes)
-	require.Equal(t, bytes, bInt.Bytes())
-	buildAttr := Attribute{}
-	err = buildAttr.UnmarshalBinary(bInt.Bytes())
-	require.NoError(t, err)
-	require.Equal(t, attr, buildAttr)
 }

@@ -67,9 +67,9 @@ func buildCredential(t *testing.T, sysParams *gabi.SystemParameters, attester *c
 func verify(t *testing.T, attester *credentials.Attester, claimer *credentials.Claimer, cred *credentials.AttestedClaim, claim credentials.Claim, accI uint64) {
 	requestedAttr := [4]string{
 		"ctype",
-		"contents" + credentials.SEPARATOR + "age",
-		"contents" + credentials.SEPARATOR + "special",
-		"contents" + credentials.SEPARATOR + "likedNumbers",
+		"contents" + credentials.Separator + "age",
+		"contents" + credentials.Separator + "special",
+		"contents" + credentials.Separator + "likedNumbers",
 	}
 	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, accI)
 	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
@@ -157,9 +157,9 @@ func TestCombinedPresentation(t *testing.T) {
 
 	requestedAttrs := [4]string{
 		"ctype",
-		"contents" + credentials.SEPARATOR + "age",
-		"contents" + credentials.SEPARATOR + "special",
-		"contents" + credentials.SEPARATOR + "likedNumbers",
+		"contents" + credentials.Separator + "age",
+		"contents" + credentials.Separator + "special",
+		"contents" + credentials.Separator + "likedNumbers",
 	}
 	requestPresentation := [2]credentials.PartialPresentationRequest{
 		credentials.PartialPresentationRequest{
@@ -235,7 +235,7 @@ func TestBigCredential(t *testing.T) {
 	cred, err := user.BuildCredential(sigMsg, userSession)
 	require.NoError(t, err, "Could not request attributes")
 
-	requestedAttr := [2]string{"ctype", "contents" + credentials.SEPARATOR + "name"}
+	requestedAttr := [2]string{"ctype", "contents" + credentials.Separator + "name"}
 	verifierSession, reqAttrMsg := credentials.RequestPresentation(sysParams, requestedAttr[:], true, 0)
 	disclosedAttr, err := user.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
 	require.NoError(t, err, "Could not disclose attributes")
@@ -338,10 +338,10 @@ func TestFullWorkflow(t *testing.T) {
 	fmt.Println("claim:", string(bts))
 
 	requestedAttr := [4]string{
-		"contents" + credentials.SEPARATOR + "name",
-		"contents" + credentials.SEPARATOR + "age",
-		"contents" + credentials.SEPARATOR + "special",
-		"contents" + credentials.SEPARATOR + "gender",
+		"contents" + credentials.Separator + "name",
+		"contents" + credentials.Separator + "age",
+		"contents" + credentials.Separator + "special",
+		"contents" + credentials.Separator + "gender",
 	}
 	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
 	bts, err = json.Marshal(verifierSession)
@@ -399,9 +399,9 @@ func TestMixingVerificationSessions(t *testing.T) {
 
 	requestedAttr := [4]string{
 		"ctype",
-		"contents" + credentials.SEPARATOR + "age",
-		"contents" + credentials.SEPARATOR + "special",
-		"contents" + credentials.SEPARATOR + "likedNumbers",
+		"contents" + credentials.Separator + "age",
+		"contents" + credentials.Separator + "special",
+		"contents" + credentials.Separator + "likedNumbers",
 	}
 	_, reqAttrMsg1 := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
 	verifierSession2, _ := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
@@ -450,9 +450,9 @@ func TestForgedCombinedPresentation(t *testing.T) {
 
 	requestedAttrs := [4]string{
 		"ctype",
-		"contents" + credentials.SEPARATOR + "age",
-		"contents" + credentials.SEPARATOR + "special",
-		"contents" + credentials.SEPARATOR + "likedNumbers",
+		"contents" + credentials.Separator + "age",
+		"contents" + credentials.Separator + "special",
+		"contents" + credentials.Separator + "likedNumbers",
 	}
 	requestPresentation := [2]credentials.PartialPresentationRequest{
 		credentials.PartialPresentationRequest{
@@ -531,9 +531,9 @@ func TestPresentForgedAttributes(t *testing.T) {
 
 	requestedAttr := [4]string{
 		"ctype",
-		"contents" + credentials.SEPARATOR + "age",
-		"contents" + credentials.SEPARATOR + "special",
-		"contents" + credentials.SEPARATOR + "likedNumbers",
+		"contents" + credentials.Separator + "age",
+		"contents" + credentials.Separator + "special",
+		"contents" + credentials.Separator + "likedNumbers",
 	}
 	_, reqAttrMsg1 := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
 	verifierSession2, _ := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
@@ -575,9 +575,9 @@ func TestPresentRequestNonexistent(t *testing.T) {
 
 	requestedAttr := [4]string{
 		"ctype",
-		"contents" + credentials.SEPARATOR + "age",
-		"contents" + credentials.SEPARATOR + "specifghfghal",
-		"contents" + credentials.SEPARATOR + "likedNumbers",
+		"contents" + credentials.Separator + "age",
+		"contents" + credentials.Separator + "specifghfghal",
+		"contents" + credentials.Separator + "likedNumbers",
 	}
 	_, reqAttrMsg1 := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
 	verifierSession2, _ := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)

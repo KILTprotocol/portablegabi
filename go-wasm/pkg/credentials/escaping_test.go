@@ -12,34 +12,34 @@ func TestEscapedSplit(t *testing.T) {
 	b := "oipoi23o"
 	c := "界a界世" // hopefully not an insult!
 
-	seq := escapedSplit(a+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
+	seq := escapedSplit(a+Separator+b+Separator+c, rune(Separator[0]))
 	assert.Equal(t, []string{a, b, c}, seq)
 
-	seq = escapedSplit(a+"\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\" + SEPARATOR + b, c}, seq)
+	seq = escapedSplit(a+"\\"+Separator+b+Separator+c, rune(Separator[0]))
+	assert.Equal(t, []string{a + "\\" + Separator + b, c}, seq)
 
-	seq = escapedSplit(a+"\\\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
+	seq = escapedSplit(a+"\\\\"+Separator+b+Separator+c, rune(Separator[0]))
 	assert.Equal(t, []string{a + "\\\\", b, c}, seq)
 
-	seq = escapedSplit(a+"\\\\\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\\\\\" + SEPARATOR + b, c}, seq)
+	seq = escapedSplit(a+"\\\\\\"+Separator+b+Separator+c, rune(Separator[0]))
+	assert.Equal(t, []string{a + "\\\\\\" + Separator + b, c}, seq)
 
-	seq = escapedSplit(a+"\t\t\t\t"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
+	seq = escapedSplit(a+"\t\t\t\t"+Separator+b+Separator+c, rune(Separator[0]))
 	assert.Equal(t, []string{a + "\t\t\t\t", b, c}, seq)
 
-	seq = escapedSplit(a+"\\t\\"+SEPARATOR+b+SEPARATOR+c, rune(SEPARATOR[0]))
-	assert.Equal(t, []string{a + "\\t\\" + SEPARATOR + b, c}, seq)
+	seq = escapedSplit(a+"\\t\\"+Separator+b+Separator+c, rune(Separator[0]))
+	assert.Equal(t, []string{a + "\\t\\" + Separator + b, c}, seq)
 
-	seq = escapedSplit(SEPARATOR+SEPARATOR+c+SEPARATOR, rune(SEPARATOR[0]))
+	seq = escapedSplit(Separator+Separator+c+Separator, rune(Separator[0]))
 	assert.Equal(t, []string{"", "", c, ""}, seq)
 
-	seq = escapedSplit(SEPARATOR+c+SEPARATOR+SEPARATOR, rune(SEPARATOR[0]))
+	seq = escapedSplit(Separator+c+Separator+Separator, rune(Separator[0]))
 	assert.Equal(t, []string{"", c, "", ""}, seq)
 }
 
 func TestSeparator(t *testing.T) {
 	// SEPARATOR must be exactly one char long
-	require.Equal(t, 1, len([]rune(SEPARATOR)))
+	require.Equal(t, 1, len([]rune(Separator)))
 }
 
 func TestEscape(t *testing.T) {
