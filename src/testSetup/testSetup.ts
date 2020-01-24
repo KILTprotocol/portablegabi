@@ -25,6 +25,26 @@ import {
   Credential,
 } from '../types/Claim'
 
+export async function actorSetup(): Promise<{
+  attester: Array<[GabiAttester, Accumulator]>
+  claimers: GabiClaimer[]
+}> {
+  const gabiAttester1 = new GabiAttester(pubKey, privKey)
+  const gabiAttester2 = new GabiAttester(pubKeyRevo2, privKeyRevo2)
+  const gabiClaimer1 = await GabiClaimer.buildFromScratch()
+  const gabiClaimer2 = await GabiClaimer.buildFromScratch()
+  const update1 = await gabiAttester1.createAccumulator()
+  const update2 = await gabiAttester2.createAccumulator()
+
+  return {
+    attester: [
+      [gabiAttester1, update1],
+      [gabiAttester2, update2],
+    ],
+    claimers: [gabiClaimer1, gabiClaimer2],
+  }
+}
+
 export async function attestationSetup({
   claimer,
   attester,
@@ -40,6 +60,7 @@ export async function attestationSetup({
   claimerSession: ClaimerAttestationSession
   attesterSession: AttesterAttestationSession
   initiateAttestationReq: InitiateAttestationRequest
+  attestationRequest: AttestationRequest
 }> {
   const {
     message: initiateAttestationReq,
@@ -68,6 +89,7 @@ export async function attestationSetup({
   return {
     initiateAttestationReq,
     claimerSession,
+    attestationRequest,
     attesterSession,
     attestation,
     witness,
