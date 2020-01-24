@@ -1,13 +1,9 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
-import runTestSetup from '../testSetup/testSetup'
+import { runTestSetup, attestationSetup } from '../testSetup/testSetup'
 import GabiClaimer from './GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
-import {
-  claim,
-  numOfClaimKeys,
-  disclosedAttributes,
-} from '../testSetup/testConfig'
+import { claim, disclosedAttributes } from '../testSetup/testConfig'
 import {
   ICredential,
   IIssueAttestation,
@@ -30,6 +26,7 @@ import {
 } from '../types/Claim'
 import GabiVerifier from '../verification/GabiVerifier'
 import { VerificationSession, PresentationRequest } from '../types/Verification'
+import CombinedRequestBuilder from '../verification/CombinedRequestBuilder'
 
 async function buildCredentialError(
   claimer: GabiClaimer,
@@ -222,22 +219,52 @@ describe('Test claimer functionality', () => {
         credObj.credential.signature
       )
       expect(aSigObj.nonrev).toStrictEqual(credObj.credential.nonrevWitness)
-      // compare attributes
-      expect(credObj.credential.attributes).toHaveLength(numOfClaimKeys + 1)
-      const parsedReq = JSON.parse(attestationRequest.valueOf())
-      parsedReq.values.map((val: any) =>
-        expect(credObj.credential.attributes).toContain(val)
-      )
     })
     it('Checks for correct data in buildPresentation', () => {
       expect(proof).not.toBe('undefined')
       const proofObj: IProof = JSON.parse(proof.valueOf())
       const sigObj: IIssueAttestation = JSON.parse(aSignature.valueOf())
-      expect(proofObj.attributes).toHaveLength(numOfClaimKeys)
       // TODO: verify this
       expect(proofObj.proof.A).not.toEqual(sigObj.signature.A)
       expect(proofObj.proof.e_response).not.toEqual(sigObj.proof.e_response)
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)
+    })
+    it('Test build combined presentation', async () => {
+      const { credential: credential2 } = await attestationSetup({
+        attester: gabiAttester,
+        claimer: gabiClaimer,
+        update,
+      })
+      expect(credential2).not.toBe('undefined')
+
+      const { message: req, session } = await new CombinedRequestBuilder()
+        .requestPresentation({
+          requestedAttributes: disclosedAttributes,
+          requestNonRevocationProof: true,
+          minIndex: 1,
+        })
+        .requestPresentation({
+          requestedAttributes: disclosedAttributes,
+          requestNonRevocationProof: true,
+          minIndex: 1,
+        })
+        .finalise()
+      const combPresentation = await gabiClaimer.buildCombinedPresentation({
+        credentials: [credential, credential2],
+        combinedPresentationReq: req,
+        attesterPubKeys: [gabiAttester.getPubKey(), gabiAttester.getPubKey()],
+      })
+      expect(combPresentation).toBeDefined()
+      const {
+        verified,
+        claims,
+      } = await GabiVerifier.verifyCombinedPresentation({
+        proof: combPresentation,
+        attesterPubKeys: [gabiAttester.getPubKey(), gabiAttester.getPubKey()],
+        verifierSession: session,
+      })
+      expect(verified).toBe(true)
+      expect(claims.length).toBe(2)
     })
     it('Updates credential and compares both versions (without revoking)', async () => {
       const timeBeforeUpdate = new Date().getTime()
@@ -435,11 +462,8 @@ describe('Test claimer functionality', () => {
         verifierSession, // from 1st session
         attesterPubKey: gabiAttester.getPubKey(),
       })
-      expect(verified).toBeTruthy() // FIXME: Remove after fix
-      expect(verifiedClaim).toBeNull() // FIXME: Remove after fix
-      // expect(verified).toBeFalsy() // FIXME: Should hold true @weichweich
-      // expect(spy.error).toHaveBeenCalledTimes(1) // FIXME: Should hold true
-      // expect(spy.error).toHaveBeenCalledWith('ecdsa signature was invalid') // FIXME: Should hold true
+      expect(verified).toBe(false)
+      expect(verifiedClaim).toBeNull()
     })
   })
 })

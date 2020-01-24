@@ -516,7 +516,6 @@ class WasmError extends Error {}
 class GoWasm extends Go {
   static async init() {
     const go = new Go()
-    console.log('Instantiating WASM...')
     // instantiate WASM
     await WebAssembly.instantiate(
       fs.readFileSync(path.resolve(__dirname, '../../build/wasm/main.wasm')),

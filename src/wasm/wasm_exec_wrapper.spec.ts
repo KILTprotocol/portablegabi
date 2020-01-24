@@ -31,7 +31,6 @@ describe('Test WASM wrapper', () => {
     const wasmExitSpy: jest.SpyInstance = jest
       .spyOn(GoInstance, 'exit')
       .mockImplementation()
-    expect(spy.log).toHaveBeenCalledWith('Instantiating WASM...')
     GoInstance.close()
     expect(wasmExitSpy).toHaveBeenCalledWith(0)
     expect(spy.exit).not.toHaveBeenCalled()

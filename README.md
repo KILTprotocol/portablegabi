@@ -31,18 +31,18 @@ The complete process is showcased in the [example file](docs/example.ts). Note t
 
 // (1.1) Example claim
 const claim = {
-contents: {
+  contents: {
     name: 'Jasper',
     age: '42',
     city: 'Berlin',
     id: 'ed638ndke92902n29',
-},
+  },
 }
 
 // (1.2) Create claimer identity: Either from scratch or mnemonic seed
 const claimer = await GabiClaimer.buildFromScratch()
 const claimer = await GabiClaimer.buildFromMnemonic(
-'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
+  'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
 )
 
 /* (2) Attester Setup */
@@ -51,73 +51,84 @@ const claimer = await GabiClaimer.buildFromMnemonic(
 const attester = await GabiAttester.buildFromScratch() // Takes very long due to finding safe prime numbers, ~10 minutes
 
 // (2.1) Create accumulator (for revocation)
-const update = await attester.createAccumulator()
+let update = await attester.createAccumulator()
 
 /* (3) Attestation */
 
 // (3.1) Attester sends two nonces to claimer
 const {
-message: startAttestationMsg,
-session: AttesterAttestationSession,
+  message: startAttestationMsg,
+  session: AttesterAttestationSession,
 } = await attester.startAttestation()
 
 // (3.2) Claimer requests attestation
 const {
-message: attestationRequest,
-session: claimerSignSession,
+  message: attestationRequest,
+  session: claimerSignSession,
 } = await claimer.requestAttestation({
-startAttestationMsg,
-claim: JSON.stringify(claim),
-attesterPubKey: attester.getPubKey(),
+  startAttestationMsg,
+  claim: JSON.stringify(claim),
+  attesterPubKey: attester.getPubKey(),
 })
 
 // (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
 const { attestation, witness } = await attester.issueAttestation({
-attestationSession: AttesterAttestationSession,
-attestationRequest,
-update,
+  attestationSession: AttesterAttestationSession,
+  attestationRequest,
+  update,
 })
 
 // (3.4) Claimer builds credential from attester's signature
 const credential = await claimer.buildCredential({
-claimerSignSession,
-attestation,
+  claimerSignSession,
+  attestation,
 })
 
 /* (4) Verification */
 
 // (4.1) Verifier sends two nonces to claimer
 const {
-session: verifierSession,
-message: presentationReq,
+  session: verifierSession,
+  message: presentationReq,
 } = await GabiVerifier.requestPresentation({
-requestedAttributes: ['contents.age', 'contents.city'],
-requestNonRevocationProof: true,
-minIndex: 1,
+  requestedAttributes: ['contents.age', 'contents.city'],
+  requestNonRevocationProof: true,
+  minIndex: 1,
 })
 
 // (4.2) Claimer reveals attributes
 const proof = await claimer.buildPresentation({
-credential,
-presentationReq,
-attesterPubKey: attester.getPubKey(),
+  credential,
+  presentationReq,
+  attesterPubKey: attester.getPubKey(),
 })
 
 // (4.3) Verifier verifies attributes
 const {
-claim: verifiedClaim,
-verified,
+  claim: verifiedClaim,
+  verified,
 } = await GabiVerifier.verifyPresentation({
-proof,
-verifierSession,
-attesterPubKey: attester.getPubKey(),
+  proof,
+  verifierSession,
+  attesterPubKey: attester.getPubKey(),
 })
 
 /* (5) Revocation */
-// TODO
+
+// revoke witness of a credential
+update = await attester.revokeAttestation({ update, witness: other_witness })
+
+// all claimers have to update their own credential with the new update.
+// This will only work for non revoked credentials
+credential = await claimer.updateCredential({
+    credential,
+    attesterPubKey: attester.getPubKey(),
+    update,
+  })
 
 /* (6) Close WASM Instance */
-goWasmClose()
+await goWasmClose()
+
 ```
 
 ## Limitations
