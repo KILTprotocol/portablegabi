@@ -302,7 +302,10 @@ func setNestedValue(m map[string]interface{}, key string, value interface{}) err
 			old[key] = m
 		}
 	}
-	key = unescape(parts[len(parts)-1], []rune(SEPARATOR)[0])
+	key = unescape(parts[len(parts)-1], []rune(Separator)[0])
+	if _, ok := m[key]; ok {
+		return errors.New("key already set")
+	}
 	m[key] = value
 	return nil
 }
