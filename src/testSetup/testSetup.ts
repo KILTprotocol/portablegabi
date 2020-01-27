@@ -72,7 +72,7 @@ export async function attestationSetup({
     session: claimerSession,
   } = await claimer.requestAttestation({
     startAttestationMsg: initiateAttestationReq,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: attester.getPubKey(),
   })
   // Attester issues attestation
@@ -112,7 +112,7 @@ export async function presentationSetup({
   presentationReq: PresentationRequest
   presentation: Presentation
   verified: boolean
-  claim: any
+  claim: object
 }> {
   // request
   const {
@@ -180,7 +180,7 @@ export async function runTestSetup(): Promise<{
   verifierSession: VerificationSession
   presentationReq: PresentationRequest
   proof: Presentation
-  verifiedClaim: any
+  verifiedClaim: object
   verified: boolean
 }> {
   const gabiAttester = new GabiAttester(pubKey, privKey)
@@ -199,7 +199,7 @@ export async function runTestSetup(): Promise<{
     session: claimerSignSession,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: gabiAttester.getPubKey(),
   })
   // Attester issues claim
@@ -228,7 +228,7 @@ export async function runTestSetup(): Promise<{
     session: claimerSignSession2,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: gabiAttester2.getPubKey(),
   })
   // E12: Incorrect data, should use startAttestationMsg2
@@ -237,7 +237,7 @@ export async function runTestSetup(): Promise<{
     session: claimerSignSessionE12,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: gabiAttester2.getPubKey(),
   })
   // E21: Incorrect data, should use gabiAttester2.getPubKey()
@@ -246,7 +246,7 @@ export async function runTestSetup(): Promise<{
     session: claimerSignSessionE21,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: gabiAttester.getPubKey(),
   })
 
@@ -371,7 +371,7 @@ export async function verifySetup(
   credential: Credential,
   requestedAttributes: string[],
   index: number
-): Promise<{ verified: boolean; verifiedClaim: any }> {
+): Promise<{ verified: boolean; verifiedClaim: object }> {
   const {
     session: verifierSession,
     message: presentationReq,

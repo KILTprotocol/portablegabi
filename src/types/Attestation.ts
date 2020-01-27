@@ -15,25 +15,25 @@ export default interface IGabiAttester {
 
 export class AttesterPublicKey extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 export class AttesterAttestationSession extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 export class InitiateAttestationRequest extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 export class Accumulator extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 export class Witness extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 export class Attestation extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }

@@ -162,7 +162,7 @@ describe('Test claimer functionality', () => {
     it('Checks valid requestAttestation', async () => {
       const request = await gabiClaimer.requestAttestation({
         startAttestationMsg,
-        claim: JSON.stringify(claim),
+        claim,
         attesterPubKey: gabiAttester.getPubKey(),
       })
       expect(request).toBeDefined()
