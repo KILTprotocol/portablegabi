@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/revocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,6 +76,32 @@ func TestSign(t *testing.T) {
 
 	_, _, err = attester.AttestClaim(request, session, update)
 	require.NoError(t, err)
+}
+
+func TestSignInvalid(t *testing.T) {
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
+	require.NoError(t, err)
+
+	request := &AttestedClaimRequest{}
+	err = json.Unmarshal(byteAttestationRequest, request)
+	require.NoError(t, err)
+
+	session := &AttesterSession{}
+	err = json.Unmarshal(byteAttesterSession, session)
+	require.NoError(t, err)
+
+	update := &revocation.Update{}
+	err = json.Unmarshal(byteUpdate, update)
+	require.NoError(t, err)
+
+	// attester expects a different nonce, AttestationRequest should now become invalid
+	session.Nonce = session.Nonce.SetUint64(999999)
+
+	attested, witness, err := attester.AttestClaim(request, session, update)
+	assert.Error(t, err)
+	assert.Nil(t, attested)
+	assert.Nil(t, witness)
 }
 
 func TestSignAndRevoke(t *testing.T) {
