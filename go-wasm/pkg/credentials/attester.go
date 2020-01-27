@@ -14,6 +14,7 @@ import (
 // attestation
 type AttesterSession struct {
 	Context *big.Int `json:"context"`
+	Nonce   *big.Int `json:"nonce"`
 }
 
 // Attester can attest claims.
@@ -51,16 +52,21 @@ func (attester *Attester) InitiateAttestation() (*AttesterSession, *StartSession
 		return nil, nil, err
 	}
 	// send request attributes to sign
-	return &AttesterSession{Context: context}, &StartSessionMsg{
-		Context: context,
-		Nonce:   nonce,
-	}, nil
+	return &AttesterSession{
+			Context: context,
+			Nonce:   nonce,
+		}, &StartSessionMsg{
+			Context: context,
+			Nonce:   nonce,
+		}, nil
 }
 
 // AttestClaim issues an attestation for the given claim. It takes the
 // RequestAttestedClaim which was send by the claimer and an AttesterSession.
 // It returns an gabi.IssueSignatureMessage which should be send to the claimer.
 func (attester *Attester) AttestClaim(reqCred *AttestedClaimRequest, session *AttesterSession, update *revocation.Update) (*gabi.IssueSignatureMessage, *revocation.Witness, error) {
+	reqCred.CommitMsg.Proofs.Verify([]*gabi.PublicKey{attester.PublicKey}, session.Context, session.Nonce, false, nil)
+
 	attributes := reqCred.Claim.ToAttributes()
 	marshaledAttr, err := AttributesToBigInts(attributes)
 	if err != nil {

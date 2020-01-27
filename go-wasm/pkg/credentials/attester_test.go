@@ -50,6 +50,25 @@ func TestNewAttester(t *testing.T) {
 	require.True(t, publicKey.RevocationSupported())
 }
 
+func TestInitiateAttestation(t *testing.T) {
+	attester := &Attester{
+		PrivateKey: &gabi.PrivateKey{},
+		PublicKey:  &gabi.PublicKey{},
+	}
+	err := json.Unmarshal(attesterPrivKey, attester.PrivateKey)
+	require.NoError(t, err)
+	err = json.Unmarshal(attesterPubKey, attester.PublicKey)
+	require.NoError(t, err)
+	gabi.GenerateRevocationKeypair(attester.PrivateKey, attester.PublicKey)
+
+	session, message, err := attester.InitiateAttestation()
+	assert.NoError(t, err)
+	assert.NotNil(t, session)
+	assert.NotNil(t, message)
+	assert.Equal(t, session.Context, message.Context)
+	assert.Equal(t, session.Nonce, message.Nonce)
+}
+
 func TestSign(t *testing.T) {
 	attester := &Attester{
 		PrivateKey: &gabi.PrivateKey{},
