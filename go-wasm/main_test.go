@@ -419,6 +419,15 @@ func TestFullWorkflow(t *testing.T) {
 	bts, err = json.Marshal(attrComb)
 	require.NoError(t, err)
 	fmt.Println("Presentation (combined):", string(bts))
+
+	fmt.Println("\nRevocation...")
+	rUpdate, err := attester.RevokeAttestation(update, cred2.Credential.NonRevocationWitness)
+	require.NoError(t, err)
+	require.NotNil(t, rUpdate)
+	bts, err = json.Marshal(rUpdate)
+	require.NoError(t, err)
+	fmt.Println("Update:", string(bts))
+
 }
 
 // -------- negative tests --------
