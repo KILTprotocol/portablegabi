@@ -281,6 +281,7 @@ func TestFullWorkflow(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Println("Claimer:", string(bts))
 
+	// Attest Claim/Build credential
 	claim := credentials.Claim{
 		"ctype": "0xDEADBEEFCOFEE",
 		"contents": map[string]interface{}{
@@ -337,6 +338,7 @@ func TestFullWorkflow(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Println("claim:", string(bts))
 
+	// Request Presentation
 	requestedAttr := [4]string{
 		"contents" + credentials.Separator + "name",
 		"contents" + credentials.Separator + "age",
@@ -371,6 +373,52 @@ func TestFullWorkflow(t *testing.T) {
 	require.Equal(t, shouldContents["name"], contents["name"])
 	require.Equal(t, shouldContents["special"], contents["special"])
 	require.Nil(t, attr["contents.name"])
+
+	// for combined proof
+	fmt.Println("\nCombined...")
+	_, cred2 := buildCredential(t, sysParams, attester, claimer, update)
+	requestedAttr2 := [2]string{
+		"contents" + credentials.Separator + "name",
+		"contents" + credentials.Separator + "likedNumbers",
+	}
+	combVerifierSession, reqCombAttr := credentials.RequestCombinedPresentation(attester.PublicKey.Params, []credentials.PartialPresentationRequest{
+		credentials.PartialPresentationRequest{
+			RequestedAttributes:   requestedAttr[:],
+			ReqNonRevocationProof: true,
+			ReqMinIndex:           1,
+		},
+		credentials.PartialPresentationRequest{
+			RequestedAttributes:   requestedAttr2[:],
+			ReqNonRevocationProof: true,
+			ReqMinIndex:           1,
+		},
+	})
+	bts, err = json.Marshal(combVerifierSession)
+	require.NoError(t, err)
+	fmt.Println("verifierSession (combined):", string(bts))
+	bts, err = json.Marshal(reqAttrMsg)
+	require.NoError(t, err)
+	fmt.Println("PresentationRequest (combined):", string(bts))
+
+	discloseCombCred, err := claimer.BuildCombinedPresentation([]*gabi.PublicKey{
+		attester.PublicKey,
+		attester.PublicKey,
+	}, []*credentials.AttestedClaim{
+		cred,
+		cred2,
+	}, reqCombAttr)
+	require.NoError(t, err, "Could not disclose attributes")
+	bts, err = json.Marshal(discloseCombCred)
+	require.NoError(t, err)
+	fmt.Println("PresentationResponse:", string(bts))
+
+	_, attrComb, err := credentials.VerifyCombinedPresentation([]*gabi.PublicKey{
+		attester.PublicKey,
+		attester.PublicKey,
+	}, discloseCombCred, combVerifierSession)
+	bts, err = json.Marshal(attrComb)
+	require.NoError(t, err)
+	fmt.Println("Presentation (combined):", string(bts))
 }
 
 // -------- negative tests --------
