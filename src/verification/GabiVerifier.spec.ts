@@ -1,20 +1,15 @@
 import {
-  initClaimerAttesterSetup,
   attestationSetup,
   presentationSetup,
+  actorSetup,
 } from '../testSetup/testSetup'
-import {
-  disclosedAttributes,
-  claim,
-  pubKey2,
-  privKey2,
-} from '../testSetup/testConfig'
+import { disclosedAttributes, claim } from '../testSetup/testConfig'
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import { VerificationSession, PresentationRequest } from '../types/Verification'
 import { ICredential, IProof } from '../testSetup/testTypes'
 import GabiVerifier from './GabiVerifier'
 import GabiClaimer from '../claim/GabiClaimer'
-import { Accumulator } from '../types/Attestation'
+import { Accumulator, Witness } from '../types/Attestation'
 import { Credential, Presentation } from '../types/Claim'
 import GabiAttester from '../attestation/GabiAttester'
 
@@ -74,6 +69,7 @@ describe('Test verifier functionality', () => {
   let gabiAttester: GabiAttester
   let gabiAttester2: GabiAttester
   let update: Accumulator
+  let witness: Witness
   let credential: Credential
   let verifierSession: VerificationSession
   let presentationReq: PresentationRequest
@@ -81,9 +77,12 @@ describe('Test verifier functionality', () => {
   let presentedClaim: any
   let verified: boolean
   beforeAll(async () => {
-    ;({ gabiClaimer, gabiAttester, update } = await initClaimerAttesterSetup())
-    gabiAttester2 = new GabiAttester(pubKey2, privKey2)
-    ;({ credential } = await attestationSetup({
+    ;({
+      claimers: [gabiClaimer],
+      attesters: [gabiAttester, gabiAttester2],
+      accumulators: [update],
+    } = await actorSetup())
+    ;({ credential, witness } = await attestationSetup({
       claimer: gabiClaimer,
       attester: gabiAttester,
       update,
@@ -112,7 +111,12 @@ describe('Test verifier functionality', () => {
       expect(
         presObj.partialPresentationRequest.requestedAttributes
       ).toStrictEqual(disclosedAttributes)
-      // TODO: add more?
+      expect(verObj.reqNonRevocationProof).toEqual(
+        presObj.partialPresentationRequest.reqNonRevocationProof
+      )
+      expect(verObj.reqMinIndex).toEqual(
+        presObj.partialPresentationRequest.reqMinIndex
+      )
     })
     it('Checks valid verifyPresentation', () => {
       expectSuccess(verified, presentedClaim)
@@ -122,7 +126,6 @@ describe('Test verifier functionality', () => {
         picture: { DATA: claim.contents.picture.DATA },
         eyeColor: claim.contents.eyeColor,
       })
-      // TODO: add more?
     })
     it('Verifies presentationSetup works as intended', async () => {
       await expectVerificationSucceeded(
@@ -326,6 +329,27 @@ describe('Test verifier functionality', () => {
         2
       )
     })
+    it('Should verify even after revocation when minIndex is too old (i.e. small)', async () => {
+      await gabiAttester.revokeAttestation({
+        update,
+        witness,
+      })
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        1
+      )
+      // expect fail for current index
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        2
+      )
+    })
   })
   describe('Checks invalid/tampered data', () => {
     it('Should throw on empty requested/disclosed attributes array', async () => {
@@ -515,8 +539,4 @@ describe('Test verifier functionality', () => {
       )
     })
   })
-  // describe('Tests combined presentation', () => {})
-  it.todo(
-    'Revoke but require index 1 should result in successfull verification'
-  )
 })

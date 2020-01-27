@@ -148,7 +148,7 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 
 	for i, partialReq := range reqAttributes.PartialRequests {
 		if len(partialReq.RequestedAttributes) < 1 {
-			return nil, fmt.Errorf("requested attributes should not be empty for the %d. credential", i)
+			return nil, fmt.Errorf("requested attributes should not be empty for the %d. credential", i+1)
 		}
 		cred := credentials[i].Credential
 		cred.Pk = pubKs[i]

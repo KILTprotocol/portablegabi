@@ -2,9 +2,9 @@ import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import GabiAttester from './GabiAttester'
 import { privKey, pubKey } from '../testSetup/testConfig'
 import {
-  initClaimerAttesterSetup,
   attestationSetup,
   mixedAttestationsSetup,
+  actorSetup,
 } from '../testSetup/testSetup'
 import {
   Accumulator,
@@ -38,7 +38,11 @@ describe('Test attester', () => {
     }
   }
   beforeAll(async () => {
-    ;({ gabiClaimer, gabiAttester, update } = await initClaimerAttesterSetup())
+    ;({
+      claimers: [gabiClaimer],
+      attesters: [gabiAttester],
+      accumulators: [update],
+    } = await actorSetup())
     ;({
       initiateAttestationReq,
       attesterSession,
@@ -123,4 +127,6 @@ describe('Test attester', () => {
       ).rejects.toThrow('ecdsa signature was invalid')
     })
   })
+  it.todo('tamper message nonce')
+  it.todo('tamper context nonce')
 })

@@ -17,24 +17,38 @@ import {
   AttesterAttestationSession,
   Accumulator,
 } from '../types/Attestation'
-import { VerificationSession, PresentationRequest } from '../types/Verification'
+import {
+  VerificationSession,
+  PresentationRequest,
+  CombinedPresentationRequest,
+  CombinedVerificationSession,
+} from '../types/Verification'
 import {
   AttestationRequest,
   Presentation,
   ClaimerAttestationSession,
   Credential,
 } from '../types/Claim'
+import CombinedRequestBuilder from '../verification/CombinedRequestBuilder'
 
-// creates instances for claimer and attester with accumulator
-export async function initClaimerAttesterSetup(): Promise<{
-  gabiClaimer: GabiClaimer
-  gabiAttester: GabiAttester
-  update: Accumulator
+// creates instances for two claimers, attesters and corresponding accumulators each
+export async function actorSetup(): Promise<{
+  claimers: GabiClaimer[]
+  attesters: GabiAttester[]
+  accumulators: Accumulator[]
 }> {
-  const gabiAttester = new GabiAttester(pubKey, privKey)
-  const gabiClaimer = await GabiClaimer.buildFromScratch()
-  const update = await gabiAttester.createAccumulator()
-  return { gabiClaimer, gabiAttester, update }
+  const gabiAttester1 = new GabiAttester(pubKey, privKey)
+  const gabiAttester2 = new GabiAttester(pubKey2, privKey2)
+  const gabiClaimer1 = await GabiClaimer.buildFromScratch()
+  const gabiClaimer2 = await GabiClaimer.buildFromScratch()
+  const update1 = await gabiAttester1.createAccumulator()
+  const update2 = await gabiAttester2.createAccumulator()
+
+  return {
+    claimers: [gabiClaimer1, gabiClaimer2],
+    attesters: [gabiAttester1, gabiAttester2],
+    accumulators: [update1, update2],
+  }
 }
 
 // attests claim and builds credential
@@ -288,5 +302,94 @@ export async function mixedAttestationsSetup({
     mixedIssuedAttestations,
     mixedSignatures,
     validSignatureBuildCredential,
+  }
+}
+
+export async function combinedSetup({
+  claimer,
+  attesters,
+  updates,
+  disclosedAttsArr,
+  minIndices,
+  requestNonRevocationProof,
+  inputCredentials,
+}: {
+  claimer: GabiClaimer
+  attesters: GabiAttester[]
+  updates: Accumulator[]
+  disclosedAttsArr: string[][]
+  minIndices: number[]
+  requestNonRevocationProof: boolean[]
+  inputCredentials?: Credential[]
+}): Promise<{
+  combinedBuilder: CombinedRequestBuilder
+  combinedReq: CombinedPresentationRequest
+  combinedSession: CombinedVerificationSession
+  verified: boolean
+  claims: any
+}> {
+  if (
+    attesters.length !== updates.length ||
+    updates.length !== disclosedAttsArr.length ||
+    disclosedAttsArr.length !== minIndices.length ||
+    minIndices.length !== requestNonRevocationProof.length
+  ) {
+    throw new Error('Array lengths dont match up in combined setup')
+  }
+  const attesterPubKeys = attesters.map(attester => attester.getPubKey())
+  // build credentials if inputCredentials is missing
+  let credentials: Credential[]
+  if (
+    inputCredentials &&
+    inputCredentials.filter(cred => cred instanceof Credential).length ===
+      attesters.length
+  ) {
+    credentials = inputCredentials
+  } else {
+    credentials = await Promise.all(
+      attesters.map((attester, idx) =>
+        attestationSetup({
+          attester,
+          claimer,
+          update: updates[idx],
+        })
+      )
+    ).then(attestations =>
+      attestations.map(attestation => attestation.credential)
+    )
+  }
+  // build combined requests
+  let combinedBuilder = new CombinedRequestBuilder()
+  combinedBuilder = disclosedAttsArr.reduce(
+    (builder, requestedAttributes, idx) =>
+      builder.requestPresentation({
+        requestedAttributes,
+        requestNonRevocationProof: requestNonRevocationProof[idx],
+        minIndex: minIndices[idx],
+      }),
+    combinedBuilder
+  )
+  const {
+    message: combinedReq,
+    session: combinedSession,
+  } = await combinedBuilder.finalise()
+  // build presentation
+  const combPresentation = await claimer.buildCombinedPresentation({
+    credentials,
+    combinedPresentationReq: combinedReq,
+    attesterPubKeys,
+  })
+  // verify presentation
+  const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
+    proof: combPresentation,
+    attesterPubKeys,
+    verifierSession: combinedSession,
+  })
+  return {
+    combinedBuilder,
+    combinedReq,
+    combinedSession,
+    verified,
+    claims,
   }
 }
