@@ -71,7 +71,7 @@ func (attester *Attester) AttestClaim(reqCred *AttestedClaimRequest, session *At
 	}
 
 	attributes := reqCred.Claim.ToAttributes()
-	marshaledAttr, err := AttributesToBigInts(attributes)
+	marshaledAttr, err := attributesToBigInts(attributes)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -118,7 +118,7 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 			return nil, err
 		}
 	}
-	attrIndices, err := attestedClaim.GetAttributeIndices(partialReq.RequestedAttributes)
+	attrIndices, err := attestedClaim.getAttributeIndices(partialReq.RequestedAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 				return nil, err
 			}
 		}
-		attrIndices, err := credentials[i].GetAttributeIndices(partialReq.RequestedAttributes)
+		attrIndices, err := credentials[i].getAttributeIndices(partialReq.RequestedAttributes)
 		if err != nil {
 			return nil, err
 		}

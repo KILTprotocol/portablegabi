@@ -14,7 +14,7 @@ func TestGetAttributeIndices(t *testing.T) {
 	err := json.Unmarshal(byteCredential, cred)
 	require.NoError(t, err)
 
-	indice, err := cred.GetAttributeIndices([]string{
+	indice, err := cred.getAttributeIndices([]string{
 		"ctype",
 		"contents.age",
 		"contents.gender",
@@ -38,7 +38,7 @@ func TestGetMissingAttribute(t *testing.T) {
 	err := json.Unmarshal(byteCredential, cred)
 	require.NoError(t, err)
 
-	indice, err := cred.GetAttributeIndices(req.RequestedAttributes)
+	indice, err := cred.getAttributeIndices(req.RequestedAttributes)
 	assert.Error(t, err)
 	assert.Nil(t, indice)
 }
@@ -55,7 +55,7 @@ func TestReconstructClaim(t *testing.T) {
 	}
 	attributes := oldClaim.ToAttributes()
 
-	claim, err := NewClaimFromAttribute(attributes)
+	claim, err := newClaimFromAttribute(attributes)
 	require.NoError(t, err)
 	require.Equal(t, oldClaim, claim)
 }
@@ -71,12 +71,12 @@ func TestReconstructClaimFull(t *testing.T) {
 		},
 	}
 	oldAttributes := oldClaim.ToAttributes()
-	bigInts, err := AttributesToBigInts(oldAttributes)
+	bigInts, err := attributesToBigInts(oldAttributes)
 	require.NoError(t, err)
 
 	attributes, err := BigIntsToAttributes(bigInts)
 	require.NoError(t, err)
-	claim, err := NewClaimFromAttribute(attributes)
+	claim, err := newClaimFromAttribute(attributes)
 	require.NoError(t, err)
 	require.Equal(t, oldClaim, claim)
 }
@@ -102,7 +102,7 @@ func TestReconstructFail(t *testing.T) {
 		},
 	}
 
-	claim, err := NewClaimFromAttribute(attributes)
+	claim, err := newClaimFromAttribute(attributes)
 	require.Error(t, err)
 	require.Nil(t, claim)
 }
@@ -125,7 +125,7 @@ func TestAttributesToInts(t *testing.T) {
 			Value:    make([]byte, 1024*1024),
 		},
 	}
-	ints, err := AttributesToBigInts(attributes)
+	ints, err := attributesToBigInts(attributes)
 	require.NoError(t, err)
 	backAttributes, err := BigIntsToAttributes(ints)
 	require.NoError(t, err)
@@ -191,10 +191,10 @@ func TestSetNestedValueFailed(t *testing.T) {
 
 func TestSortRemoveDuplicates(t *testing.T) {
 	sliceA := []string{"a", "c", "b"}
-	sorted, unique := SortRemoveDuplicates(sliceA)
+	sorted, unique := sortRemoveDuplicates(sliceA)
 	assert.True(t, unique)
 	assert.Equal(t, []string{"a", "b", "c"}, sorted)
-	sorted, unique = SortRemoveDuplicates(append(sliceA, sliceA...))
+	sorted, unique = sortRemoveDuplicates(append(sliceA, sliceA...))
 	assert.False(t, unique)
 	assert.Equal(t, []string{"a", "b", "c"}, sorted)
 }
