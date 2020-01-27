@@ -48,7 +48,7 @@ export default class GabiClaimer implements IGabiClaimer {
     startAttestationMsg,
     attesterPubKey,
   }: {
-    claim: string
+    claim: object
     startAttestationMsg: InitiateAttestationRequest
     attesterPubKey: AttesterPublicKey
   }): Promise<{
@@ -59,7 +59,7 @@ export default class GabiClaimer implements IGabiClaimer {
       WasmHooks.requestAttestation,
       [
         this.secret,
-        claim,
+        JSON.stringify(claim),
         startAttestationMsg.valueOf(),
         attesterPubKey.valueOf(),
       ]

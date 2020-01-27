@@ -121,7 +121,7 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 			return nil, err
 		}
 	}
-	attrIndices, err := attestedClaim.GetAttributeIndices(partialReq.RequestedAttributes)
+	attrIndices, err := attestedClaim.getAttributeIndices(partialReq.RequestedAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -140,9 +140,9 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credentials []*AttestedClaim,
 	reqAttributes *CombinedPresentationRequest) (*CombinedPresentationResponse, error) {
 	if len(pubKs) != len(reqAttributes.PartialRequests) {
-		return nil, errors.New("wrong amount of public keys")
+		return nil, fmt.Errorf("expected %d public keys, got %d", len(reqAttributes.PartialRequests), len(pubKs))
 	} else if len(credentials) != len(reqAttributes.PartialRequests) {
-		return nil, errors.New("wrong amount of attested claims")
+		return nil, fmt.Errorf("expected %d attested claims, got %d", len(reqAttributes.PartialRequests), len(credentials))
 	}
 	proofBuilder := make([]gabi.ProofBuilder, len(reqAttributes.PartialRequests))
 
@@ -159,7 +159,7 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 				return nil, err
 			}
 		}
-		attrIndices, err := credentials[i].GetAttributeIndices(partialReq.RequestedAttributes)
+		attrIndices, err := credentials[i].getAttributeIndices(partialReq.RequestedAttributes)
 		if err != nil {
 			return nil, err
 		}

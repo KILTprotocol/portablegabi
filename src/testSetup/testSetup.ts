@@ -79,7 +79,7 @@ export async function attestationSetup({
     session: claimerSession,
   } = await claimer.requestAttestation({
     startAttestationMsg: initiateAttestationReq,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: attester.getPubKey(),
   })
   // Attester issues attestation
@@ -124,7 +124,7 @@ export async function presentationSetup({
   presentationReq: PresentationRequest
   presentation: Presentation
   verified: boolean
-  claim: any
+  claim: object
 }> {
   // request
   const {
@@ -184,15 +184,18 @@ export async function mixedAttestationsSetup({
   claimerSession2: ClaimerAttestationSession
   claimerSessionE12: ClaimerAttestationSession
   claimerSessionE21: ClaimerAttestationSession
-  mixedIssuedAttestations: {
+  mixedAttestationsInvalid: {
     [key: number]: {
+      attestationSession: AttesterAttestationSession
+      attestationRequest: AttestationRequest
+      update: Accumulator
+    }
+  }
+  mixedAttestationsValid: {
+    issuance: {
       attestation: Attestation
       witness: Witness
     }
-  }
-  mixedSignatures: Attestation[]
-  validSignatureBuildCredential: {
-    attestation: Attestation
     claimerSession: ClaimerAttestationSession
   }
 }> {
@@ -211,7 +214,7 @@ export async function mixedAttestationsSetup({
     session: claimerSession2,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: gabiAttester2.getPubKey(),
   })
   // E12: Mixed data, should use startAttestationMsg2
@@ -220,7 +223,7 @@ export async function mixedAttestationsSetup({
     session: claimerSessionE12,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: initiateAttestationReq,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: gabiAttester2.getPubKey(),
   })
   // E21: Mixed data, should use gabiAttester2.getPubKey()
@@ -229,7 +232,7 @@ export async function mixedAttestationsSetup({
     session: claimerSessionE21,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
-    claim: JSON.stringify(claim),
+    claim,
     attesterPubKey: gabiAttester.getPubKey(),
   })
 
@@ -242,49 +245,46 @@ export async function mixedAttestationsSetup({
     attestationRequest: attestationRequest2,
     update: update2,
   })
-  const mixedIssuedAttestations = {
-    1112_2221: await gabiAttester.issueAttestation({
+
+  const mixedAttestationsInvalid = {
+    1112_2221: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequestE12, // 12
       update,
-    }),
-    1122_2211: await gabiAttester.issueAttestation({
+    },
+    1122_2211: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequest2, // 22
       update,
-    }),
-    1222_2111: await gabiAttester.issueAttestation({
+    },
+    1222_2111: {
       attestationSession: attesterSignSession2, // 2
       attestationRequest: attestationRequest2, // 22
       update,
-    }),
-    1211_2122: await gabiAttester.issueAttestation({
+    },
+    1211_2122: {
       attestationSession: attesterSignSession2, // 1
       attestationRequest, // 11
       update,
-    }),
-    1121_2212: await gabiAttester.issueAttestation({
+    },
+    1121_2212: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequestE21, // 21
       update,
-    }),
-    1212_2121: await gabiAttester.issueAttestation({
+    },
+    1212_2121: {
       attestationSession: attesterSignSession2, // 2
       attestationRequest: attestationRequestE12, // 12
       update,
-    }),
-    // this is a correct signature when called from gabiAttester since the pk matches
-    1221_2112: await gabiAttester.issueAttestation({
+    },
+  }
+
+  const mixedAttestationsValid = {
+    issuance: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession2, // 1
       attestationRequest: attestationRequestE21, // 21
       update,
     }),
-  }
-  const mixedSignatures = Object.values(mixedIssuedAttestations).map(
-    response => response.attestation
-  )
-  const validSignatureBuildCredential = {
-    attestation: mixedIssuedAttestations[1221_2112].attestation,
     claimerSession: claimerSessionE21,
   }
 
@@ -301,9 +301,8 @@ export async function mixedAttestationsSetup({
     claimerSession2,
     claimerSessionE12,
     claimerSessionE21,
-    mixedIssuedAttestations,
-    mixedSignatures,
-    validSignatureBuildCredential,
+    mixedAttestationsInvalid,
+    mixedAttestationsValid,
   }
 }
 

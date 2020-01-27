@@ -8,27 +8,27 @@ export interface IPresentationRequest {
 
 export interface IVerifiedPresentation {
   verified: boolean
-  claim: any
+  claim: object
 }
 
 export interface IVerifiedCombinedPresentation {
   verified: boolean
-  claims: any[]
+  claims: object[]
 }
 
 export class VerificationSession extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 export class PresentationRequest extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 export class CombinedVerificationSession extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 export class CombinedPresentationRequest extends String {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: any
+  private thisIsOnlyHereToPreventClassMixes: int
 }

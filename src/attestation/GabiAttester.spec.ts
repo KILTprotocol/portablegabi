@@ -31,10 +31,11 @@ describe('Test attester', () => {
   let attestation: Attestation
   let witness: Witness
   let witness2: Witness
-  let mixedIssuedAttestations: {
+  let mixedAttestationsInvalid: {
     [key: number]: {
-      attestation: Attestation
-      witness: Witness
+      attestationSession: AttesterAttestationSession
+      attestationRequest: AttestationRequest
+      update: Accumulator
     }
   }
   beforeAll(async () => {
@@ -57,7 +58,7 @@ describe('Test attester', () => {
     ;({
       update2,
       witness2,
-      mixedIssuedAttestations,
+      mixedAttestationsInvalid,
     } = await mixedAttestationsSetup({
       gabiClaimer,
       gabiAttester,
@@ -88,6 +89,26 @@ describe('Test attester', () => {
   })
   // since the attester acts as a middleman, most of the functionality is tested in GabiClaimer and GabiVerifier
   describe('Test attester functionality', () => {
+    it('Should throw when issuing unsigned attestations', async () => {
+      return Promise.all(
+        Object.values(mixedAttestationsInvalid).map(
+          ({
+            attestationSession: attestationSessionMixed,
+            attestationRequest: attestationRequestMixed,
+            update: updateMixed,
+          }) =>
+            expect(
+              gabiAttester.issueAttestation({
+                attestationSession: attestationSessionMixed,
+                attestationRequest: attestationRequestMixed,
+                update: updateMixed,
+              })
+            ).rejects.toThrow('commit message could not be verified')
+        )
+      ).then(response =>
+        response.map(item => expect(item).not.toEqual(expect.anything()))
+      )
+    })
     it('Should not throw when revoking with another accumulator of same attester', async () => {
       const updateNew = await gabiAttester.createAccumulator()
       await expect(
@@ -96,19 +117,6 @@ describe('Test attester', () => {
           witness,
         })
       ).resolves.toEqual(expect.anything())
-    })
-    it('Should not throw when revoking with witnesses from mixedIssuedAttestations', async () => {
-      // reason: all of these issueAttestation calls have been made from gabiAttester
-      Object.values(mixedIssuedAttestations).forEach(
-        async ({ witness: theWitness }) => {
-          await expect(
-            gabiAttester.revokeAttestation({
-              update,
-              witness: theWitness,
-            })
-          ).resolves.toEqual(expect.anything())
-        }
-      )
     })
     it('Should not throw when revoking with witness from another attester', async () => {
       await expect(
@@ -126,7 +134,7 @@ describe('Test attester', () => {
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
-    it('Should throw when tampering context of initiateAttestationReq', async () => {
+    it.skip('Should throw when tampering context of initiateAttestationReq', async () => {
       const {
         session: attesterSession2,
         message: initiateAttestationReq2,
@@ -147,7 +155,7 @@ describe('Test attester', () => {
       } = await gabiClaimer.requestAttestation({
         // startAttestationMsg: initiateAttestationReqTampered,
         startAttestationMsg: initiateAttestationReq2,
-        claim: JSON.stringify(claim),
+        claim,
         attesterPubKey: gabiAttester.getPubKey(),
       })
       // Attester issues attestation

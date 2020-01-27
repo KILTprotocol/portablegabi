@@ -97,7 +97,7 @@ func VerifyPresentation(issuerPubK *gabi.PublicKey, signedAttributes *Presentati
 		if err != nil {
 			return false, nil, err
 		}
-		claim, err := NewClaimFromAttribute(attributes)
+		claim, err := newClaimFromAttribute(attributes)
 		if err != nil {
 			return false, nil, err
 		}
@@ -121,7 +121,7 @@ func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, combinedPrese
 			if err != nil {
 				return false, nil, err
 			}
-			claim, err := NewClaimFromAttribute(attributes)
+			claim, err := newClaimFromAttribute(attributes)
 			if err != nil {
 				return false, nil, err
 			}

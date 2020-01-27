@@ -36,17 +36,14 @@ import CombinedRequestBuilder from '../verification/CombinedRequestBuilder'
 async function buildCredentialError(
   claimer: GabiClaimer,
   attestation: Attestation,
-  claimerSession: ClaimerAttestationSession,
-  spy: Spy<'log'>,
-  errCount = 1
-): Promise<number> {
+  claimerSession: ClaimerAttestationSession
+): Promise<void> {
   await expect(
     claimer.buildCredential({
       attestation,
       claimerSession,
     })
   ).rejects.toThrowError('Proof of correctness on signature does not verify')
-  return errCount + 1
 }
 
 // close WASM instance after tests ran
@@ -103,12 +100,13 @@ describe('Test claimer functionality', () => {
   let claimerSession2: ClaimerAttestationSession
   let claimerSessionE12: ClaimerAttestationSession
   let claimerSessionE21: ClaimerAttestationSession
-  let mixedSignatures: Attestation[]
-  let validSignatureBuildCredential: {
-    attestation: Attestation
+  let mixedAttestationsValid: {
+    issuance: {
+      attestation: Attestation
+      witness: Witness
+    }
     claimerSession: ClaimerAttestationSession
   }
-  let claimerSessions: ClaimerAttestationSession[]
   let presentationReq: PresentationRequest
   let presentation: Presentation
 
@@ -146,10 +144,9 @@ describe('Test claimer functionality', () => {
       update2,
       attestation2,
       claimerSession2,
+      mixedAttestationsValid,
       claimerSessionE12,
       claimerSessionE21,
-      mixedSignatures,
-      validSignatureBuildCredential,
     } = await mixedAttestationsSetup({
       gabiClaimer,
       gabiAttester,
@@ -158,12 +155,6 @@ describe('Test claimer functionality', () => {
       attesterSession,
       attestationRequest,
     }))
-    claimerSessions = [
-      claimerSession,
-      claimerSession2,
-      claimerSessionE12,
-      claimerSessionE21,
-    ]
   }, 20000)
 
   // clear mocks after each test
@@ -185,7 +176,7 @@ describe('Test claimer functionality', () => {
     it('Checks valid requestAttestation', async () => {
       const request = await gabiClaimer.requestAttestation({
         startAttestationMsg: initiateAttestationReq,
-        claim: JSON.stringify(claim),
+        claim,
         attesterPubKey: gabiAttester.getPubKey(),
       })
       expect(request).toBeDefined()
@@ -365,42 +356,36 @@ describe('Test claimer functionality', () => {
       await buildCredentialError(
         gabiClaimer,
         attestation, // attester 1
-        claimerSession2, // attester 2
-        spy
+        claimerSession2 // attester 2
       )
       return buildCredentialError(
         gabiClaimer,
         attestation2, // attester 2
-        claimerSession, // attester 1
-        spy
+        claimerSession // attester 1
       )
     })
-    it('Should throw for 27 of all 28 instances of mixed signatures', async () => {
-      let errCounter = 1
-      for (const mixedAttestation of mixedSignatures) {
-        for (const session of claimerSessions) {
-          // there is exactly one possiblity to build a credential from the sessions and signatures
-          if (
-            mixedAttestation === validSignatureBuildCredential.attestation &&
-            session === validSignatureBuildCredential.claimerSession
-          ) {
-            const validCred = await gabiClaimer.buildCredential({
-              attestation: validSignatureBuildCredential.attestation,
-              claimerSession: validSignatureBuildCredential.claimerSession,
-            })
-            expect(validCred).toBeDefined()
-            expect(validCred.length).toBeGreaterThan(10)
-          } else {
-            errCounter = await buildCredentialError(
-              gabiClaimer,
-              mixedAttestation,
-              session,
-              spy,
-              errCounter
-            )
-          }
-        }
-      }
+    it('Should throw for 3 of all 4 possibilties to build a credential from valid mixed attestation', async () => {
+      expect(mixedAttestationsValid).toEqual(expect.anything())
+      await expect(
+        gabiClaimer.buildCredential({
+          attestation: mixedAttestationsValid.issuance.attestation,
+          claimerSession: claimerSessionE21,
+        })
+      ).resolves.toEqual(expect.anything())
+      const throwingSessions = [
+        claimerSession,
+        claimerSession2,
+        claimerSessionE12,
+      ]
+      return Promise.all(
+        throwingSessions.map(session =>
+          buildCredentialError(
+            gabiClaimer,
+            mixedAttestationsValid.issuance.attestation,
+            session
+          )
+        )
+      )
     })
     it('Should throw on buildPresentation with pubkey from different attester', async () => {
       await expect(
