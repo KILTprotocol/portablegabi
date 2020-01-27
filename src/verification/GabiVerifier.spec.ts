@@ -26,14 +26,16 @@ async function expectVerificationFailed(
   attester: GabiAttester,
   credential: Credential,
   requestedAttributes: string[],
-  index: number
+  index: number,
+  reqNonRevocationProof = true
 ): Promise<{ verified: boolean; presentationClaim: any }> {
   const { verified, claim: presentationClaim } = await presentationSetup({
     claimer,
     attester,
     credential,
     requestedAttributes,
-    minIndex: index,
+    reqMinIndex: index,
+    reqNonRevocationProof,
   })
   expect(presentationClaim).toBeNull()
   expect(verified).toBe(false)
@@ -50,14 +52,16 @@ async function expectVerificationSucceeded(
   attester: GabiAttester,
   credential: Credential,
   requestedAttributes: string[],
-  index: number
+  index: number,
+  reqNonRevocationProof = true
 ): Promise<{ verified: boolean; presentationClaim: any }> {
   const { verified, claim: presentationClaim } = await presentationSetup({
     claimer,
     attester,
     credential,
     requestedAttributes,
-    minIndex: index,
+    reqMinIndex: index,
+    reqNonRevocationProof,
   })
   expect(presentationClaim).toEqual(expect.anything())
   expect(verified).toBe(true)
@@ -99,7 +103,7 @@ describe('Test verifier functionality', () => {
       credential,
     }))
   }, 10000)
-  describe('Checks valid data', () => {
+  describe('Check valid data', () => {
     it('Checks valid startVerficiationSession', async () => {
       expect(verifierSession).toBeDefined()
       expect(presentationReq).toBeDefined()
@@ -114,8 +118,8 @@ describe('Test verifier functionality', () => {
       expect(verObj.reqNonRevocationProof).toEqual(
         presObj.partialPresentationRequest.reqNonRevocationProof
       )
-      expect(verObj.reqMinIndex).toEqual(
-        presObj.partialPresentationRequest.reqMinIndex
+      expect(verObj.reqreqMinIndex).toEqual(
+        presObj.partialPresentationRequest.reqreqMinIndex
       )
     })
     it('Checks valid verifyPresentation', () => {
@@ -185,8 +189,8 @@ describe('Test verifier functionality', () => {
         session: verifierSession2,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        requestNonRevocationProof: true,
-        minIndex: 1,
+        reqNonRevocationProof: true,
+        reqMinIndex: 1,
       })
       const proof2 = await gabiClaimer.buildPresentation({
         credential,
@@ -200,8 +204,8 @@ describe('Test verifier functionality', () => {
         session: verifierSession3,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        requestNonRevocationProof: true,
-        minIndex: 1,
+        reqNonRevocationProof: true,
+        reqMinIndex: 1,
       })
       const proof3 = await gabiClaimer.buildPresentation({
         credential,
@@ -329,7 +333,7 @@ describe('Test verifier functionality', () => {
         2
       )
     })
-    it('Should verify even after revocation when minIndex is too old (i.e. small)', async () => {
+    it('Should verify even after revocation when reqMinIndex is too old (i.e. small)', async () => {
       await gabiAttester.revokeAttestation({
         update,
         witness,
@@ -341,7 +345,7 @@ describe('Test verifier functionality', () => {
         disclosedAttributes,
         1
       )
-      // expect fail for current index
+      // expect failure for current index
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
@@ -350,8 +354,32 @@ describe('Test verifier functionality', () => {
         2
       )
     })
+    it('Should verify even after revocation when reqNonRevocationProof === false', async () => {
+      await gabiAttester.revokeAttestation({
+        update,
+        witness,
+      })
+      // expect success with reqNonRevocationProof === true
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        2,
+        false
+      )
+      // expect failure with reqNonRevocationProof === true
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        2,
+        true
+      )
+    })
   })
-  describe('Checks invalid/tampered data', () => {
+  describe('Check invalid/tampered data', () => {
     it('Should throw on empty requested/disclosed attributes array', async () => {
       await expect(
         presentationSetup({
@@ -359,7 +387,7 @@ describe('Test verifier functionality', () => {
           attester: gabiAttester,
           credential,
           requestedAttributes: [],
-          minIndex: 0,
+          reqMinIndex: 0,
         })
       ).rejects.toThrow('requested attributes should not be empty')
     })
@@ -419,8 +447,8 @@ describe('Test verifier functionality', () => {
         session: verifierSession2,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        requestNonRevocationProof: true,
-        minIndex: 1,
+        reqNonRevocationProof: true,
+        reqMinIndex: 1,
       })
       const proof2 = await gabiClaimer.buildPresentation({
         credential,

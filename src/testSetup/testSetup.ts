@@ -110,13 +110,13 @@ export async function presentationSetup({
   attester,
   credential,
   requestedAttributes = disclosedAttributes,
-  minIndex = 1,
+  reqMinIndex = 1,
 }: {
   claimer: GabiClaimer
   attester: GabiAttester
   credential: Credential
   requestedAttributes?: string[]
-  minIndex?: number
+  reqMinIndex?: number
 }): Promise<{
   verifierSession: VerificationSession
   presentationReq: PresentationRequest
@@ -130,8 +130,8 @@ export async function presentationSetup({
     message: presentationReq,
   } = await GabiVerifier.requestPresentation({
     requestedAttributes,
-    requestNonRevocationProof: true,
-    minIndex,
+    reqNonRevocationProof: true,
+    reqMinIndex,
   })
   // response
   const presentation = await claimer.buildPresentation({
@@ -311,7 +311,7 @@ export async function combinedSetup({
   updates,
   disclosedAttsArr,
   minIndices,
-  requestNonRevocationProof,
+  reqNonRevocationProof,
   inputCredentials,
 }: {
   claimer: GabiClaimer
@@ -319,7 +319,7 @@ export async function combinedSetup({
   updates: Accumulator[]
   disclosedAttsArr: string[][]
   minIndices: number[]
-  requestNonRevocationProof: boolean[]
+  reqNonRevocationProof: boolean[]
   inputCredentials?: Credential[]
 }): Promise<{
   combinedBuilder: CombinedRequestBuilder
@@ -332,7 +332,7 @@ export async function combinedSetup({
     attesters.length !== updates.length ||
     updates.length !== disclosedAttsArr.length ||
     disclosedAttsArr.length !== minIndices.length ||
-    minIndices.length !== requestNonRevocationProof.length
+    minIndices.length !== reqNonRevocationProof.length
   ) {
     throw new Error('Array lengths dont match up in combined setup')
   }
@@ -364,8 +364,8 @@ export async function combinedSetup({
     (builder, requestedAttributes, idx) =>
       builder.requestPresentation({
         requestedAttributes,
-        requestNonRevocationProof: requestNonRevocationProof[idx],
-        minIndex: minIndices[idx],
+        reqNonRevocationProof: reqNonRevocationProof[idx],
+        reqMinIndex: minIndices[idx],
       }),
     combinedBuilder
   )

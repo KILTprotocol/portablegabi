@@ -249,7 +249,7 @@ describe('Test claimer functionality', () => {
       expect(proofObj.proof.e_response).not.toEqual(sigObj.proof.e_response)
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)
     })
-    it.only('Test build combined presentation', async () => {
+    it('Test build combined presentation', async () => {
       const { credential: credential2 } = await attestationSetup({
         attester: gabiAttester,
         claimer: gabiClaimer,
@@ -261,13 +261,13 @@ describe('Test claimer functionality', () => {
       const { message: req, session } = await new CombinedRequestBuilder()
         .requestPresentation({
           requestedAttributes: disclosedAttributes,
-          requestNonRevocationProof: true,
-          minIndex: 1,
+          reqNonRevocationProof: true,
+          reqMinIndex: 1,
         })
         .requestPresentation({
           requestedAttributes: disclosedAttributes,
-          requestNonRevocationProof: true,
-          minIndex: 1,
+          reqNonRevocationProof: true,
+          reqMinIndex: 1,
         })
         .finalise()
       const combPresentation = await gabiClaimer.buildCombinedPresentation({
@@ -284,7 +284,7 @@ describe('Test claimer functionality', () => {
         attesterPubKeys: [gabiAttester.getPubKey(), gabiAttester.getPubKey()],
         verifierSession: session,
       })
-      expect(verified).toBe(true) // FIXME:: Should be false for index 1000
+      expect(verified).toBe(true)
       expect(claims.length).toBe(2)
     })
     it('Updates credential and compares both versions (without revoking)', async () => {

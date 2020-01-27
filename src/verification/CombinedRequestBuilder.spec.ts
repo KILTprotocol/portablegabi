@@ -21,7 +21,7 @@ async function expectCombinedSetupToBe(
     updates,
     disclosedAttsArr,
     minIndices,
-    requestNonRevocationProof,
+    reqNonRevocationProof,
     inputCredentials,
   }: {
     claimer: GabiClaimer
@@ -29,7 +29,7 @@ async function expectCombinedSetupToBe(
     updates: Accumulator[]
     disclosedAttsArr: string[][]
     minIndices: number[]
-    requestNonRevocationProof: boolean[]
+    reqNonRevocationProof: boolean[]
     inputCredentials?: any
   }
 ): Promise<void> {
@@ -45,7 +45,7 @@ async function expectCombinedSetupToBe(
     updates,
     disclosedAttsArr,
     minIndices,
-    requestNonRevocationProof,
+    reqNonRevocationProof,
     inputCredentials,
   })
   expect(combinedBuilder).toEqual(expect.anything())
@@ -67,13 +67,13 @@ describe('Test combined requests', () => {
     const { message, session } = await new CombinedRequestBuilder()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
-        requestNonRevocationProof: true,
-        minIndex: 1,
+        reqNonRevocationProof: true,
+        reqMinIndex: 1,
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributesCombined,
-        requestNonRevocationProof: true,
-        minIndex: 1,
+        reqNonRevocationProof: true,
+        reqMinIndex: 1,
       })
       .finalise()
     expect(message).toEqual(expect.anything())
@@ -86,7 +86,7 @@ describe('Test combined requests', () => {
       updates: accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
       minIndices: [1, 1],
-      requestNonRevocationProof: [true, true],
+      reqNonRevocationProof: [true, true],
     })
   })
   it('Should not verify if one credential is revoked', async () => {
@@ -117,7 +117,7 @@ describe('Test combined requests', () => {
       updates: accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
       minIndices: [1000, 1000],
-      requestNonRevocationProof: [true, true],
+      reqNonRevocationProof: [true, true],
       inputCredentials: attestations.map(attestation => attestation.credential),
     })
   })
@@ -129,7 +129,7 @@ describe('Test combined requests', () => {
         updates: accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
         minIndices: [1, 1],
-        requestNonRevocationProof: [true, true],
+        reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow(
       'requested attributes should not be empty for the 2. credential'
@@ -143,11 +143,11 @@ describe('Test combined requests', () => {
         updates: accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
         minIndices: [1],
-        requestNonRevocationProof: [true, true],
+        reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow('Array lengths dont match up in combined setup')
   })
-  it('Should not verify with incorrect indices', async () => {
+  it.only('Should not verify with incorrect indices', async () => {
     // FIXME: Currently verifies for any indices
     await expectCombinedSetupToBe(false, {
       claimer: claimers[0],
@@ -155,7 +155,7 @@ describe('Test combined requests', () => {
       updates: accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
       minIndices: [1000, 1000],
-      requestNonRevocationProof: [true, true],
+      reqNonRevocationProof: [true, true],
     })
   })
 })

@@ -107,9 +107,9 @@ const verify = async (
     session: verifierSession,
     message: presentationReq,
   } = await GabiVerifier.requestPresentation({
-    requestNonRevocationProof: true,
+    reqNonRevocationProof: true,
     requestedAttributes: disclosedAttributes,
-    minIndex: index,
+    reqMinIndex: index,
   })
   console.timeEnd('Verifier requests attributes')
 
@@ -240,13 +240,13 @@ const runCombinedWorkflow = async (): Promise<void> => {
   const { message, session } = await new CombinedRequestBuilder()
     .requestPresentation({
       requestedAttributes: disclosedAttributes1,
-      requestNonRevocationProof: true,
-      minIndex: 1,
+      reqNonRevocationProof: true,
+      reqMinIndex: 1,
     })
     .requestPresentation({
       requestedAttributes: disclosedAttributes2,
-      requestNonRevocationProof: true,
-      minIndex: 1,
+      reqNonRevocationProof: true,
+      reqMinIndex: 1,
     })
     .finalise()
 
@@ -296,15 +296,15 @@ const runMixedVerification = async (): Promise<void> => {
   // should verify
   console.time('Verifier requests attributes')
   const { message: presentationReq } = await GabiVerifier.requestPresentation({
-    requestNonRevocationProof: true,
+    reqNonRevocationProof: true,
     requestedAttributes: disclosedAttributes,
-    minIndex: 1,
+    reqMinIndex: 1,
   })
   console.timeEnd('Verifier requests attributes')
   const { session: verifierSession2 } = await GabiVerifier.requestPresentation({
-    requestNonRevocationProof: true,
+    reqNonRevocationProof: true,
     requestedAttributes: disclosedAttributes,
-    minIndex: 1,
+    reqMinIndex: 1,
   })
 
   console.time('Claimer reveals attributes')
