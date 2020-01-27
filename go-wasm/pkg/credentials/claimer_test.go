@@ -24,11 +24,11 @@ func TestRequestSignature(t *testing.T) {
 	require.True(t, success, "Error in sysparams")
 
 	attesterMsg := &StartSessionMsg{}
-	err := json.Unmarshal(byteStartSigMsg, attesterMsg)
+	err := json.Unmarshal(byteInitiatAttestation, attesterMsg)
 	require.NoError(t, err)
 
-	publicKey := &gabi.PublicKey{}
-	err = json.Unmarshal(attesterPubKey, publicKey)
+	attester := &Attester{}
+	err = json.Unmarshal(byteAttester, attester)
 	require.NoError(t, err)
 
 	claim := Claim{
@@ -42,7 +42,7 @@ func TestRequestSignature(t *testing.T) {
 
 	claimer, err := NewClaimer(sysParams)
 	require.NoError(t, err)
-	session, reqMsg, err := claimer.RequestAttestationForClaim(publicKey, attesterMsg, claim)
+	session, reqMsg, err := claimer.RequestAttestationForClaim(attester.PublicKey, attesterMsg, claim)
 	assert.NoError(t, err)
 	assert.NotNil(t, reqMsg)
 	assert.NotNil(t, session)
@@ -53,11 +53,11 @@ func TestBuildCredential(t *testing.T) {
 	require.True(t, success, "Error in sysparams")
 
 	attestation := &gabi.IssueSignatureMessage{}
-	err := json.Unmarshal(byteSigMsg, attestation)
+	err := json.Unmarshal(byteAttestationResponse, attestation)
 	require.NoError(t, err)
 
 	session := &UserIssuanceSession{}
-	err = json.Unmarshal(byteUserSession, session)
+	err = json.Unmarshal(byteAttestClaimerSession, session)
 	require.NoError(t, err)
 
 	claimer, err := ClaimerFromMnemonic(sysParams, mnemonic, "")
@@ -68,12 +68,12 @@ func TestBuildCredential(t *testing.T) {
 }
 
 func TestUpdateCredential(t *testing.T) {
-	publicKey := &gabi.PublicKey{}
-	err := json.Unmarshal(bytePublicKey, publicKey)
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
 	require.NoError(t, err)
 
 	sigMsg := &gabi.IssueSignatureMessage{}
-	err = json.Unmarshal(byteSigMsg, sigMsg)
+	err = json.Unmarshal(byteAttestationResponse, sigMsg)
 	require.NoError(t, err)
 
 	claimer := &Claimer{}
@@ -88,19 +88,98 @@ func TestUpdateCredential(t *testing.T) {
 	err = json.Unmarshal(byteUpdate, update)
 	require.NoError(t, err)
 
-	credR, err := claimer.UpdateCredential(publicKey, cred, update)
+	credR, err := claimer.UpdateCredential(attester.PublicKey, cred, update)
 	assert.NoError(t, err, "Could not request attributes")
 	assert.NotNil(t, credR)
 }
 
 func TestEnsureAccumulator(t *testing.T) {
-	// TODO: ...
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
+	require.NoError(t, err)
+
+	cred := &AttestedClaim{}
+	err = json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	witness := cred.Credential.NonRevocationWitness
+	witness.Accumulator = nil
+	require.NotNil(t, witness.SignedAccumulator)
+
+	err = ensureAccumulator(attester.PublicKey, witness)
+	assert.NoError(t, err)
+	assert.NotNil(t, witness.Accumulator)
+}
+
+func TestEnsureAccumulatorInvalid(t *testing.T) {
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
+	require.NoError(t, err)
+
+	cred := &AttestedClaim{}
+	err = json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	witness := cred.Credential.NonRevocationWitness
+	// if byte 5 is 0 this test fails.
+	witness.SignedAccumulator.Data[5] += byte(3)
+	witness.Accumulator = nil
+	require.NotNil(t, witness.SignedAccumulator)
+
+	err = ensureAccumulator(attester.PublicKey, witness)
+	assert.Error(t, err)
+	assert.Nil(t, witness.Accumulator)
 }
 
 func TestBuildPresentation(t *testing.T) {
-	// TODO: ...
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
+	require.NoError(t, err)
+
+	cred := &AttestedClaim{}
+	err = json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	claimer := &Claimer{}
+	err = json.Unmarshal(byteClaimer, cred)
+	require.NoError(t, err)
+
+	reqPresentation := &PresentationRequest{}
+	err = json.Unmarshal(bytePresentationRequest, reqPresentation)
+	require.NoError(t, err)
+
+	presentation, err := claimer.BuildPresentation(attester.PublicKey, cred, reqPresentation)
+	assert.NotNil(t, presentation)
+	assert.NoError(t, err)
+	assert.NotNil(t, presentation)
 }
 
 func TestBuildCombinedPresentation(t *testing.T) {
-	// TODO: ...
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
+	require.NoError(t, err)
+
+	cred := &AttestedClaim{}
+	err = json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	cred2 := &AttestedClaim{}
+	err = json.Unmarshal(byteCredential2, cred2)
+	require.NoError(t, err)
+
+	claimer := &Claimer{}
+	err = json.Unmarshal(byteClaimer, cred)
+	require.NoError(t, err)
+
+	reqPresentation := &CombinedPresentationRequest{}
+	err = json.Unmarshal(byteCombPresentationRequest, reqPresentation)
+	require.NoError(t, err)
+
+	presentation, err := claimer.BuildCombinedPresentation(
+		[]*gabi.PublicKey{attester.PublicKey, attester.PublicKey},
+		[]*AttestedClaim{cred, cred2},
+		reqPresentation)
+	assert.NotNil(t, presentation)
+	assert.NoError(t, err)
+	assert.NotNil(t, presentation)
 }

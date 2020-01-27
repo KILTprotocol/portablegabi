@@ -269,17 +269,17 @@ func TestFullWorkflow(t *testing.T) {
 
 	bts, err := json.Marshal(attester)
 	require.NoError(t, err)
-	fmt.Println("Attester:", string(bts))
+	fmt.Printf("byteAttester    = []byte(`%s`)\n", string(bts))
 
 	bts, err = json.Marshal(update)
 	require.NoError(t, err)
-	fmt.Println("Update:", string(bts))
+	fmt.Printf("byteUpdate      = []byte(`%s`)\n", string(bts))
 
 	claimer, err := credentials.ClaimerFromMnemonic(sysParams, Mnemonic, "")
 	require.NoError(t, err, "Error in claimer key generation")
 	bts, err = json.Marshal(claimer)
 	require.NoError(t, err)
-	fmt.Println("Claimer:", string(bts))
+	fmt.Printf("byteClaimer     = []byte(`%s`)\n", string(bts))
 
 	// Attest Claim/Build credential
 	claim := credentials.Claim{
@@ -303,40 +303,40 @@ func TestFullWorkflow(t *testing.T) {
 
 	bts, err = json.Marshal(attesterSession)
 	require.NoError(t, err)
-	fmt.Println("AttesterSession:", string(bts))
+	fmt.Printf("byteAttesterSession = []byte(`%s`)\n", string(bts))
 
 	bts, err = json.Marshal(startSignMsg)
 	require.NoError(t, err)
-	fmt.Println("StartAttestationMessage:", string(bts))
+	fmt.Printf("byteInitiatAttestation = []byte(`%s`)\n", string(bts))
 
 	userSession, reqAttestMsg, err := claimer.RequestAttestationForClaim(attester.PublicKey, startSignMsg, claim)
 	require.NoError(t, err, "Could not request signature")
 
 	bts, err = json.Marshal(reqAttestMsg)
 	require.NoError(t, err)
-	fmt.Println("AttestationRequest:", string(bts))
+	fmt.Printf("byteAttestationRequest = []byte(`%s`)\n", string(bts))
 
 	bts, err = json.Marshal(userSession)
 	require.NoError(t, err)
-	fmt.Println("ClaimerSession:", string(bts))
+	fmt.Printf("byteAttestClaimerSession = []byte(`%s`)\n", string(bts))
 
 	sigMsg, _, err := attester.AttestClaim(reqAttestMsg, attesterSession, update)
 	require.NoError(t, err, "Could not create signature")
 
 	bts, err = json.Marshal(sigMsg)
 	require.NoError(t, err)
-	fmt.Println("AttestationResponse:", string(bts))
+	fmt.Printf("byteAttestationResponse = []byte(`%s`)\n", string(bts))
 
 	cred, err := claimer.BuildCredential(sigMsg, userSession)
 	require.NoError(t, err, "Could not request attributes")
 
 	bts, err = json.Marshal(cred)
 	require.NoError(t, err)
-	fmt.Println("Credential:", string(bts))
+	fmt.Printf("byteCredential = []byte(`%s`)\n", string(bts))
 
 	bts, err = json.Marshal(claim)
 	require.NoError(t, err)
-	fmt.Println("claim:", string(bts))
+	fmt.Printf("byteClaim = []byte(`%s`)\n", string(bts))
 
 	// Request Presentation
 	requestedAttr := [4]string{
@@ -348,21 +348,23 @@ func TestFullWorkflow(t *testing.T) {
 	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
 	bts, err = json.Marshal(verifierSession)
 	require.NoError(t, err)
-	fmt.Println("verifierSession:", string(bts))
+	fmt.Printf("byteVerifierSession = []byte(`%s`)\n", string(bts))
+
 	bts, err = json.Marshal(reqAttrMsg)
 	require.NoError(t, err)
-	fmt.Println("PresentationRequest:", string(bts))
+	fmt.Printf("bytePresentationRequest = []byte(`%s`)\n", string(bts))
 
 	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
 	require.NoError(t, err, "Could not disclose attributes")
 	bts, err = json.Marshal(disclosedAttr)
 	require.NoError(t, err)
-	fmt.Println("PresentationResponse:", string(bts))
+	fmt.Printf("bytePresentationResponse = []byte(`%s`)\n", string(bts))
 
 	_, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
 	bts, err = json.Marshal(attr)
 	require.NoError(t, err)
-	fmt.Println("Presentation:", string(bts))
+	fmt.Printf("bytePresentation = []byte(`%s`)\n", string(bts))
+
 	require.NoError(t, err, "Could not verify attributes")
 	contents, ok := attr["contents"].(map[string]interface{})
 	require.NoError(t, err, "Could not verify attributes")
@@ -375,8 +377,12 @@ func TestFullWorkflow(t *testing.T) {
 	require.Nil(t, attr["contents.name"])
 
 	// for combined proof
-	fmt.Println("\nCombined...")
+	fmt.Println("\n//Combined...")
 	_, cred2 := buildCredential(t, sysParams, attester, claimer, update)
+	bts, err = json.Marshal(cred2)
+	require.NoError(t, err)
+	fmt.Printf("byteCredential2  = []byte(`%s`)\n", string(bts))
+
 	requestedAttr2 := [2]string{
 		"contents" + credentials.Separator + "name",
 		"contents" + credentials.Separator + "likedNumbers",
@@ -395,10 +401,11 @@ func TestFullWorkflow(t *testing.T) {
 	})
 	bts, err = json.Marshal(combVerifierSession)
 	require.NoError(t, err)
-	fmt.Println("verifierSession (combined):", string(bts))
-	bts, err = json.Marshal(reqAttrMsg)
+	fmt.Printf("byteCombVerifierSession = []byte(`%s`)\n", string(bts))
+
+	bts, err = json.Marshal(reqCombAttr)
 	require.NoError(t, err)
-	fmt.Println("PresentationRequest (combined):", string(bts))
+	fmt.Printf("byteCombPresentationRequest = []byte(`%s`)\n", string(bts))
 
 	discloseCombCred, err := claimer.BuildCombinedPresentation([]*gabi.PublicKey{
 		attester.PublicKey,
@@ -410,7 +417,7 @@ func TestFullWorkflow(t *testing.T) {
 	require.NoError(t, err, "Could not disclose attributes")
 	bts, err = json.Marshal(discloseCombCred)
 	require.NoError(t, err)
-	fmt.Println("PresentationResponse:", string(bts))
+	fmt.Printf("byteCombPresentationResponse = []byte(`%s`)\n", string(bts))
 
 	_, attrComb, err := credentials.VerifyCombinedPresentation([]*gabi.PublicKey{
 		attester.PublicKey,
@@ -418,15 +425,15 @@ func TestFullWorkflow(t *testing.T) {
 	}, discloseCombCred, combVerifierSession)
 	bts, err = json.Marshal(attrComb)
 	require.NoError(t, err)
-	fmt.Println("Presentation (combined):", string(bts))
+	fmt.Printf("byteCombPresentation = []byte(`%s`)\n", string(bts))
 
-	fmt.Println("\nRevocation...")
+	fmt.Println("\n//Revocation...")
 	rUpdate, err := attester.RevokeAttestation(update, cred2.Credential.NonRevocationWitness)
 	require.NoError(t, err)
 	require.NotNil(t, rUpdate)
 	bts, err = json.Marshal(rUpdate)
 	require.NoError(t, err)
-	fmt.Println("Update:", string(bts))
+	fmt.Printf("byteUpdateRevocation = []byte(`%s`)\n", string(bts))
 
 }
 

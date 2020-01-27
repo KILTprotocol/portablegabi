@@ -2,6 +2,7 @@ package credentials
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
@@ -136,9 +137,9 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credentials []*AttestedClaim,
 	reqAttributes *CombinedPresentationRequest) (*CombinedPresentationResponse, error) {
 	if len(pubKs) != len(reqAttributes.PartialRequests) {
-		return nil, errors.New("wrong amount of public keys")
+		return nil, fmt.Errorf("expected %d public keys, got %d", len(reqAttributes.PartialRequests), len(pubKs))
 	} else if len(credentials) != len(reqAttributes.PartialRequests) {
-		return nil, errors.New("wrong amount of attested claims")
+		return nil, fmt.Errorf("expected %d attested claims, got %d", len(reqAttributes.PartialRequests), len(credentials))
 	}
 	proofBuilder := make([]gabi.ProofBuilder, len(reqAttributes.PartialRequests))
 
