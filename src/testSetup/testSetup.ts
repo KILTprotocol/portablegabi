@@ -111,12 +111,14 @@ export async function presentationSetup({
   credential,
   requestedAttributes = disclosedAttributes,
   reqMinIndex = 1,
+  reqNonRevocationProof = true,
 }: {
   claimer: GabiClaimer
   attester: GabiAttester
   credential: Credential
   requestedAttributes?: string[]
   reqMinIndex?: number
+  reqNonRevocationProof?: boolean
 }): Promise<{
   verifierSession: VerificationSession
   presentationReq: PresentationRequest
@@ -130,7 +132,7 @@ export async function presentationSetup({
     message: presentationReq,
   } = await GabiVerifier.requestPresentation({
     requestedAttributes,
-    reqNonRevocationProof: true,
+    reqNonRevocationProof,
     reqMinIndex,
   })
   // response
@@ -326,7 +328,7 @@ export async function combinedSetup({
   combinedReq: CombinedPresentationRequest
   combinedSession: CombinedVerificationSession
   verified: boolean
-  claims: any
+  claims: any[]
 }> {
   if (
     attesters.length !== updates.length ||

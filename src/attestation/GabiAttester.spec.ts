@@ -1,6 +1,6 @@
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import GabiAttester from './GabiAttester'
-import { privKey, pubKey } from '../testSetup/testConfig'
+import { privKey, pubKey, claim } from '../testSetup/testConfig'
 import {
   attestationSetup,
   mixedAttestationsSetup,
@@ -125,6 +125,47 @@ describe('Test attester', () => {
           witness,
         })
       ).rejects.toThrow('ecdsa signature was invalid')
+    })
+    it('Should throw when tampering context of initiateAttestationReq', async () => {
+      const {
+        session: attesterSession2,
+        message: initiateAttestationReq2,
+      } = await gabiAttester.startAttestation()
+      console.log(initiateAttestationReq2)
+      const tamperObj: { nonce: string; context: string } = {
+        ...JSON.parse(initiateAttestationReq2.valueOf()),
+        context: 'El1fs5GK2sko8JkfEhWiCITaD38uA2CZN29opxU6TKM=', // === btoa('tampered')
+        // context: 'dGFtcGVyZWQ', // === btoa('tampered')
+      }
+      const initiateAttestationReqTampered = new InitiateAttestationRequest(
+        JSON.stringify(tamperObj)
+      )
+      console.log(initiateAttestationReqTampered)
+      const {
+        message: attestationRequest2,
+        session: claimerSession,
+      } = await gabiClaimer.requestAttestation({
+        // startAttestationMsg: initiateAttestationReqTampered,
+        startAttestationMsg: initiateAttestationReq2,
+        claim: JSON.stringify(claim),
+        attesterPubKey: gabiAttester.getPubKey(),
+      })
+      // Attester issues attestation
+      const {
+        attestation: attestation2,
+        witness: witness3,
+      } = await gabiAttester.issueAttestation({
+        attestationSession: attesterSession2,
+        attestationRequest: attestationRequest2,
+        update,
+      })
+      expect(attestation2).toEqual(expect.anything())
+      expect(witness3).toEqual(expect.anything())
+      const credential = await gabiClaimer.buildCredential({
+        attestation: attestation2,
+        claimerSession,
+      })
+      expect(credential).toEqual(expect.anything())
     })
   })
   it.todo('tamper message nonce')
