@@ -81,7 +81,7 @@ const issuanceProcess = async (
   // the attester might want to inspect the attributes he is about to sign
   const checkClaim = attestationRequest.getClaim()
 
-  // TODO: comparing two claims needs to be more robust. '{a:1,b:2}' !== '{b:2,a:1}'
+  // both claims should equal, but order of keys might be changed
   if (JSON.stringify(checkClaim) === JSON.stringify(claim)) {
     console.log('ERR: some things are wrong')
   }

@@ -14,6 +14,10 @@ import {
   attestationSetup,
 } from '../testSetup/testSetup'
 import GabiVerifier from './GabiVerifier'
+import { goWasmClose } from '../wasm/wasm_exec_wrapper'
+
+// close WASM instance after tests ran
+afterAll(() => goWasmClose())
 
 async function expectCombinedSetupToBe(
   outcome: boolean,
