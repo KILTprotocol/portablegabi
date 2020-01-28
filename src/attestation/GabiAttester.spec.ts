@@ -14,11 +14,10 @@ import {
   Witness,
 } from '../types/Attestation'
 import GabiClaimer from '../claim/GabiClaimer'
-import { AttestationRequest } from '../types/Claim'
+import { AttestationRequest, ClaimError } from '../types/Claim'
 
-afterAll(async () => {
-  await goWasmClose()
-})
+// close WASM instance after tests ran
+afterAll(() => goWasmClose())
 
 describe('Test attester', () => {
   let gabiAttester: GabiAttester
@@ -68,7 +67,7 @@ describe('Test attester', () => {
       attestationRequest,
     }))
   })
-  describe('Confirm valid data from runTestSetup', () => {
+  describe('Confirm valid data from testSetup', () => {
     it('Checks valid buildFromKeyPair for existing keys', async () => {
       const attester = new GabiAttester(pubKey, privKey)
       expect(attester).toBeDefined()
@@ -85,6 +84,24 @@ describe('Test attester', () => {
     it('Checks valid issueAttestation', async () => {
       expect(attestation).toBeDefined()
       expect(witness).toBeDefined()
+    })
+    it('Should return the exact claim when using getClaim', async () => {
+      const checkClaim = attestationRequest.getClaim()
+      expect(checkClaim).toStrictEqual(claim)
+    })
+
+    it('Should throw parse error when building invalid claim from request', async () => {
+      expect(() => new AttestationRequest('undefined').getClaim()).toThrowError(
+        ClaimError.duringParsing
+      )
+      expect(() => new AttestationRequest(undefined).getClaim()).toThrowError(
+        ClaimError.duringParsing
+      )
+    })
+    it('Should throw missing error when building invalid claim from request', async () => {
+      expect(() => new AttestationRequest('{}').getClaim()).toThrowError(
+        ClaimError.claimMissing
+      )
     })
   })
   // since the attester acts as a middleman, most of the functionality is tested in GabiClaimer and GabiVerifier
@@ -134,48 +151,57 @@ describe('Test attester', () => {
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
-    it.skip('Should throw when tampering context of initiateAttestationReq', async () => {
+    it('Should throw when tampering context of initiateAttestationReq', async () => {
       const {
         session: attesterSession2,
         message: initiateAttestationReq2,
       } = await gabiAttester.startAttestation()
-      console.log(initiateAttestationReq2)
       const tamperObj: { nonce: string; context: string } = {
         ...JSON.parse(initiateAttestationReq2.valueOf()),
-        context: 'El1fs5GK2sko8JkfEhWiCITaD38uA2CZN29opxU6TKM=', // === btoa('tampered')
-        // context: 'dGFtcGVyZWQ', // === btoa('tampered')
+        context: 'El1fs5GK2sko8JkfEhWiCITaD38uA2CZN29opxU6TKM=',
       }
-      const initiateAttestationReqTampered = new InitiateAttestationRequest(
-        JSON.stringify(tamperObj)
-      )
-      console.log(initiateAttestationReqTampered)
       const {
         message: attestationRequest2,
-        session: claimerSession,
       } = await gabiClaimer.requestAttestation({
-        // startAttestationMsg: initiateAttestationReqTampered,
-        startAttestationMsg: initiateAttestationReq2,
+        startAttestationMsg: new InitiateAttestationRequest(
+          JSON.stringify(tamperObj)
+        ),
         claim,
         attesterPubKey: gabiAttester.getPubKey(),
       })
-      // Attester issues attestation
+      await expect(
+        gabiAttester.issueAttestation({
+          attestationSession: attesterSession2,
+          attestationRequest: attestationRequest2,
+          update,
+        })
+      ).rejects.toThrow('commit message could not be verified')
+    })
+    it('Should throw when tampering nonce of initiateAttestationReq', async () => {
       const {
-        attestation: attestation2,
-        witness: witness3,
-      } = await gabiAttester.issueAttestation({
-        attestationSession: attesterSession2,
-        attestationRequest: attestationRequest2,
-        update,
+        session: attesterSession2,
+        message: initiateAttestationReq2,
+      } = await gabiAttester.startAttestation()
+      const tamperObj: { nonce: string; context: string } = {
+        ...JSON.parse(initiateAttestationReq2.valueOf()),
+        nonce: 'w4eSUP9HnptKog==',
+      }
+      const {
+        message: attestationRequest2,
+      } = await gabiClaimer.requestAttestation({
+        startAttestationMsg: new InitiateAttestationRequest(
+          JSON.stringify(tamperObj)
+        ),
+        claim,
+        attesterPubKey: gabiAttester.getPubKey(),
       })
-      expect(attestation2).toEqual(expect.anything())
-      expect(witness3).toEqual(expect.anything())
-      const credential = await gabiClaimer.buildCredential({
-        attestation: attestation2,
-        claimerSession,
-      })
-      expect(credential).toEqual(expect.anything())
+      await expect(
+        gabiAttester.issueAttestation({
+          attestationSession: attesterSession2,
+          attestationRequest: attestationRequest2,
+          update,
+        })
+      ).rejects.toThrow('commit message could not be verified')
     })
   })
-  it.todo('tamper message nonce')
-  it.todo('tamper context nonce')
 })

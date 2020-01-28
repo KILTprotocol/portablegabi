@@ -28,6 +28,7 @@ import {
   AttestationRequest,
   Credential,
   Presentation,
+  ClaimError,
 } from '../types/Claim'
 import GabiVerifier from '../verification/GabiVerifier'
 import { PresentationRequest } from '../types/Verification'
@@ -47,9 +48,7 @@ async function buildCredentialError(
 }
 
 // close WASM instance after tests ran
-afterAll(async () => {
-  await goWasmClose()
-})
+afterAll(() => goWasmClose())
 
 describe('Test claimer creation', () => {
   let gabiClaimer: GabiClaimer
@@ -172,7 +171,7 @@ describe('Test claimer functionality', () => {
   })
 
   // run tests on valid data
-  describe('Checks valid data', () => {
+  describe('Positive tests', () => {
     it('Checks valid requestAttestation', async () => {
       const request = await gabiClaimer.requestAttestation({
         startAttestationMsg: initiateAttestationReq,
@@ -189,6 +188,33 @@ describe('Test claimer functionality', () => {
       expect(attesterSession).toBeDefined()
       expect(attestationRequest).toBeDefined()
       expect(claimerSession).toBeDefined()
+    })
+    it('Should throw when requesting attestation with empty object as claim', async () => {
+      await expect(
+        gabiClaimer.requestAttestation({
+          startAttestationMsg: initiateAttestationReq,
+          claim: {},
+          attesterPubKey: gabiAttester.getPubKey(),
+        })
+      ).rejects.toThrowError(ClaimError.claimMissing)
+    })
+    it('Should throw when requesting attestation with non-object as claim', async () => {
+      await expect(
+        gabiClaimer.requestAttestation({
+          startAttestationMsg: initiateAttestationReq,
+          claim: ('string' as unknown) as object,
+          attesterPubKey: gabiAttester.getPubKey(),
+        })
+      ).rejects.toThrowError(ClaimError.notAnObject('string'))
+    })
+    it('Should throw when requesting attestation with array as claim', async () => {
+      await expect(
+        gabiClaimer.requestAttestation({
+          startAttestationMsg: initiateAttestationReq,
+          claim: [1],
+          attesterPubKey: gabiAttester.getPubKey(),
+        })
+      ).rejects.toThrowError(ClaimError.duringParsing)
     })
     it('Should build credential for gabiAttester', async () => {
       await expect(
@@ -239,44 +265,6 @@ describe('Test claimer functionality', () => {
       expect(proofObj.proof.A).not.toEqual(sigObj.signature.A)
       expect(proofObj.proof.e_response).not.toEqual(sigObj.proof.e_response)
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)
-    })
-    it('Test build combined presentation', async () => {
-      const { credential: credential2 } = await attestationSetup({
-        attester: gabiAttester,
-        claimer: gabiClaimer,
-        update,
-      })
-      expect(credential2).not.toBe('undefined')
-      expect(credential2).toEqual(expect.anything())
-
-      const { message: req, session } = await new CombinedRequestBuilder()
-        .requestPresentation({
-          requestedAttributes: disclosedAttributes,
-          reqNonRevocationProof: true,
-          reqMinIndex: 1,
-        })
-        .requestPresentation({
-          requestedAttributes: disclosedAttributes,
-          reqNonRevocationProof: true,
-          reqMinIndex: 1,
-        })
-        .finalise()
-      const combPresentation = await gabiClaimer.buildCombinedPresentation({
-        credentials: [credential, credential2],
-        combinedPresentationReq: req,
-        attesterPubKeys: [gabiAttester.getPubKey(), gabiAttester.getPubKey()],
-      })
-      expect(combPresentation).toEqual(expect.anything())
-      const {
-        verified,
-        claims,
-      } = await GabiVerifier.verifyCombinedPresentation({
-        proof: combPresentation,
-        attesterPubKeys: [gabiAttester.getPubKey(), gabiAttester.getPubKey()],
-        verifierSession: session,
-      })
-      expect(verified).toBe(true)
-      expect(claims.length).toBe(2)
     })
     it('Updates credential and compares both versions (without revoking)', async () => {
       const timeBeforeUpdate = new Date().getTime()
@@ -351,8 +339,8 @@ describe('Test claimer functionality', () => {
   })
 
   // run tests on invalid data
-  describe('Checks invalid/tampered data', () => {
-    it('Should throw in buildCredential for incorrect (session, signature) combination', async () => {
+  describe('Negative tests', () => {
+    it('Should throw in buildCredential for incorrect combination of session and signature', async () => {
       await buildCredentialError(
         gabiClaimer,
         attestation, // attester 1
