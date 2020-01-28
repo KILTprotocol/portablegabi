@@ -10,8 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var ()
-
 var (
 	KeyLength = 1024
 	OneYear   = (int64)(365 * 24 * 60 * 60 * 1000 * 1000 * 1000)

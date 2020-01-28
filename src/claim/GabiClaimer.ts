@@ -21,14 +21,13 @@ import {
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 
 function checkValidClaimStructure(claim: object): void | Error {
-  const parsedClaim = JSON.parse(JSON.stringify(claim))
   if (!Object.keys(claim).length) {
     throw ClaimError.claimMissing
   }
-  if (typeof parsedClaim !== 'object') {
-    throw ClaimError.notAnObject(typeof parsedClaim)
+  if (typeof claim !== 'object') {
+    throw ClaimError.notAnObject(typeof claim)
   }
-  if (Array.isArray(parsedClaim)) {
+  if (Array.isArray(claim)) {
     throw ClaimError.duringParsing
   }
 }

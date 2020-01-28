@@ -49,7 +49,6 @@ export default class GabiAttester implements IGabiAttester {
     }
   }
 
-  // CHECKME: Should each attester have a single unique accumulator?
   public async createAccumulator(): Promise<Accumulator> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.createAccumulator, [

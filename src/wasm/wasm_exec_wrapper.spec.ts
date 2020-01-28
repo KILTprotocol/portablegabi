@@ -8,10 +8,7 @@ const goWasm = require('./wasm_exec')
 describe('Test WASM wrapper', () => {
   let spy: Spy<''>
   const hooksArr: string[] = Object.keys(WasmHooks).filter(
-    x =>
-      x !== WasmHooks.genKeypair && // takes too much time
-      x !== WasmHooks.genKey && // works
-      x !== WasmHooks.keyFromMnemonic // FIXME: Uncaught Go Error panic: runtime error: index out of range [1] with length 1
+    x => x !== WasmHooks.genKeypair && x !== WasmHooks.genKey // both take no input
   )
   beforeEach(() => {
     spy = {
