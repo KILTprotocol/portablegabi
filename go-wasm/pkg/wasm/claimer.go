@@ -23,7 +23,7 @@ func GenKey(this js.Value, inputs []js.Value) (interface{}, error) {
 
 // KeyFromMnemonic derives a key from a given mnemonic
 func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
-	if len(inputs) < 1 {
+	if len(inputs) < 2 {
 		return nil, errors.New("missing inputs")
 	}
 	claimer, err := credentials.ClaimerFromMnemonic(SysParams, inputs[0].String(), inputs[1].String())

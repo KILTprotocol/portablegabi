@@ -4,6 +4,7 @@ import IGabiClaimer, {
   Credential,
   Presentation,
   CombinedPresentation,
+  ClaimError,
 } from '../types/Claim'
 import WasmHooks from '../wasm/WasmHooks'
 import {
@@ -18,6 +19,18 @@ import {
   PresentationRequest,
 } from '../types/Verification'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
+
+function checkValidClaimStructure(claim: object): void | Error {
+  if (!Object.keys(claim).length) {
+    throw ClaimError.claimMissing
+  }
+  if (typeof claim !== 'object') {
+    throw ClaimError.notAnObject(typeof claim)
+  }
+  if (Array.isArray(claim)) {
+    throw ClaimError.duringParsing
+  }
+}
 
 export default class GabiClaimer implements IGabiClaimer {
   private readonly secret: string
@@ -55,6 +68,8 @@ export default class GabiClaimer implements IGabiClaimer {
     message: AttestationRequest
     session: ClaimerAttestationSession
   }> {
+    // check for invalid claim structure
+    checkValidClaimStructure(claim)
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.requestAttestation,
       [
@@ -71,16 +86,16 @@ export default class GabiClaimer implements IGabiClaimer {
   }
 
   public async buildCredential({
-    claimerSignSession,
+    claimerSession,
     attestation,
   }: {
-    claimerSignSession: ClaimerAttestationSession
+    claimerSession: ClaimerAttestationSession
     attestation: Attestation
   }): Promise<Credential> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.buildCredential, [
         this.secret,
-        claimerSignSession.valueOf(),
+        claimerSession.valueOf(),
         attestation.valueOf(),
       ])
     )

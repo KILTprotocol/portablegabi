@@ -15,15 +15,15 @@ import { Presentation, CombinedPresentation } from '../types/Claim'
 export default class GabiVerifier {
   public static async requestPresentation({
     requestedAttributes,
-    requestNonRevocationProof,
-    minIndex,
+    reqNonRevocationProof,
+    reqMinIndex,
   }: IPresentationRequest): Promise<{
     message: PresentationRequest
     session: VerificationSession
   }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.requestPresentation,
-      [requestNonRevocationProof, minIndex, JSON.stringify(requestedAttributes)]
+      [reqNonRevocationProof, reqMinIndex, JSON.stringify(requestedAttributes)]
     )
     return {
       message: new PresentationRequest(message),

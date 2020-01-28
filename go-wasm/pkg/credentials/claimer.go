@@ -2,6 +2,7 @@ package credentials
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
@@ -110,6 +111,9 @@ func ensureAccumulator(pk *gabi.PublicKey, witness *revocation.Witness) error {
 // BuildPresentation reveals the attributes which are requested by the verifier.
 func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *AttestedClaim, reqAttributes *PresentationRequest) (*PresentationResponse, error) {
 	partialReq := reqAttributes.PartialPresentationRequest
+	if len(partialReq.RequestedAttributes) < 1 {
+		return nil, errors.New("requested attributes should not be empty")
+	}
 	if partialReq.ReqNonRevocationProof {
 		witness := attestedClaim.Credential.NonRevocationWitness
 		err := ensureAccumulator(pk, witness)
@@ -117,7 +121,7 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 			return nil, err
 		}
 	}
-	attrIndices, err := attestedClaim.GetAttributeIndices(partialReq.RequestedAttributes)
+	attrIndices, err := attestedClaim.getAttributeIndices(partialReq.RequestedAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -136,13 +140,16 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credentials []*AttestedClaim,
 	reqAttributes *CombinedPresentationRequest) (*CombinedPresentationResponse, error) {
 	if len(pubKs) != len(reqAttributes.PartialRequests) {
-		return nil, errors.New("wrong amount of public keys")
+		return nil, fmt.Errorf("expected %d public keys, got %d", len(reqAttributes.PartialRequests), len(pubKs))
 	} else if len(credentials) != len(reqAttributes.PartialRequests) {
-		return nil, errors.New("wrong amount of attested claims")
+		return nil, fmt.Errorf("expected %d attested claims, got %d", len(reqAttributes.PartialRequests), len(credentials))
 	}
 	proofBuilder := make([]gabi.ProofBuilder, len(reqAttributes.PartialRequests))
 
 	for i, partialReq := range reqAttributes.PartialRequests {
+		if len(partialReq.RequestedAttributes) < 1 {
+			return nil, fmt.Errorf("requested attributes should not be empty for the %d. credential", i+1)
+		}
 		cred := credentials[i].Credential
 		cred.Pk = pubKs[i]
 		if partialReq.ReqNonRevocationProof {
@@ -152,7 +159,7 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 				return nil, err
 			}
 		}
-		attrIndices, err := credentials[i].GetAttributeIndices(partialReq.RequestedAttributes)
+		attrIndices, err := credentials[i].getAttributeIndices(partialReq.RequestedAttributes)
 		if err != nil {
 			return nil, err
 		}

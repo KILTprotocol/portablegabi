@@ -16,16 +16,12 @@ export default class GabiAttester implements IGabiAttester {
   private readonly publicKey: string
 
   // generate keypair
-  private static async buildFromKeyPair(): Promise<{
-    privateKey: string
-    publicKey: string
-  }> {
-    const validityDuration = 365 * 24 * 60 * 60 * 1000 * 1000 * 1000 // 365 days in nanoseconds
-    return goWasmExec(WasmHooks.genKeypair, [70, validityDuration])
-  }
-
   public static async buildFromScratch(): Promise<GabiAttester> {
-    const { privateKey, publicKey } = await GabiAttester.buildFromKeyPair()
+    const validityDuration = 365 * 24 * 60 * 60 * 1000 * 1000 * 1000 // 365 days in nanoseconds
+    const { privateKey, publicKey } = await goWasmExec(WasmHooks.genKeypair, [
+      70,
+      validityDuration,
+    ])
     return new GabiAttester(publicKey, privateKey)
   }
 

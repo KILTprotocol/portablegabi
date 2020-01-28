@@ -11,12 +11,6 @@ const goWasmExec = <T>(
 ): Promise<T> =>
   Promise.resolve(GoInstance).then(wasm => wasm.execWasmFn(goHook, args))
 
-export const goWasmExecCustom = <T>(
-  goHook: WasmHooks,
-  customGoInstance: any,
-  args?: Array<string | number | boolean>
-): Promise<T> => customGoInstance.execWasmFn(goHook, args)
-
 export const goWasmClose = (): Promise<void> =>
   Promise.resolve(GoInstance).then(wasm => {
     return wasm.close()

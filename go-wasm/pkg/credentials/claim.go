@@ -64,11 +64,11 @@ type (
 
 // NewAttestedClaim instantiates a new AttestedClaim.
 func NewAttestedClaim(cb *gabi.CredentialBuilder, attributes []*Attribute, signature *gabi.IssueSignatureMessage) (*AttestedClaim, error) {
-	claim, err := NewClaimFromAttribute(attributes)
+	claim, err := newClaimFromAttribute(attributes)
 	if err != nil {
 		return nil, err
 	}
-	bInts, err := AttributesToBigInts(attributes)
+	bInts, err := attributesToBigInts(attributes)
 	if err != nil {
 		return nil, err
 	}
@@ -82,12 +82,12 @@ func NewAttestedClaim(cb *gabi.CredentialBuilder, attributes []*Attribute, signa
 	}, nil
 }
 
-func (attestedClaim *AttestedClaim) GetAttributeIndices(reqAttributes []string) ([]int, error) {
+func (attestedClaim *AttestedClaim) getAttributeIndices(reqAttributes []string) ([]int, error) {
 	// make sure attributes are unique
-	reqAttributes, _ = SortRemoveDuplicates(reqAttributes)
+	reqAttributes, _ = sortRemoveDuplicates(reqAttributes)
 
 	indices := make([]int, len(reqAttributes))
-	attributes, err := attestedClaim.GetAttributes()
+	attributes, err := attestedClaim.getAttributes()
 	if err != nil {
 		return nil, err
 	}
@@ -109,14 +109,14 @@ func (attestedClaim *AttestedClaim) GetAttributeIndices(reqAttributes []string) 
 	return indices, nil
 }
 
-// GetRawAttributes returns a list of all attributes stored inside the credential.
-func (attestedClaim *AttestedClaim) GetRawAttributes() []*big.Int {
+// getRawAttributes returns a list of all attributes stored inside the credential.
+func (attestedClaim *AttestedClaim) getRawAttributes() []*big.Int {
 	return attestedClaim.Credential.Attributes[1:]
 }
 
-// GetAttributes returns a list of all attributes stored inside the credential.
-func (attestedClaim *AttestedClaim) GetAttributes() ([]*Attribute, error) {
-	bInts := attestedClaim.GetRawAttributes()
+// getAttributes returns a list of all attributes stored inside the credential.
+func (attestedClaim *AttestedClaim) getAttributes() ([]*Attribute, error) {
+	bInts := attestedClaim.getRawAttributes()
 	attributes, err := BigIntsToAttributes(bInts)
 	if err != nil {
 		return nil, err
@@ -130,7 +130,7 @@ func (attestedClaim *AttestedClaim) GetAttributes() ([]*Attribute, error) {
 	return attributes, nil
 }
 
-func NewClaimFromAttribute(attributes []*Attribute) (Claim, error) {
+func newClaimFromAttribute(attributes []*Attribute) (Claim, error) {
 	claim := make(Claim)
 	for _, attr := range attributes {
 		var err error
@@ -269,9 +269,9 @@ func BigIntsToAttributes(encodedAttributes []*big.Int) ([]*Attribute, error) {
 	return attributes, nil
 }
 
-// AttributesToBigInts takes an array of attributes and marshals them into an
+// attributesToBigInts takes an array of attributes and marshals them into an
 // array of big.ints.
-func AttributesToBigInts(attributes []*Attribute) ([]*big.Int, error) {
+func attributesToBigInts(attributes []*Attribute) ([]*big.Int, error) {
 	bInts := make([]*big.Int, len(attributes))
 	for i, attribute := range attributes {
 		bytes, err := attribute.MarshalBinary()
@@ -370,7 +370,10 @@ func setNestedValue(m map[string]interface{}, key string, value interface{}) err
 	return nil
 }
 
-func SortRemoveDuplicates(slice []string) ([]string, bool) {
+func sortRemoveDuplicates(slice []string) ([]string, bool) {
+	if len(slice) < 1 {
+		return slice, true
+	}
 	sort.Slice(slice[:], func(i, j int) bool {
 		return strings.Compare(slice[i], slice[j]) < 0
 	})

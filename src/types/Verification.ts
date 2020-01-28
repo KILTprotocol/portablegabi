@@ -2,8 +2,8 @@
 /* eslint-disable-next-line max-classes-per-file */
 export interface IPresentationRequest {
   requestedAttributes: string[]
-  requestNonRevocationProof: boolean
-  minIndex: number
+  reqNonRevocationProof: boolean
+  reqMinIndex: number
 }
 
 export interface IVerifiedPresentation {
