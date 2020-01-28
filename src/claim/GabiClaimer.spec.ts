@@ -8,7 +8,7 @@ import {
 } from '../testSetup/testSetup'
 import GabiClaimer from './GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
-import { claim, disclosedAttributes } from '../testSetup/testConfig'
+import { claim } from '../testSetup/testConfig'
 import {
   ICredential,
   IIssueAttestation,
@@ -30,9 +30,7 @@ import {
   Presentation,
   ClaimError,
 } from '../types/Claim'
-import GabiVerifier from '../verification/GabiVerifier'
 import { PresentationRequest } from '../types/Verification'
-import CombinedRequestBuilder from '../verification/CombinedRequestBuilder'
 
 async function buildCredentialError(
   claimer: GabiClaimer,
