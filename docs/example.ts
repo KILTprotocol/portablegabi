@@ -52,7 +52,7 @@ const testEnv2 = {
 const issuanceProcess = async (
   attester: GabiAttester,
   claimer: GabiClaimer,
-  update: Accumulator,
+  accumulator: Accumulator,
   claim: object
 ): Promise<{
   credential: Credential
@@ -89,7 +89,7 @@ const issuanceProcess = async (
   const { attestation, witness } = await attester.issueAttestation({
     attestationSession,
     attestationRequest,
-    update,
+    accumulator,
   })
   console.timeEnd('Attester issues requested attestation')
 
@@ -158,19 +158,19 @@ const runWorkflow = async (): Promise<void> => {
   console.timeEnd('Build claimer identity')
 
   console.time('Build accumulator')
-  let update = await gabiAttester.createAccumulator()
+  let accumulator = await gabiAttester.createAccumulator()
   console.timeEnd('Build accumulator')
 
   let { credential } = await issuanceProcess(
     gabiAttester,
     gabiClaimer,
-    update,
+    accumulator,
     claim
   )
   const { credential: credential2, witness: witness2 } = await issuanceProcess(
     gabiAttester,
     gabiClaimer,
-    update,
+    accumulator,
     claim
   )
   // should verify
@@ -180,18 +180,18 @@ const runWorkflow = async (): Promise<void> => {
   await verify(gabiClaimer, gabiAttester, credential, disclosedAttributes, 2)
 
   console.time('revoke attestation')
-  update = new Accumulator(
-    await gabiAttester.revokeAttestation({ update, witness: witness2 })
+  accumulator = new Accumulator(
+    await gabiAttester.revokeAttestation({ accumulator, witness: witness2 })
   )
   console.timeEnd('revoke attestation')
 
-  console.time('update credential')
+  console.time('accumulator credential')
   credential = await gabiClaimer.updateCredential({
     credential,
     attesterPubKey: gabiAttester.getPubKey(),
-    update,
+    accumulator,
   })
-  console.timeEnd('update credential')
+  console.timeEnd('accumulator credential')
   await verify(gabiClaimer, gabiAttester, credential, disclosedAttributes, 1)
 }
 
@@ -227,7 +227,7 @@ const runCombinedWorkflow = async (): Promise<void> => {
   console.timeEnd('Build accumulator')
 
   console.time('Build accumulator')
-  const update2 = await gabiAttester2.createAccumulator()
+  const accumulator2 = await gabiAttester2.createAccumulator()
   console.timeEnd('Build accumulator')
 
   // eslint-disable-next-line prefer-const
@@ -240,7 +240,7 @@ const runCombinedWorkflow = async (): Promise<void> => {
   const { credential: credential2 } = await issuanceProcess(
     gabiAttester2,
     gabiClaimer,
-    update2,
+    accumulator2,
     claim2
   )
 
@@ -290,13 +290,13 @@ const runMixedVerification = async (): Promise<void> => {
   console.timeEnd('Build claimer identity')
 
   console.time('Build accumulator')
-  const update = await gabiAttester.createAccumulator()
+  const accumulator = await gabiAttester.createAccumulator()
   console.timeEnd('Build accumulator')
 
   const { credential } = await issuanceProcess(
     gabiAttester,
     gabiClaimer,
-    update,
+    accumulator,
     claim
   )
 

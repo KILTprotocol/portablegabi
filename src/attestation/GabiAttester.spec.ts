@@ -22,8 +22,8 @@ afterAll(() => goWasmClose())
 describe('Test attester', () => {
   let gabiAttester: GabiAttester
   let gabiClaimer: GabiClaimer
-  let update: Accumulator
-  let update2: Accumulator
+  let accumulator: Accumulator
+  let accumulator2: Accumulator
   let initiateAttestationReq: InitiateAttestationRequest
   let attesterSession: AttesterAttestationSession
   let attestationRequest: AttestationRequest
@@ -34,14 +34,14 @@ describe('Test attester', () => {
     [key: number]: {
       attestationSession: AttesterAttestationSession
       attestationRequest: AttestationRequest
-      update: Accumulator
+      accumulator: Accumulator
     }
   }
   beforeAll(async () => {
     ;({
       claimers: [gabiClaimer],
       attesters: [gabiAttester],
-      accumulators: [update],
+      accumulators: [accumulator],
     } = await actorSetup())
     ;({
       initiateAttestationReq,
@@ -52,16 +52,16 @@ describe('Test attester', () => {
     } = await attestationSetup({
       claimer: gabiClaimer,
       attester: gabiAttester,
-      update,
+      accumulator,
     }))
     ;({
-      update2,
+      accumulator2,
       witness2,
       mixedAttestationsInvalid,
     } = await mixedAttestationsSetup({
       gabiClaimer,
       gabiAttester,
-      update,
+      accumulator,
       initiateAttestationReq,
       attesterSession,
       attestationRequest,
@@ -75,7 +75,7 @@ describe('Test attester', () => {
     })
     it('Checks non-deterministic accumulator creation', async () => {
       const updateNew = gabiAttester.createAccumulator()
-      expect(update.valueOf()).not.toStrictEqual(updateNew.valueOf())
+      expect(accumulator.valueOf()).not.toStrictEqual(updateNew.valueOf())
     })
     it('Checks valid startAttestation', () => {
       expect(initiateAttestationReq).toBeDefined()
@@ -112,13 +112,13 @@ describe('Test attester', () => {
           ({
             attestationSession: attestationSessionMixed,
             attestationRequest: attestationRequestMixed,
-            update: updateMixed,
+            accumulator: updateMixed,
           }) =>
             expect(
               gabiAttester.issueAttestation({
                 attestationSession: attestationSessionMixed,
                 attestationRequest: attestationRequestMixed,
-                update: updateMixed,
+                accumulator: updateMixed,
               })
             ).rejects.toThrow('commit message could not be verified')
         )
@@ -130,7 +130,7 @@ describe('Test attester', () => {
       const updateNew = await gabiAttester.createAccumulator()
       await expect(
         gabiAttester.revokeAttestation({
-          update: updateNew,
+          accumulator: updateNew,
           witness,
         })
       ).resolves.toEqual(expect.anything())
@@ -138,7 +138,7 @@ describe('Test attester', () => {
     it('Should not throw when revoking with witness from another attester', async () => {
       await expect(
         gabiAttester.revokeAttestation({
-          update,
+          accumulator,
           witness: witness2,
         })
       ).resolves.toEqual(expect.anything())
@@ -146,7 +146,7 @@ describe('Test attester', () => {
     it('Should throw when revoking with accumulator from another attester', async () => {
       await expect(
         gabiAttester.revokeAttestation({
-          update: update2,
+          accumulator: accumulator2,
           witness,
         })
       ).rejects.toThrow('ecdsa signature was invalid')
@@ -173,7 +173,7 @@ describe('Test attester', () => {
         gabiAttester.issueAttestation({
           attestationSession: attesterSession2,
           attestationRequest: attestationRequest2,
-          update,
+          accumulator,
         })
       ).rejects.toThrow('commit message could not be verified')
     })
@@ -199,7 +199,7 @@ describe('Test attester', () => {
         gabiAttester.issueAttestation({
           attestationSession: attesterSession2,
           attestationRequest: attestationRequest2,
-          update,
+          accumulator,
         })
       ).rejects.toThrow('commit message could not be verified')
     })

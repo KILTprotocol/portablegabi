@@ -24,7 +24,7 @@ async function expectCombinedSetupToBe(
   {
     claimer,
     attesters,
-    updates,
+    accumulators,
     disclosedAttsArr,
     minIndices,
     reqNonRevocationProof,
@@ -32,7 +32,7 @@ async function expectCombinedSetupToBe(
   }: {
     claimer: GabiClaimer
     attesters: GabiAttester[]
-    updates: Accumulator[]
+    accumulators: Accumulator[]
     disclosedAttsArr: string[][]
     minIndices: number[]
     reqNonRevocationProof: boolean[]
@@ -48,7 +48,7 @@ async function expectCombinedSetupToBe(
   } = await combinedSetup({
     claimer,
     attesters,
-    updates,
+    accumulators,
     disclosedAttsArr,
     minIndices,
     reqNonRevocationProof,
@@ -91,7 +91,7 @@ describe('Test combined requests', () => {
         attestationSetup({
           attester,
           claimer: claimers[0],
-          update: accumulators[idx],
+          accumulator: accumulators[idx],
         })
       )
     ).then(attestations =>
@@ -139,7 +139,7 @@ describe('Test combined requests', () => {
     await expectCombinedSetupToBe(true, {
       claimer: claimers[0],
       attesters,
-      updates: accumulators,
+      accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
       minIndices: [1, 1],
       reqNonRevocationProof: [true, true],
@@ -150,7 +150,7 @@ describe('Test combined requests', () => {
       combinedSetup({
         claimer: claimers[0],
         attesters,
-        updates: accumulators,
+        accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
         minIndices: [1, 1],
         reqNonRevocationProof: [true, true],
@@ -162,7 +162,7 @@ describe('Test combined requests', () => {
       combinedSetup({
         claimer: claimers[0],
         attesters,
-        updates: accumulators,
+        accumulators,
         disclosedAttsArr: [[], disclosedAttributes],
         minIndices: [1, 1],
         reqNonRevocationProof: [true, true],
@@ -176,7 +176,7 @@ describe('Test combined requests', () => {
       combinedSetup({
         claimer: claimers[0],
         attesters,
-        updates: accumulators,
+        accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
         minIndices: [1],
         reqNonRevocationProof: [true, true],
@@ -188,7 +188,7 @@ describe('Test combined requests', () => {
       combinedSetup({
         claimer: claimers[0],
         attesters,
-        updates: accumulators,
+        accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         minIndices: [1, -1],
         reqNonRevocationProof: [true, true],
@@ -200,7 +200,7 @@ describe('Test combined requests', () => {
       combinedSetup({
         claimer: claimers[0],
         attesters,
-        updates: accumulators,
+        accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         minIndices: [-1, -1],
         reqNonRevocationProof: [true, true],
@@ -213,7 +213,7 @@ describe('Test combined requests', () => {
     await expectCombinedSetupToBe(false, {
       claimer: claimers[0],
       attesters,
-      updates: accumulators,
+      accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
       minIndices: [1000, 1000],
       reqNonRevocationProof: [true, true],
@@ -226,7 +226,7 @@ describe('Test combined requests', () => {
     await expectCombinedSetupToBe(true, {
       claimer: claimers[0],
       attesters: range.map((_, idx) => attesters[idx % 2]),
-      updates: range.map((_, idx) => accumulators[idx % 2]),
+      accumulators: range.map((_, idx) => accumulators[idx % 2]),
       disclosedAttsArr: new Array(n).fill(disclosedAttributes),
       minIndices: range,
       reqNonRevocationProof: new Array(n).fill(true),
@@ -240,13 +240,13 @@ describe('Test combined requests', () => {
           attestationSetup({
             attester,
             claimer: claimers[0],
-            update: accumulators[idx],
+            accumulator: accumulators[idx],
           })
         )
       )
       // revoke 2nd credential
       attesters[1].revokeAttestation({
-        update: accumulators[1],
+        accumulator: accumulators[1],
         witness: attestations[1].witness,
       })
       credentials = attestations.map(attestation => attestation.credential)
@@ -255,7 +255,7 @@ describe('Test combined requests', () => {
       await expectCombinedSetupToBe(false, {
         claimer: claimers[0],
         attesters,
-        updates: accumulators,
+        accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         minIndices: [1, 2],
         reqNonRevocationProof: [true, true],
@@ -266,7 +266,7 @@ describe('Test combined requests', () => {
       await expectCombinedSetupToBe(true, {
         claimer: claimers[0],
         attesters,
-        updates: accumulators,
+        accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         minIndices: [1, 1],
         reqNonRevocationProof: [true, true],
@@ -277,7 +277,7 @@ describe('Test combined requests', () => {
       await expectCombinedSetupToBe(true, {
         claimer: claimers[0],
         attesters,
-        updates: accumulators,
+        accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         minIndices: [1, 2],
         reqNonRevocationProof: [true, false],
@@ -285,4 +285,5 @@ describe('Test combined requests', () => {
       })
     })
   })
+  it.todo('? Combine two single presentations into combined proof')
 })

@@ -83,7 +83,7 @@ describe('Test claimer functionality', () => {
   let spy: Spy<'log'>
   let gabiClaimer: GabiClaimer
   let gabiAttester: GabiAttester
-  let update: Accumulator
+  let accumulator: Accumulator
   let initiateAttestationReq: InitiateAttestationRequest
   let attesterSession: AttesterAttestationSession
   let claimerSession: ClaimerAttestationSession
@@ -92,7 +92,7 @@ describe('Test claimer functionality', () => {
   let attestation: Attestation
   let credential: Credential
   let gabiAttester2: GabiAttester
-  let update2: Accumulator
+  let accumulator2: Accumulator
   let attestation2: Attestation
   let claimerSession2: ClaimerAttestationSession
   let claimerSessionE12: ClaimerAttestationSession
@@ -112,7 +112,7 @@ describe('Test claimer functionality', () => {
     ;({
       claimers: [gabiClaimer],
       attesters: [gabiAttester],
-      accumulators: [update],
+      accumulators: [accumulator],
     } = await actorSetup())
     ;({
       initiateAttestationReq,
@@ -125,7 +125,7 @@ describe('Test claimer functionality', () => {
     } = await attestationSetup({
       claimer: gabiClaimer,
       attester: gabiAttester,
-      update,
+      accumulator,
     }))
     credential = await gabiClaimer.buildCredential({
       claimerSession,
@@ -138,7 +138,7 @@ describe('Test claimer functionality', () => {
     }))
     ;({
       gabiAttester2,
-      update2,
+      accumulator2,
       attestation2,
       claimerSession2,
       mixedAttestationsValid,
@@ -147,7 +147,7 @@ describe('Test claimer functionality', () => {
     } = await mixedAttestationsSetup({
       gabiClaimer,
       gabiAttester,
-      update,
+      accumulator,
       initiateAttestationReq,
       attesterSession,
       attestationRequest,
@@ -269,7 +269,7 @@ describe('Test claimer functionality', () => {
       const updatedCred = await gabiClaimer.updateCredential({
         credential,
         attesterPubKey: gabiAttester.getPubKey(),
-        update,
+        accumulator,
       })
       const timeAfterUpdate = new Date().getTime()
       expect(updatedCred).toBeDefined()
@@ -300,7 +300,7 @@ describe('Test claimer functionality', () => {
     })
     it('Should throw when updating a revoked credential', async () => {
       const revUpdate = await gabiAttester.revokeAttestation({
-        update,
+        accumulator,
         witness,
       })
       expect(revUpdate).toBeDefined()
@@ -308,7 +308,7 @@ describe('Test claimer functionality', () => {
         gabiClaimer.updateCredential({
           credential,
           attesterPubKey: gabiAttester.getPubKey(),
-          update: new Accumulator(revUpdate),
+          accumulator: new Accumulator(revUpdate),
         })
       ).rejects.toThrowError('revoked')
     })
@@ -323,14 +323,14 @@ describe('Test claimer functionality', () => {
       const { credential: diffCredFromOtherClaimer } = await attestationSetup({
         claimer: gabiClaimer2,
         attester: gabiAttester,
-        update,
+        accumulator,
       })
       expect(diffCredFromOtherClaimer).toEqual(expect.anything())
       await expect(
         gabiClaimer.updateCredential({
           credential: diffCredFromOtherClaimer,
           attesterPubKey: gabiAttester.getPubKey(),
-          update,
+          accumulator,
         })
       ).resolves.toEqual(expect.anything())
     })
@@ -387,25 +387,25 @@ describe('Test claimer functionality', () => {
         gabiClaimer.updateCredential({
           credential,
           attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
-          update,
+          accumulator,
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
-    it('Should throw on updateCredential with update from different attester', async () => {
+    it('Should throw on updateCredential with accumulator from different attester', async () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
           attesterPubKey: gabiAttester.getPubKey(),
-          update: update2, // should be gabiAttester to be valid
+          accumulator: accumulator2, // should be gabiAttester to be valid
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
-    it('Should throw on updateCredential with update + pubkey from different attester', async () => {
+    it('Should throw on updateCredential with accumulator + pubkey from different attester', async () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
           attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
-          update: update2, // should be gabiAttester to be valid
+          accumulator: accumulator2, // should be gabiAttester to be valid
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })

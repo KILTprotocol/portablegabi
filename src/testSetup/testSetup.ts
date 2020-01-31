@@ -41,13 +41,13 @@ export async function actorSetup(): Promise<{
   const gabiAttester2 = new GabiAttester(pubKey2, privKey2)
   const gabiClaimer1 = await GabiClaimer.buildFromScratch()
   const gabiClaimer2 = await GabiClaimer.buildFromScratch()
-  const update1 = await gabiAttester1.createAccumulator()
-  const update2 = await gabiAttester2.createAccumulator()
+  const accumulator1 = await gabiAttester1.createAccumulator()
+  const accumulator2 = await gabiAttester2.createAccumulator()
 
   return {
     claimers: [gabiClaimer1, gabiClaimer2],
     attesters: [gabiAttester1, gabiAttester2],
-    accumulators: [update1, update2],
+    accumulators: [accumulator1, accumulator2],
   }
 }
 
@@ -55,11 +55,11 @@ export async function actorSetup(): Promise<{
 export async function attestationSetup({
   claimer,
   attester,
-  update,
+  accumulator,
 }: {
   claimer: GabiClaimer
   attester: GabiAttester
-  update: Accumulator
+  accumulator: Accumulator
 }): Promise<{
   initiateAttestationReq: InitiateAttestationRequest
   attesterSession: AttesterAttestationSession
@@ -86,7 +86,7 @@ export async function attestationSetup({
   const { attestation, witness } = await attester.issueAttestation({
     attestationSession: attesterSession,
     attestationRequest,
-    update,
+    accumulator,
   })
   // Claimer builds credential
   const credential = await claimer.buildCredential({
@@ -160,20 +160,20 @@ export async function presentationSetup({
 export async function mixedAttestationsSetup({
   gabiClaimer,
   gabiAttester,
-  update,
+  accumulator,
   initiateAttestationReq,
   attesterSession,
   attestationRequest,
 }: {
   gabiClaimer: GabiClaimer
   gabiAttester: GabiAttester
-  update: Accumulator
+  accumulator: Accumulator
   initiateAttestationReq: InitiateAttestationRequest
   attesterSession: AttesterAttestationSession
   attestationRequest: AttestationRequest
 }): Promise<{
   gabiAttester2: GabiAttester
-  update2: Accumulator
+  accumulator2: Accumulator
   witness2: Witness
   attestation2: Attestation
   startAttestationMsg2: InitiateAttestationRequest
@@ -188,7 +188,7 @@ export async function mixedAttestationsSetup({
     [key: number]: {
       attestationSession: AttesterAttestationSession
       attestationRequest: AttestationRequest
-      update: Accumulator
+      accumulator: Accumulator
     }
   }
   mixedAttestationsValid: {
@@ -200,7 +200,7 @@ export async function mixedAttestationsSetup({
   }
 }> {
   const gabiAttester2 = new GabiAttester(pubKey2, privKey2)
-  const update2 = await gabiAttester2.createAccumulator()
+  const accumulator2 = await gabiAttester2.createAccumulator()
 
   // (1) Start attestation
   const {
@@ -243,39 +243,39 @@ export async function mixedAttestationsSetup({
   } = await gabiAttester2.issueAttestation({
     attestationSession: attesterSignSession2,
     attestationRequest: attestationRequest2,
-    update: update2,
+    accumulator: accumulator2,
   })
 
   const mixedAttestationsInvalid = {
     1112_2221: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequestE12, // 12
-      update,
+      accumulator,
     },
     1122_2211: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequest2, // 22
-      update,
+      accumulator,
     },
     1222_2111: {
       attestationSession: attesterSignSession2, // 2
       attestationRequest: attestationRequest2, // 22
-      update,
+      accumulator,
     },
     1211_2122: {
       attestationSession: attesterSignSession2, // 1
       attestationRequest, // 11
-      update,
+      accumulator,
     },
     1121_2212: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequestE21, // 21
-      update,
+      accumulator,
     },
     1212_2121: {
       attestationSession: attesterSignSession2, // 2
       attestationRequest: attestationRequestE12, // 12
-      update,
+      accumulator,
     },
   }
 
@@ -283,7 +283,7 @@ export async function mixedAttestationsSetup({
     issuance: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession2, // 1
       attestationRequest: attestationRequestE21, // 21
-      update,
+      accumulator,
     }),
     claimerSession: claimerSessionE21,
   }
@@ -291,7 +291,7 @@ export async function mixedAttestationsSetup({
   return {
     gabiAttester2,
     witness2,
-    update2,
+    accumulator2,
     attestation2,
     startAttestationMsg2,
     attesterSignSession2,
@@ -309,7 +309,7 @@ export async function mixedAttestationsSetup({
 export async function combinedSetup({
   claimer,
   attesters,
-  updates,
+  accumulators,
   disclosedAttsArr,
   minIndices,
   reqNonRevocationProof,
@@ -317,7 +317,7 @@ export async function combinedSetup({
 }: {
   claimer: GabiClaimer
   attesters: GabiAttester[]
-  updates: Accumulator[]
+  accumulators: Accumulator[]
   disclosedAttsArr: string[][]
   minIndices: number[]
   reqNonRevocationProof: boolean[]
@@ -330,8 +330,8 @@ export async function combinedSetup({
   claims: any[]
 }> {
   if (
-    attesters.length !== updates.length ||
-    updates.length !== disclosedAttsArr.length ||
+    attesters.length !== accumulators.length ||
+    accumulators.length !== disclosedAttsArr.length ||
     disclosedAttsArr.length !== minIndices.length ||
     minIndices.length !== reqNonRevocationProof.length
   ) {
@@ -352,7 +352,7 @@ export async function combinedSetup({
         attestationSetup({
           attester,
           claimer,
-          update: updates[idx],
+          accumulator: accumulators[idx],
         })
       )
     ).then(attestations =>

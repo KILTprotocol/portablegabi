@@ -62,11 +62,11 @@ export default class GabiAttester implements IGabiAttester {
   public async issueAttestation({
     attestationSession,
     attestationRequest,
-    update,
+    accumulator,
   }: {
     attestationSession: AttesterAttestationSession
     attestationRequest: AttestationRequest
-    update: Accumulator
+    accumulator: Accumulator
   }): Promise<{
     attestation: Attestation
     witness: Witness
@@ -79,7 +79,7 @@ export default class GabiAttester implements IGabiAttester {
       this.publicKey,
       attestationSession.valueOf(),
       attestationRequest.valueOf(),
-      update.valueOf(),
+      accumulator.valueOf(),
     ])
 
     return {
@@ -90,16 +90,16 @@ export default class GabiAttester implements IGabiAttester {
 
   // revoke attestation
   public async revokeAttestation({
-    update,
+    accumulator,
     witness,
   }: {
-    update: Accumulator
+    accumulator: Accumulator
     witness: Witness
   }): Promise<string> {
     return goWasmExec<string>(WasmHooks.revokeAttestation, [
       this.privateKey,
       this.publicKey,
-      update.valueOf(),
+      accumulator.valueOf(),
       witness.valueOf(),
     ])
   }

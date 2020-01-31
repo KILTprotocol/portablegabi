@@ -144,17 +144,17 @@ export default class GabiClaimer implements IGabiClaimer {
   public async updateCredential({
     credential,
     attesterPubKey,
-    update,
+    accumulator,
   }: {
     credential: Credential
     attesterPubKey: AttesterPublicKey
-    update: Accumulator
+    accumulator: Accumulator
   }): Promise<Credential> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.updateCredential, [
         this.secret,
         credential.valueOf(),
-        update.valueOf(),
+        accumulator.valueOf(),
         attesterPubKey.valueOf(),
       ])
     )
