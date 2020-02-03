@@ -6,6 +6,12 @@ export interface IPresentationRequest {
   reqMinIndex: number
 }
 
+export interface IPresentationRequestChain
+  extends Omit<IPresentationRequest, 'reqMinIndex'> {
+  reqIndex: number | 'latest'
+  address: string
+}
+
 export interface IVerifiedPresentation {
   verified: boolean
   claim: object

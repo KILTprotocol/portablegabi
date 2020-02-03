@@ -310,12 +310,11 @@ describe('Test verifier functionality', () => {
         accumulator,
       })
       // attester revokes credential to increase accumulator index
-      const updateAfterRev = new Accumulator(
-        await gabiAttester.revokeAttestation({
-          accumulator,
-          witness: witnessToBeRevoked,
-        })
-      )
+      const updateAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witness: witnessToBeRevoked,
+      })
+
       expect(credToBeRevoked).toBeDefined()
       expect(updateAfterRev).toBeDefined()
       expect(updateAfterRev).not.toBeNull()
@@ -349,12 +348,11 @@ describe('Test verifier functionality', () => {
         accumulator,
         witness: witnessToBeRevoked,
       })
-      const updateAfterRev = new Accumulator(
-        await gabiAttester.revokeAttestation({
-          accumulator,
-          witness: witnessToBeRevoked,
-        })
-      )
+      const updateAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witness: witnessToBeRevoked,
+      })
+
       const credAfterIndexIncrease = await gabiClaimer.updateCredential({
         credential,
         attesterPubKey: gabiAttester.getPubKey(),
@@ -376,6 +374,7 @@ describe('Test verifier functionality', () => {
       )
     })
     it('Should verify even after revocation when reqMinIndex is too old (i.e. small)', async () => {
+      // revoke variable credential
       await gabiAttester.revokeAttestation({
         accumulator,
         witness,
@@ -399,23 +398,68 @@ describe('Test verifier functionality', () => {
     it('Should not verify when sending credential created with too old index', async () => {
       const {
         credential: credToBeRevoked,
-        witness: witnessToBeRevoked,
+        attestation: attestationRev,
+        claimerSession: claimerSessionRev,
+        witness: witnessRev,
       } = await attestationSetup({
         claimer: gabiClaimer,
         attester: gabiAttester,
         accumulator,
       })
-      expect(credToBeRevoked).toEqual(expect.anything())
-      await gabiAttester.revokeAttestation({
+      await gabiAttester.revokeAttestation({ accumulator, witness: witnessRev })
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevoked,
+        disclosedAttributes,
+        2
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevoked,
+        disclosedAttributes,
+        1
+      )
+      // test for build
+      const credToBeRevokedBuilt = await gabiClaimer.buildCredential({
+        claimerSession: claimerSessionRev,
+        attestation: attestationRev,
+      })
+
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedBuilt,
+        disclosedAttributes,
+        2
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedBuilt,
+        disclosedAttributes,
+        1
+      )
+      // test for update
+      const credToBeRevokedUpdated = await gabiClaimer.updateCredential({
+        credential: credToBeRevokedBuilt,
+        attesterPubKey: gabiAttester.getPubKey(),
         accumulator,
-        witness: witnessToBeRevoked,
       })
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
-        credential,
+        credToBeRevokedUpdated,
         disclosedAttributes,
         2
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedUpdated,
+        disclosedAttributes,
+        1
       )
     })
     it('Should verify even after revocation when reqNonRevocationProof === false', async () => {
@@ -631,4 +675,5 @@ describe('Test verifier functionality', () => {
       )
     })
   })
+  it.todo('requestCombinedPresentation')
 })

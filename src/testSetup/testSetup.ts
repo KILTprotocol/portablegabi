@@ -22,14 +22,15 @@ import {
   PresentationRequest,
   CombinedPresentationRequest,
   CombinedVerificationSession,
+  IPresentationRequest,
 } from '../types/Verification'
 import {
   AttestationRequest,
   Presentation,
   ClaimerAttestationSession,
   Credential,
+  CombinedPresentation,
 } from '../types/Claim'
-import CombinedRequestBuilder from '../verification/CombinedRequestBuilder'
 
 // creates instances for two claimers, attesters and corresponding accumulators each
 export async function actorSetup(): Promise<{
@@ -323,8 +324,8 @@ export async function combinedSetup({
   reqNonRevocationProof: boolean[]
   inputCredentials?: Credential[]
 }): Promise<{
-  combinedBuilder: CombinedRequestBuilder
-  combinedReq: CombinedPresentationRequest
+  combinedPresentation: CombinedPresentation
+  combinedPresentationReq: CombinedPresentationRequest
   combinedSession: CombinedVerificationSession
   verified: boolean
   claims: any[]
@@ -360,36 +361,34 @@ export async function combinedSetup({
     )
   }
   // build combined requests
-  let combinedBuilder = new CombinedRequestBuilder()
-  combinedBuilder = disclosedAttsArr.reduce(
-    (builder, requestedAttributes, idx) =>
-      builder.requestPresentation({
-        requestedAttributes,
-        reqNonRevocationProof: reqNonRevocationProof[idx],
-        reqMinIndex: minIndices[idx],
-      }),
-    combinedBuilder
+  const requests: IPresentationRequest[] = disclosedAttsArr.map(
+    (requestedAttributes, idx) => ({
+      requestedAttributes,
+      reqNonRevocationProof: reqNonRevocationProof[idx],
+      reqMinIndex: minIndices[idx],
+    })
   )
+  // request combined presentation
   const {
-    message: combinedReq,
+    message: combinedPresentationReq,
     session: combinedSession,
-  } = await combinedBuilder.finalise()
+  } = await GabiVerifier.requestCombinedPresentation(requests)
   // build presentation
-  const combPresentation = await claimer.buildCombinedPresentation({
+  const combinedPresentation = await claimer.buildCombinedPresentation({
     credentials,
-    combinedPresentationReq: combinedReq,
+    combinedPresentationReq,
     attesterPubKeys,
   })
   // verify presentation
   const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
-    proof: combPresentation,
+    proof: combinedPresentation,
     attesterPubKeys,
     verifierSession: combinedSession,
   })
   return {
-    combinedBuilder,
-    combinedReq,
+    combinedPresentationReq,
     combinedSession,
+    combinedPresentation,
     verified,
     claims,
   }

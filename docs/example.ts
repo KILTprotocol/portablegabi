@@ -180,9 +180,10 @@ const runWorkflow = async (): Promise<void> => {
   await verify(gabiClaimer, gabiAttester, credential, disclosedAttributes, 2)
 
   console.time('revoke attestation')
-  accumulator = new Accumulator(
-    await gabiAttester.revokeAttestation({ accumulator, witness: witness2 })
-  )
+  accumulator = await gabiAttester.revokeAttestation({
+    accumulator,
+    witness: witness2,
+  })
   console.timeEnd('revoke attestation')
 
   console.time('accumulator credential')

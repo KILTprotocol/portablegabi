@@ -41,3 +41,14 @@ export const disclosedAttributesCombined = [
   'contents.image.BINARY',
   'contents.ident',
 ]
+
+export const chainCfg = {
+  attester1: {
+    mnemonic:
+      'shrug oppose rely animal cage adjust lab vacant despair napkin sword woman',
+  },
+  attester2: {
+    mnemonic:
+      'issue rose mom spot humble include staff cluster carbon wagon rule early',
+  },
+}

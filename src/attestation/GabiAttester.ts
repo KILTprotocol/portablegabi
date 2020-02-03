@@ -95,12 +95,14 @@ export default class GabiAttester implements IGabiAttester {
   }: {
     accumulator: Accumulator
     witness: Witness
-  }): Promise<string> {
-    return goWasmExec<string>(WasmHooks.revokeAttestation, [
-      this.privateKey,
-      this.publicKey,
-      accumulator.valueOf(),
-      witness.valueOf(),
-    ])
+  }): Promise<Accumulator> {
+    return new Accumulator(
+      await goWasmExec<string>(WasmHooks.revokeAttestation, [
+        this.privateKey,
+        this.publicKey,
+        accumulator.valueOf(),
+        witness.valueOf(),
+      ])
+    )
   }
 }

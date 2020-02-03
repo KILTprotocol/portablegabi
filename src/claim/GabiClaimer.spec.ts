@@ -308,7 +308,7 @@ describe('Test claimer functionality', () => {
         gabiClaimer.updateCredential({
           credential,
           attesterPubKey: gabiAttester.getPubKey(),
-          accumulator: new Accumulator(revUpdate),
+          accumulator: revUpdate,
         })
       ).rejects.toThrowError('revoked')
     })
@@ -391,6 +391,16 @@ describe('Test claimer functionality', () => {
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
+    it('Should throw on updateCredential with different accumulator of same attester', async () => {
+      const acc = await gabiAttester.createAccumulator()
+      await expect(
+        gabiClaimer.updateCredential({
+          credential,
+          attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
+          accumulator: acc,
+        })
+      ).rejects.toThrow('ecdsa signature was invalid')
+    })
     it('Should throw on updateCredential with accumulator from different attester', async () => {
       await expect(
         gabiClaimer.updateCredential({
@@ -410,4 +420,5 @@ describe('Test claimer functionality', () => {
       ).rejects.toThrow('ecdsa signature was invalid')
     })
   })
+  it.todo('chain: ')
 })

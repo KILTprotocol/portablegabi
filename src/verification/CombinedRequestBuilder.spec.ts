@@ -3,7 +3,6 @@ import {
   disclosedAttributesCombined,
   //   claimCombined,
 } from '../testSetup/testConfig'
-import CombinedRequestBuilder from './CombinedRequestBuilder'
 import GabiClaimer from '../claim/GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
 import { Accumulator } from '../types/Attestation'
@@ -15,6 +14,8 @@ import {
 } from '../testSetup/testSetup'
 import GabiVerifier from './GabiVerifier'
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
+import CombinedRequestBuilder from './CombinedRequestBuilder'
+import { IPresentationRequest } from '../types/Verification'
 
 // close WASM instance after tests ran
 afterAll(() => goWasmClose())
@@ -40,9 +41,9 @@ async function expectCombinedSetupToBe(
   }
 ): Promise<void> {
   const {
-    combinedBuilder,
-    combinedReq,
+    combinedPresentationReq,
     combinedSession,
+    combinedPresentation,
     verified: verifiedCombined,
     claims,
   } = await combinedSetup({
@@ -54,9 +55,9 @@ async function expectCombinedSetupToBe(
     reqNonRevocationProof,
     inputCredentials,
   })
-  expect(combinedBuilder).toEqual(expect.anything())
-  expect(combinedReq).toEqual(expect.anything())
+  expect(combinedPresentationReq).toEqual(expect.anything())
   expect(combinedSession).toEqual(expect.anything())
+  expect(combinedPresentation).toEqual(expect.anything())
   expect(verifiedCombined).toBe(outcome)
   expect(claims).toEqual(expect.anything())
   expect(claims).toHaveLength(attesters.length)
@@ -70,7 +71,9 @@ describe('Test combined requests', () => {
     ;({ attesters, accumulators, claimers } = await actorSetup())
   })
   it('Checks valid CombinedRequestBuilder', async () => {
-    const { message, session } = await new CombinedRequestBuilder()
+    const { message, session } = await new CombinedRequestBuilder<
+      IPresentationRequest
+    >()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
@@ -98,9 +101,9 @@ describe('Test combined requests', () => {
       attestations.map(attestation => attestation.credential)
     )
     const {
-      message: combinedReq,
+      message: combinedPresentationReq,
       session: combinedSession,
-    } = await new CombinedRequestBuilder()
+    } = await new CombinedRequestBuilder<IPresentationRequest>()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
@@ -116,7 +119,7 @@ describe('Test combined requests', () => {
     await expect(
       claimers[0].buildCombinedPresentation({
         credentials,
-        combinedPresentationReq: combinedReq,
+        combinedPresentationReq,
         attesterPubKeys: [attesters[1].getPubKey(), attesters[0].getPubKey()],
       })
     ).rejects.toThrow('ecdsa signature was invalid')
@@ -124,7 +127,7 @@ describe('Test combined requests', () => {
     // (2) test swapped attesters pubkey positions in verifyCombinedPresentation
     const combPresentation = await claimers[0].buildCombinedPresentation({
       credentials,
-      combinedPresentationReq: combinedReq,
+      combinedPresentationReq,
       attesterPubKeys: attesters.map(attester => attester.getPubKey()),
     })
     const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({

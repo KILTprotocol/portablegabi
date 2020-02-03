@@ -6,11 +6,11 @@ export interface IGabiMsgSession {
 }
 
 export default interface IGabiAttester {
+  createAccumulator: Function
+  getPubKey: Function
   startAttestation: Function
   issueAttestation: Function
   revokeAttestation: Function
-  getPubKey: Function
-  createAccumulator: Function
 }
 
 export class AttesterPublicKey extends String {

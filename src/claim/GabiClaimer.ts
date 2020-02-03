@@ -5,13 +5,13 @@ import IGabiClaimer, {
   Presentation,
   CombinedPresentation,
   ClaimError,
+  IUpdateCredential,
 } from '../types/Claim'
 import WasmHooks from '../wasm/WasmHooks'
 import {
   IGabiMsgSession,
   InitiateAttestationRequest,
   Attestation,
-  Accumulator,
   AttesterPublicKey,
 } from '../types/Attestation'
 import {
@@ -35,17 +35,17 @@ function checkValidClaimStructure(claim: object): void | Error {
 export default class GabiClaimer implements IGabiClaimer {
   private readonly secret: string
 
-  public static async buildFromMnemonic(
+  public static async buildFromMnemonic<T extends GabiClaimer>(
     mnemonic: string
-  ): Promise<GabiClaimer> {
+  ): Promise<T> {
     // secret's structure unmarshalled is { MasterSecret: string }
     const secret = await GabiClaimer.genSecret(mnemonic)
-    return new GabiClaimer(secret)
+    return new this(secret) as T
   }
 
-  public static async buildFromScratch(): Promise<GabiClaimer> {
+  public static async buildFromScratch<T extends GabiClaimer>(): Promise<T> {
     const secret = await goWasmExec<string>(WasmHooks.genKey)
-    return new GabiClaimer(secret)
+    return new this(secret) as T
   }
 
   constructor(secret: string) {
@@ -145,11 +145,7 @@ export default class GabiClaimer implements IGabiClaimer {
     credential,
     attesterPubKey,
     accumulator,
-  }: {
-    credential: Credential
-    attesterPubKey: AttesterPublicKey
-    accumulator: Accumulator
-  }): Promise<Credential> {
+  }: IUpdateCredential): Promise<Credential> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.updateCredential, [
         this.secret,
