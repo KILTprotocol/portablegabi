@@ -75,12 +75,15 @@ func verify(t *testing.T, attester *credentials.Attester, claimer *credentials.C
 	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg)
 	require.NoError(t, err, "Could not disclose attributes")
 
-	_, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
+	verified, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
+	require.True(t, verified)
 	require.NoError(t, err, "Could not verify attributes")
 	contents, ok := attr["contents"].(map[string]interface{})
-	require.True(t, ok, "should be a map")
+	require.Truef(t, ok, "should be a map got: %T", contents)
+
 	shouldContents, ok := claim["contents"].(map[string]interface{})
-	require.True(t, ok, "should be a map")
+	require.Truef(t, ok, "should be a map got: %T", shouldContents)
+
 	require.Equal(t, shouldContents["age"], contents["age"])
 	require.Equal(t, claim["ctype"], attr["ctype"])
 	require.Equal(t, shouldContents["gender"], contents["gender"])
@@ -110,17 +113,17 @@ func TestCredential(t *testing.T) {
 
 	claim, cred := buildCredential(t, sysParams, attester, claimer, update)
 
-	verify(t, attester, claimer, cred, claim, 1)
+	verify(t, attester, claimer, cred, claim, revocation.AccumulatorStartIndex)
 
 	_, cred2 := buildCredential(t, sysParams, attester, claimer, update)
-	verify(t, attester, claimer, cred2, claim, 1)
+	verify(t, attester, claimer, cred2, claim, revocation.AccumulatorStartIndex)
 
 	update, err = attester.RevokeAttestation(update, cred2.Credential.NonRevocationWitness)
 	require.NoError(t, err, "Could not revoke!")
 	cred, err = claimer.UpdateCredential(attester.PublicKey, cred, update)
 	require.NoError(t, err, "Could not update cred!")
 	// increase the accumulator index and ensure that the witness was updates!
-	verify(t, attester, claimer, cred, claim, 2)
+	verify(t, attester, claimer, cred, claim, revocation.AccumulatorStartIndex+1)
 }
 
 func TestCombinedPresentation(t *testing.T) {
@@ -150,10 +153,10 @@ func TestCombinedPresentation(t *testing.T) {
 	require.NoError(t, err, "Error in claimer key generation")
 
 	claim, cred := buildCredential(t, sysParams, attester1, claimer, update1)
-	verify(t, attester1, claimer, cred, claim, 1)
+	verify(t, attester1, claimer, cred, claim, revocation.AccumulatorStartIndex)
 
 	_, cred2 := buildCredential(t, sysParams, attester2, claimer, update2)
-	verify(t, attester2, claimer, cred2, claim, 1)
+	verify(t, attester2, claimer, cred2, claim, revocation.AccumulatorStartIndex)
 
 	requestedAttrs := [4]string{
 		"ctype",
@@ -165,12 +168,12 @@ func TestCombinedPresentation(t *testing.T) {
 		credentials.PartialPresentationRequest{
 			RequestedAttributes:   requestedAttrs[:],
 			ReqNonRevocationProof: true,
-			ReqMinIndex:           1,
+			ReqMinIndex:           revocation.AccumulatorStartIndex,
 		},
 		credentials.PartialPresentationRequest{
 			RequestedAttributes:   requestedAttrs[2:],
 			ReqNonRevocationProof: true,
-			ReqMinIndex:           1,
+			ReqMinIndex:           revocation.AccumulatorStartIndex,
 		},
 	}
 	verifierSession, reqAttrMsg := credentials.RequestCombinedPresentation(attester1.PublicKey.Params, requestPresentation[:])
@@ -345,7 +348,7 @@ func TestFullWorkflow(t *testing.T) {
 		"contents" + credentials.Separator + "special",
 		"contents" + credentials.Separator + "gender",
 	}
-	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
+	verifierSession, reqAttrMsg := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, revocation.AccumulatorStartIndex)
 	bts, err = json.Marshal(verifierSession)
 	require.NoError(t, err)
 	fmt.Printf("byteVerifierSession = []byte(`%s`)\n", string(bts))
@@ -360,16 +363,19 @@ func TestFullWorkflow(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Printf("bytePresentationResponse = []byte(`%s`)\n", string(bts))
 
-	_, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
+	verified, attr, err := credentials.VerifyPresentation(attester.PublicKey, disclosedAttr, verifierSession)
+	require.True(t, verified)
 	bts, err = json.Marshal(attr)
 	require.NoError(t, err)
 	fmt.Printf("bytePresentation = []byte(`%s`)\n", string(bts))
 
 	require.NoError(t, err, "Could not verify attributes")
 	contents, ok := attr["contents"].(map[string]interface{})
-	require.NoError(t, err, "Could not verify attributes")
-	shouldContents, ok := attr["contents"].(map[string]interface{})
-	require.True(t, ok, "should be a map")
+	require.Truef(t, ok, "should be a map got: %T full: %+v", attr["contents"], attr)
+
+	shouldContents, ok := claim["contents"].(map[string]interface{})
+	require.Truef(t, ok, "should be a map got: %T", claim["contents"])
+
 	require.Equal(t, shouldContents["age"], contents["age"])
 	require.Equal(t, shouldContents["gender"], contents["gender"])
 	require.Equal(t, shouldContents["name"], contents["name"])
@@ -391,12 +397,12 @@ func TestFullWorkflow(t *testing.T) {
 		credentials.PartialPresentationRequest{
 			RequestedAttributes:   requestedAttr[:],
 			ReqNonRevocationProof: true,
-			ReqMinIndex:           1,
+			ReqMinIndex:           revocation.AccumulatorStartIndex,
 		},
 		credentials.PartialPresentationRequest{
 			RequestedAttributes:   requestedAttr2[:],
 			ReqNonRevocationProof: true,
-			ReqMinIndex:           1,
+			ReqMinIndex:           revocation.AccumulatorStartIndex,
 		},
 	})
 	bts, err = json.Marshal(combVerifierSession)
@@ -467,8 +473,8 @@ func TestMixingVerificationSessions(t *testing.T) {
 		"contents" + credentials.Separator + "special",
 		"contents" + credentials.Separator + "likedNumbers",
 	}
-	_, reqAttrMsg1 := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
-	verifierSession2, _ := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, 1)
+	_, reqAttrMsg1 := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, revocation.AccumulatorStartIndex)
+	verifierSession2, _ := credentials.RequestPresentation(attester.PublicKey.Params, requestedAttr[:], true, revocation.AccumulatorStartIndex)
 	require.NotEqual(t, reqAttrMsg1.Nonce, verifierSession2.Nonce)
 
 	disclosedAttr, err := claimer.BuildPresentation(attester.PublicKey, cred, reqAttrMsg1)
@@ -507,10 +513,10 @@ func TestForgedCombinedPresentation(t *testing.T) {
 	require.NoError(t, err, "Error in claimer key generation")
 
 	claim, cred := buildCredential(t, sysParams, attester1, claimer, update1)
-	verify(t, attester1, claimer, cred, claim, 1)
+	verify(t, attester1, claimer, cred, claim, revocation.AccumulatorStartIndex)
 
 	_, cred2 := buildCredential(t, sysParams, attester2, claimer, update2)
-	verify(t, attester2, claimer, cred2, claim, 1)
+	verify(t, attester2, claimer, cred2, claim, revocation.AccumulatorStartIndex)
 
 	requestedAttrs := [4]string{
 		"ctype",
@@ -522,12 +528,12 @@ func TestForgedCombinedPresentation(t *testing.T) {
 		credentials.PartialPresentationRequest{
 			RequestedAttributes:   requestedAttrs[:],
 			ReqNonRevocationProof: true,
-			ReqMinIndex:           1,
+			ReqMinIndex:           revocation.AccumulatorStartIndex,
 		},
 		credentials.PartialPresentationRequest{
 			RequestedAttributes:   requestedAttrs[2:],
 			ReqNonRevocationProof: true,
-			ReqMinIndex:           1,
+			ReqMinIndex:           revocation.AccumulatorStartIndex,
 		},
 	}
 	// combined request

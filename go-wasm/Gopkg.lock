@@ -75,7 +75,7 @@
 
 [[projects]]
   branch = "export_fields"
-  digest = "1:897ba8c5b2c33f400506608da9a08b3d65e5c1dc70e8642abe1ca7256c9a8c1a"
+  digest = "1:d18fd8006f8135b20d7eca04d6f3dd63ec4544ef580c80667d65d50fdc764aea"
   name = "github.com/privacybydesign/gabi"
   packages = [
     ".",
@@ -87,7 +87,7 @@
     "signed",
   ]
   pruneopts = "UT"
-  revision = "08ead794f7fc3933952970d1fc75c50c6b122b2d"
+  revision = "5098774cddd2eaf98ce35c1c8fbcdc1494437491"
   source = "https://github.com/weichweich/gabi.git"
 
 [[projects]]
@@ -121,12 +121,12 @@
   version = "1.0.2"
 
 [[projects]]
-  digest = "1:3c05adbe0ae103967371c140e04683bf89d791badd8f384c6425abe14fe26513"
+  digest = "1:93f4c18679de6a3e34b9a3de10c5436e9888b5879ed7de0520749e1eac546bd8"
   name = "github.com/x448/float16"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ad709cdedc4e59c972effbb87ae80fe20bd81f7a"
-  version = "v0.8.3"
+  revision = "cb9afec31f2649663ebb64da5c6c32c3d365c3ca"
+  version = "v0.8.4"
 
 [[projects]]
   branch = "master"
@@ -138,23 +138,23 @@
     "sha3",
   ]
   pruneopts = "UT"
-  revision = "61a87790db17894570dfb32dbaa0a4af9ce60cb4"
+  revision = "69ecbb4d6d5dab05e49161c6e77ea40a030884e1"
 
 [[projects]]
   branch = "master"
-  digest = "1:2620d7efbd6e99521e224cbc08b57e4fb928def72e7d9f138cde3a3c568a71c7"
+  digest = "1:e1f7cd50bff4fa30d44c45fef943ade1959587a5adc8e7943c2e5d806140679f"
   name = "golang.org/x/sys"
   packages = ["cpu"]
   pruneopts = "UT"
-  revision = "86b910548bc16777f40503131aa424ae0a092199"
+  revision = "d101bd2416d505c0448a6ce8a282482678040a89"
 
 [[projects]]
-  digest = "1:b75b3deb2bce8bc079e16bb2aecfe01eb80098f5650f9e93e5643ca8b7b73737"
+  digest = "1:55b110c99c5fdc4f14930747326acce56b52cfce60b24b1c03ef686ac0e46bb1"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1f64d6156d11335c3f22d9330b0ad14fc1e789ce"
-  version = "v2.2.7"
+  revision = "53403b58ad1b561927d19068c655246f2db79d48"
+  version = "v2.2.8"
 
 [solve-meta]
   analyzer-name = "dep"
