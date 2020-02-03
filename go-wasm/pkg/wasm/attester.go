@@ -132,7 +132,7 @@ func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		PublicKey:  &gabi.PublicKey{},
 	}
 	update := &revocation.Update{}
-	witness := &revocation.Witness{}
+	witnesses := []*revocation.Witness{}
 
 	if err := json.Unmarshal([]byte(inputs[0].String()), attester.PrivateKey); err != nil {
 		return nil, err
@@ -143,8 +143,36 @@ func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 	if err := json.Unmarshal([]byte(inputs[2].String()), update); err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(inputs[3].String()), witness); err != nil {
+	if err := json.Unmarshal([]byte(inputs[3].String()), &witnesses); err != nil {
 		return nil, err
 	}
-	return attester.RevokeAttestation(update, witness)
+	return attester.RevokeAttestation(update, witnesses)
+}
+
+// GetAccumulatorIndex verifies the update and returns the current accumulator index.
+func GetAccumulatorIndex(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 2 {
+		return 0, errors.New("missing inputs")
+	}
+
+	pubKey := gabi.PublicKey{}
+	update := revocation.Update{}
+
+	if err := json.Unmarshal([]byte(inputs[0].String()), &pubKey); err != nil {
+		return 0, err
+	}
+	if err := json.Unmarshal([]byte(inputs[1].String()), &update); err != nil {
+		return 0, err
+	}
+
+	revPubKey, err := pubKey.RevocationKey()
+	if err != nil {
+		return 0, err
+	}
+	acc, _, err := update.Verify(revPubKey, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	return acc.Index, nil
 }

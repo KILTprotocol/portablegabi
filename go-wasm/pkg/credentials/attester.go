@@ -110,7 +110,7 @@ func (attester *Attester) CreateAccumulator() (*revocation.Update, error) {
 }
 
 // RevokeAttestation removes the attestation witness from the given accumulator.
-func (attester *Attester) RevokeAttestation(update *revocation.Update, witness *revocation.Witness) (*revocation.Update, error) {
+func (attester *Attester) RevokeAttestation(update *revocation.Update, witnesses []*revocation.Witness) (*revocation.Update, error) {
 	// get key pair and accumulator
 	pubK, err := attester.PublicKey.RevocationKey()
 	if err != nil {
@@ -126,9 +126,15 @@ func (attester *Attester) RevokeAttestation(update *revocation.Update, witness *
 	}
 
 	// calculate new accumulator which does not contain the witness
-	newAcc, event, err := acc.Remove(privK, witness.E, update.Events[0])
-	if err != nil {
-		return nil, err
+	previousEvent := update.Events[len(update.Events)-1]
+	newAcc := acc
+	events := make([]*revocation.Event, len(witnesses))
+	for i, w := range witnesses {
+		newAcc, previousEvent, err = newAcc.Remove(privK, w.E, previousEvent)
+		if err != nil {
+			return nil, err
+		}
+		events[i] = previousEvent
 	}
 
 	// build update
@@ -138,6 +144,6 @@ func (attester *Attester) RevokeAttestation(update *revocation.Update, witness *
 	}
 	return &revocation.Update{
 		SignedAccumulator: signNewAcc,
-		Events:            append(update.Events, event),
+		Events:            events,
 	}, nil
 }

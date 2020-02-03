@@ -118,7 +118,7 @@ func TestCredential(t *testing.T) {
 	_, cred2 := buildCredential(t, sysParams, attester, claimer, update)
 	verify(t, attester, claimer, cred2, claim, revocation.AccumulatorStartIndex)
 
-	update, err = attester.RevokeAttestation(update, cred2.Credential.NonRevocationWitness)
+	update, err = attester.RevokeAttestation(update, []*revocation.Witness{cred2.Credential.NonRevocationWitness})
 	require.NoError(t, err, "Could not revoke!")
 	cred, err = claimer.UpdateCredential(attester.PublicKey, cred, update)
 	require.NoError(t, err, "Could not update cred!")
@@ -434,7 +434,7 @@ func TestFullWorkflow(t *testing.T) {
 	fmt.Printf("byteCombPresentation = []byte(`%s`)\n", string(bts))
 
 	fmt.Println("\n//Revocation...")
-	rUpdate, err := attester.RevokeAttestation(update, cred2.Credential.NonRevocationWitness)
+	rUpdate, err := attester.RevokeAttestation(update, []*revocation.Witness{cred2.Credential.NonRevocationWitness})
 	require.NoError(t, err)
 	require.NotNil(t, rUpdate)
 	bts, err = json.Marshal(rUpdate)

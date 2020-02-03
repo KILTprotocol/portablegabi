@@ -35,6 +35,8 @@ func main() {
 	methods["verifyPresentation"] = js.FuncOf(wasm.Callbacker(wasm.VerifyPresentation))
 	methods["verifyCombinedPresentation"] = js.FuncOf(wasm.Callbacker(wasm.VerifyCombinedPresentation))
 
+	methods["GetAccumulatorIndex"] = js.FuncOf(wasm.Callbacker(wasm.GetAccumulatorIndex))
+
 	for k, v := range methods {
 		js.Global().Set(k, v)
 		defer v.Release()
