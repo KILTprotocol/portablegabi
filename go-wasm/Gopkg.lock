@@ -75,7 +75,7 @@
 
 [[projects]]
   branch = "export_fields"
-  digest = "1:d18fd8006f8135b20d7eca04d6f3dd63ec4544ef580c80667d65d50fdc764aea"
+  digest = "1:45926e2f0986b15b31fb86610d49975f40afb2eacf58e70dfcbf3f1a223a9e62"
   name = "github.com/privacybydesign/gabi"
   packages = [
     ".",
@@ -87,7 +87,7 @@
     "signed",
   ]
   pruneopts = "UT"
-  revision = "5098774cddd2eaf98ce35c1c8fbcdc1494437491"
+  revision = "990109a4bff525a0e43b84f909d56c860a25d70b"
   source = "https://github.com/weichweich/gabi.git"
 
 [[projects]]

@@ -78,34 +78,17 @@ func (user *Claimer) UpdateCredential(attesterPubK *gabi.PublicKey, attestation 
 		return nil, err
 	}
 	witness := attestation.Credential.NonRevocationWitness
-	if witness.Accumulator == nil {
-		witness.Accumulator, err = witness.SignedAccumulator.UnmarshalVerify(pubRevKey)
-		if err != nil {
-			return nil, err
-		}
+
+	err = witness.Verify(pubRevKey)
+	if err != nil {
+		return nil, err
 	}
-	index := witness.Accumulator.Index
-	if index < update.Events[0].Index-1 {
-		return nil, errors.New("update to old")
-	}
+
 	err = witness.Update(pubRevKey, update)
 	if err != nil {
 		return nil, err
 	}
 	return attestation, nil
-}
-
-func ensureAccumulator(pk *gabi.PublicKey, witness *revocation.Witness) error {
-	revPK, err := pk.RevocationKey()
-	if err != nil {
-		return err
-	}
-	acc, err := witness.SignedAccumulator.UnmarshalVerify(revPK)
-	if err != nil {
-		return err
-	}
-	witness.Accumulator = acc
-	return nil
 }
 
 // BuildPresentation reveals the attributes which are requested by the verifier.
@@ -116,7 +99,11 @@ func (user *Claimer) BuildPresentation(pk *gabi.PublicKey, attestedClaim *Attest
 	}
 	if partialReq.ReqNonRevocationProof {
 		witness := attestedClaim.Credential.NonRevocationWitness
-		err := ensureAccumulator(pk, witness)
+		revKey, err := pk.RevocationKey()
+		if err != nil {
+			return nil, err
+		}
+		err = witness.Verify(revKey)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +141,11 @@ func (user *Claimer) BuildCombinedPresentation(pubKs []*gabi.PublicKey, credenti
 		cred.Pk = pubKs[i]
 		if partialReq.ReqNonRevocationProof {
 			witness := cred.NonRevocationWitness
-			err := ensureAccumulator(pubKs[i], witness)
+			revKey, err := pubKs[i].RevocationKey()
+			if err != nil {
+				return nil, err
+			}
+			err = witness.Verify(revKey)
 			if err != nil {
 				return nil, err
 			}

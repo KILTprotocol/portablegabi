@@ -94,44 +94,6 @@ func TestUpdateCredential(t *testing.T) {
 	assert.NotNil(t, credR)
 }
 
-func TestEnsureAccumulator(t *testing.T) {
-	attester := &Attester{}
-	err := json.Unmarshal(byteAttester, attester)
-	require.NoError(t, err)
-
-	cred := &AttestedClaim{}
-	err = json.Unmarshal(byteCredential, cred)
-	require.NoError(t, err)
-
-	witness := cred.Credential.NonRevocationWitness
-	witness.Accumulator = nil
-	require.NotNil(t, witness.SignedAccumulator)
-
-	err = ensureAccumulator(attester.PublicKey, witness)
-	assert.NoError(t, err)
-	assert.NotNil(t, witness.Accumulator)
-}
-
-func TestEnsureAccumulatorInvalid(t *testing.T) {
-	attester := &Attester{}
-	err := json.Unmarshal(byteAttester, attester)
-	require.NoError(t, err)
-
-	cred := &AttestedClaim{}
-	err = json.Unmarshal(byteCredential, cred)
-	require.NoError(t, err)
-
-	witness := cred.Credential.NonRevocationWitness
-	// if byte 5 is 0 this test fails.
-	witness.SignedAccumulator.Data[5] += byte(3)
-	witness.Accumulator = nil
-	require.NotNil(t, witness.SignedAccumulator)
-
-	err = ensureAccumulator(attester.PublicKey, witness)
-	assert.Error(t, err)
-	assert.Nil(t, witness.Accumulator)
-}
-
 func TestBuildPresentation(t *testing.T) {
 	attester := &Attester{}
 	err := json.Unmarshal(byteAttester, attester)

@@ -90,7 +90,6 @@ func (attester *Attester) AttestClaim(reqCred *AttestedClaimRequest, session *At
 	if err != nil {
 		return nil, nil, err
 	}
-	witness.Accumulator = acc
 	witness.SignedAccumulator = update.SignedAccumulator
 	gabiIssuer := &gabi.Issuer{Pk: attester.PublicKey, Sk: attester.PrivateKey, Context: session.Context}
 	sig, err := gabiIssuer.IssueSignature(reqCred.CommitMsg.U, marshaledAttr, witness, reqCred.CommitMsg.Nonce2)
@@ -112,6 +111,7 @@ func (attester *Attester) CreateAccumulator() (*revocation.Update, error) {
 
 // RevokeAttestation removes the attestation witness from the given accumulator.
 func (attester *Attester) RevokeAttestation(update *revocation.Update, witness *revocation.Witness) (*revocation.Update, error) {
+	// get key pair and accumulator
 	pubK, err := attester.PublicKey.RevocationKey()
 	if err != nil {
 		return nil, err
@@ -125,5 +125,19 @@ func (attester *Attester) RevokeAttestation(update *revocation.Update, witness *
 		return nil, err
 	}
 
-	return acc.Remove(privK, witness.E, update.Events[0])
+	// calculate new accumulator which does not contain the witness
+	newAcc, event, err := acc.Remove(privK, witness.E, update.Events[0])
+	if err != nil {
+		return nil, err
+	}
+
+	// build update
+	signNewAcc, err := newAcc.Sign(privK)
+	if err != nil {
+		return nil, err
+	}
+	return &revocation.Update{
+		SignedAccumulator: signNewAcc,
+		Events:            append(update.Events, event),
+	}, nil
 }
