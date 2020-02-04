@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { Accumulator } from '../types/Attestation'
+import Accumulator from '../attestation/Accumulator'
 import {
   pubKey,
   privKey,
@@ -10,7 +10,7 @@ import {
 } from './testConfig'
 import GabiAttesterChain from '../attestation/GabiAttester.chain'
 import GabiClaimerChain from '../claim/GabiClaimer.chain'
-import getCached from '../blockchain/BlockchainApiConnection'
+import connect from '../blockchain/BlockchainApiConnection'
 import Blockchain from '../blockchain/Blockchain'
 import {
   VerificationSession,
@@ -23,8 +23,7 @@ import { Presentation, Credential, CombinedPresentation } from '../types/Claim'
 import { attestationSetup } from './testSetup'
 import GabiVerifierChain from '../verification/GabiVerifier.chain'
 
-export const blockchain = (): Promise<Blockchain> =>
-  Promise.resolve(getCached())
+export const blockchain = (): Promise<Blockchain> => Promise.resolve(connect())
 
 // creates instances for two claimers, attesters and corresponding accumulators each
 export async function actorSetupChain(): Promise<{

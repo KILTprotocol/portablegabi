@@ -25,10 +25,6 @@ export class InitiateAttestationRequest extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }
-export class Accumulator extends String {
-  // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
-}
 export class Witness extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int

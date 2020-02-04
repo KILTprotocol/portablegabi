@@ -7,7 +7,7 @@ const GoInstance = goWasm.GoWasm.init()
 
 const goWasmExec = <T>(
   goHook: WasmHooks,
-  args?: Array<string | number | boolean>
+  args?: Array<string | number | boolean | string[]>
 ): Promise<T> =>
   Promise.resolve(GoInstance).then(wasm => wasm.execWasmFn(goHook, args))
 

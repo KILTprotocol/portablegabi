@@ -20,7 +20,6 @@ import {
   Attestation,
   InitiateAttestationRequest,
   AttesterAttestationSession,
-  Accumulator,
   Witness,
 } from '../types/Attestation'
 import {
@@ -31,6 +30,7 @@ import {
   ClaimError,
 } from '../types/Claim'
 import { PresentationRequest } from '../types/Verification'
+import Accumulator from '../attestation/Accumulator'
 
 async function buildCredentialError(
   claimer: GabiClaimer,
@@ -301,7 +301,7 @@ describe('Test claimer functionality', () => {
     it('Should throw when updating a revoked credential', async () => {
       const revUpdate = await gabiAttester.revokeAttestation({
         accumulator,
-        witness,
+        witnesses: [witness],
       })
       expect(revUpdate).toBeDefined()
       await expect(

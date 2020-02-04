@@ -77,12 +77,12 @@ describe('Test combined requests', () => {
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: 1,
+        reqMinIndex: 0,
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributesCombined,
         reqNonRevocationProof: true,
-        reqMinIndex: 1,
+        reqMinIndex: 0,
       })
       .finalise()
     expect(message).toEqual(expect.anything())
@@ -107,12 +107,12 @@ describe('Test combined requests', () => {
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: 1,
+        reqMinIndex: 0,
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: 1,
+        reqMinIndex: 0,
       })
       .finalise()
     // (1) test swapped attesters pubkey positions in buildCombinedPresentation
@@ -144,7 +144,7 @@ describe('Test combined requests', () => {
       attesters,
       accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-      minIndices: [1, 1],
+      minIndices: [0, 0],
       reqNonRevocationProof: [true, true],
     })
   })
@@ -155,7 +155,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
-        minIndices: [1, 1],
+        minIndices: [0, 0],
         reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow(
@@ -167,7 +167,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [[], disclosedAttributes],
-        minIndices: [1, 1],
+        minIndices: [0, 0],
         reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow(
@@ -181,7 +181,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
-        minIndices: [1],
+        minIndices: [0],
         reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow('Array lengths dont match up in combined setup')
@@ -193,7 +193,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [1, -1],
+        minIndices: [0, -1],
         reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow(
@@ -225,7 +225,7 @@ describe('Test combined requests', () => {
   it('Should work for any number of combinations', async () => {
     // to keep the runtime small, we test only 5 combinations, but this can be set to any number
     const n = 5
-    const range = new Array(n).fill(1)
+    const range = new Array(n).fill(0)
     await expectCombinedSetupToBe(true, {
       claimer: claimers[0],
       attesters: range.map((_, idx) => attesters[idx % 2]),
@@ -260,7 +260,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [1, 2],
+        minIndices: [0, 1],
         reqNonRevocationProof: [true, true],
         inputCredentials: credentials,
       })
@@ -271,7 +271,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [1, 1],
+        minIndices: [0, 0],
         reqNonRevocationProof: [true, true],
         inputCredentials: credentials,
       })
@@ -282,7 +282,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [1, 2],
+        minIndices: [0, 1],
         reqNonRevocationProof: [true, false],
         inputCredentials: credentials,
       })

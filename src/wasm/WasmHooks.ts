@@ -5,6 +5,7 @@ enum WasmHooks {
   startAttestationSession = 'startAttestationSession',
   issueAttestation = 'issueAttestation',
   revokeAttestation = 'revokeAttestation',
+  getAccumulatorIndex = 'getAccumulatorIndex',
 
   // Claimer methods
   genKey = 'genKey',

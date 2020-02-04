@@ -4,8 +4,9 @@ import GabiAttester from '../src/attestation/GabiAttester'
 import GabiVerifier from '../src/verification/GabiVerifier'
 import { goWasmClose } from '../src/wasm/wasm_exec_wrapper'
 import CombinedRequestBuilder from '../src/verification/CombinedRequestBuilder'
-import { Witness, Accumulator } from '../src/types/Attestation'
+import { Witness } from '../src/types/Attestation'
 import { Credential } from '../src/types/Claim'
+import Accumulator from '../src/attestation/Accumulator'
 
 const testEnv1 = {
   privKey:
@@ -49,12 +50,17 @@ const testEnv2 = {
     'scissors again purse yellow cabbage fat alpha snack come ripple jacket broken',
 }
 
-const issuanceProcess = async (
-  attester: GabiAttester,
-  claimer: GabiClaimer,
-  accumulator: Accumulator,
+const issuanceProcess = async ({
+  attester,
+  claimer,
+  accumulator,
+  claim,
+}: {
+  attester: GabiAttester
+  claimer: GabiClaimer
+  accumulator: Accumulator
   claim: object
-): Promise<{
+}): Promise<{
   credential: Credential
   witness: Witness
 }> => {
@@ -161,18 +167,18 @@ const runWorkflow = async (): Promise<void> => {
   let accumulator = await gabiAttester.createAccumulator()
   console.timeEnd('Build accumulator')
 
-  let { credential } = await issuanceProcess(
-    gabiAttester,
-    gabiClaimer,
+  let { credential } = await issuanceProcess({
+    attester: gabiAttester,
+    claimer: gabiClaimer,
     accumulator,
-    claim
-  )
-  const { credential: credential2, witness: witness2 } = await issuanceProcess(
-    gabiAttester,
-    gabiClaimer,
+    claim,
+  })
+  const { credential: credential2, witness: witness2 } = await issuanceProcess({
+    attester: gabiAttester,
+    claimer: gabiClaimer,
     accumulator,
-    claim
-  )
+    claim,
+  })
   // should verify
   await verify(gabiClaimer, gabiAttester, credential, disclosedAttributes, 1)
   await verify(gabiClaimer, gabiAttester, credential2, disclosedAttributes, 1)
@@ -182,7 +188,7 @@ const runWorkflow = async (): Promise<void> => {
   console.time('revoke attestation')
   accumulator = await gabiAttester.revokeAttestation({
     accumulator,
-    witness: witness2,
+    witnesses: [witness2],
   })
   console.timeEnd('revoke attestation')
 
@@ -232,18 +238,18 @@ const runCombinedWorkflow = async (): Promise<void> => {
   console.timeEnd('Build accumulator')
 
   // eslint-disable-next-line prefer-const
-  const { credential: credential1 } = await issuanceProcess(
-    gabiAttester1,
-    gabiClaimer,
-    update1,
-    claim1
-  )
-  const { credential: credential2 } = await issuanceProcess(
-    gabiAttester2,
-    gabiClaimer,
-    accumulator2,
-    claim2
-  )
+  const { credential: credential1 } = await issuanceProcess({
+    attester: gabiAttester1,
+    claimer: gabiClaimer,
+    accumulator: update1,
+    claim: claim1,
+  })
+  const { credential: credential2 } = await issuanceProcess({
+    attester: gabiAttester2,
+    claimer: gabiClaimer,
+    accumulator: accumulator2,
+    claim: claim2,
+  })
 
   const { message, session } = await new CombinedRequestBuilder()
     .requestPresentation({
@@ -294,12 +300,12 @@ const runMixedVerification = async (): Promise<void> => {
   const accumulator = await gabiAttester.createAccumulator()
   console.timeEnd('Build accumulator')
 
-  const { credential } = await issuanceProcess(
-    gabiAttester,
-    gabiClaimer,
+  const { credential } = await issuanceProcess({
+    attester: gabiAttester,
+    claimer: gabiClaimer,
     accumulator,
-    claim
-  )
+    claim,
+  })
 
   // should verify
   console.time('Verifier requests attributes')

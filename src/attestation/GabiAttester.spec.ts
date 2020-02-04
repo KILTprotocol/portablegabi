@@ -7,7 +7,6 @@ import {
   actorSetup,
 } from '../testSetup/testSetup'
 import {
-  Accumulator,
   InitiateAttestationRequest,
   AttesterAttestationSession,
   Attestation,
@@ -15,6 +14,7 @@ import {
 } from '../types/Attestation'
 import GabiClaimer from '../claim/GabiClaimer'
 import { AttestationRequest, ClaimError } from '../types/Claim'
+import Accumulator from './Accumulator'
 
 // close WASM instance after tests ran
 afterAll(() => goWasmClose())
@@ -73,10 +73,6 @@ describe('Test attester', () => {
       expect(attester).toBeDefined()
       expect(attester).toStrictEqual(gabiAttester)
     })
-    it('Checks non-deterministic accumulator creation', async () => {
-      const updateNew = gabiAttester.createAccumulator()
-      expect(accumulator.valueOf()).not.toStrictEqual(updateNew.valueOf())
-    })
     it('Checks valid startAttestation', () => {
       expect(initiateAttestationReq).toBeDefined()
       expect(attesterSession).toBeDefined()
@@ -131,7 +127,7 @@ describe('Test attester', () => {
       await expect(
         gabiAttester.revokeAttestation({
           accumulator: updateNew,
-          witness,
+          witnesses: [witness],
         })
       ).resolves.toEqual(expect.anything())
     })
@@ -139,7 +135,7 @@ describe('Test attester', () => {
       await expect(
         gabiAttester.revokeAttestation({
           accumulator,
-          witness: witness2,
+          witnesses: [witness2],
         })
       ).resolves.toEqual(expect.anything())
     })
@@ -147,7 +143,7 @@ describe('Test attester', () => {
       await expect(
         gabiAttester.revokeAttestation({
           accumulator: accumulator2,
-          witness,
+          witnesses: [witness],
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })

@@ -1,5 +1,6 @@
 /* eslint-disable-next-line max-classes-per-file */
-import { AttesterPublicKey, Accumulator } from './Attestation'
+import Accumulator from '../attestation/Accumulator'
+import { AttesterPublicKey } from './Attestation'
 
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
 export default interface IGabiClaimer {

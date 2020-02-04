@@ -1,8 +1,8 @@
 import GabiClaimer from './GabiClaimer'
 
 import { Credential, IUpdateCredential } from '../types/Claim'
-import getCached from '../blockchain/BlockchainApiConnection'
-import { Accumulator } from '../types/Attestation'
+import connect from '../blockchain/BlockchainApiConnection'
+import Accumulator from '../attestation/Accumulator'
 
 export default class GabiClaimerChain extends GabiClaimer {
   public async updateCredentialChain({
@@ -14,7 +14,7 @@ export default class GabiClaimerChain extends GabiClaimer {
     attesterChainAddress?: string
     _accumulator?: Accumulator
   }): Promise<Credential> {
-    const chain = await getCached()
+    const chain = await connect()
     if (!_accumulator && !attesterChainAddress) {
       throw new Error(
         "Missing either accumulator or attester's chain address to run updateCredentialClaim"

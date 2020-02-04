@@ -1,11 +1,11 @@
 import { AttestationRequest } from '../types/Claim'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
+import Accumulator from './Accumulator'
 import IGabiAttester, {
   IGabiMsgSession,
   InitiateAttestationRequest,
   AttesterAttestationSession,
-  Accumulator,
   Witness,
   Attestation,
   AttesterPublicKey,
@@ -91,17 +91,19 @@ export default class GabiAttester implements IGabiAttester {
   // revoke attestation
   public async revokeAttestation({
     accumulator,
-    witness,
+    witnesses,
   }: {
     accumulator: Accumulator
-    witness: Witness
+    witnesses: Witness[]
   }): Promise<Accumulator> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.revokeAttestation, [
         this.privateKey,
         this.publicKey,
         accumulator.valueOf(),
-        witness.valueOf(),
+        JSON.stringify(
+          (witnesses || []).map(witness => JSON.parse(witness.valueOf()))
+        ),
       ])
     )
   }

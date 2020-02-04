@@ -2,12 +2,9 @@ import { KeyringPair } from '@polkadot/keyring/types'
 import { Keyring } from '@polkadot/api'
 import generate from '@polkadot/util-crypto/mnemonic/generate'
 import GabiAttester from './GabiAttester'
-import IGabiAttester, {
-  Accumulator,
-  Witness,
-  AttesterPublicKey,
-} from '../types/Attestation'
-import getCached from '../blockchain/BlockchainApiConnection'
+import IGabiAttester, { Witness, AttesterPublicKey } from '../types/Attestation'
+import connect from '../blockchain/BlockchainApiConnection'
+import Accumulator from './Accumulator'
 
 interface IGabiAttesterChain extends IGabiAttester {
   getPublicIdentity: () => {
@@ -15,10 +12,10 @@ interface IGabiAttesterChain extends IGabiAttester {
     address: string
   }
   revokeAttestation: ({
-    witness,
+    witnesses,
     accumulator,
   }: {
-    witness: Witness
+    witnesses: Witness[]
     accumulator?: Accumulator
   }) => Promise<Accumulator>
   updateAccumulator: (accumulator: Accumulator) => Promise<void>
@@ -63,17 +60,17 @@ export default class GabiAttesterChain extends GabiAttester
   }
 
   public async updateAccumulator(accumulator: Accumulator): Promise<void> {
-    return (await getCached()).updateAccumulator(this.keyringPair, accumulator)
+    return (await connect()).updateAccumulator(this.keyringPair, accumulator)
   }
 
   public async revokeAttestation({
-    witness,
+    witnesses,
     accumulator,
   }: {
-    witness: Witness
+    witnesses: Witness[]
     accumulator?: Accumulator
   }): Promise<Accumulator> {
-    const blockchain = await getCached()
+    const blockchain = await connect()
     // get latest accumulator if no input is given
     const acc =
       accumulator ||
@@ -81,7 +78,7 @@ export default class GabiAttesterChain extends GabiAttester
     // revoke attestation + get new accumulator
     const accUpdate = await super.revokeAttestation({
       accumulator: acc,
-      witness,
+      witnesses,
     })
 
     // accumulator accumulator on chain

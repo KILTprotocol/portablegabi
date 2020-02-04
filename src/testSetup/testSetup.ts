@@ -15,7 +15,6 @@ import {
   Attestation,
   Witness,
   AttesterAttestationSession,
-  Accumulator,
 } from '../types/Attestation'
 import {
   VerificationSession,
@@ -31,6 +30,7 @@ import {
   Credential,
   CombinedPresentation,
 } from '../types/Claim'
+import Accumulator from '../attestation/Accumulator'
 
 // creates instances for two claimers, attesters and corresponding accumulators each
 export async function actorSetup(): Promise<{
@@ -111,7 +111,7 @@ export async function presentationSetup({
   attester,
   credential,
   requestedAttributes = disclosedAttributes,
-  reqMinIndex = 1,
+  reqMinIndex = 0,
   reqNonRevocationProof = true,
 }: {
   claimer: GabiClaimer

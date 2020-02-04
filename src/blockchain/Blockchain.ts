@@ -2,7 +2,7 @@ import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
 import { Codec } from '@polkadot/types/types'
 import { uint8ArrToString } from './Blockchain.utility'
-import { Accumulator } from '../types/Attestation'
+import Accumulator from '../attestation/Accumulator'
 
 export type Stats = {
   chain: Codec
@@ -145,8 +145,7 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   public async getLatestRevocationIndex(address: string): Promise<number> {
-    const accumulator = await this.getLatestAccumulator(address)
-    return JSON.parse(accumulator.valueOf()).i
+    return this.getAccumulatorCount(address)
   }
 
   public async updateAccumulator(
