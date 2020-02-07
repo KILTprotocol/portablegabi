@@ -29,6 +29,11 @@ import {
 import Accumulator from '../attestation/Accumulator'
 import Credential from './Credential'
 
+/**
+ * @param claimer
+ * @param attestation
+ * @param claimerSession
+ */
 async function buildCredentialError(
   claimer: GabiClaimer,
   attestation: Attestation,

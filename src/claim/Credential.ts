@@ -4,9 +4,22 @@ import Accumulator from '../attestation/Accumulator'
 import { AttesterPublicKey } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 
+/**
+ * The credential contains information which are used to create presentations.
+ * It must be kept secret.
+ */
 export default class Credential extends String {
   private parseCache: { updateCounter: number } | undefined
 
+  /**
+   * This methods updates a credential using a new [[Accumulator]].
+   * After an attester revoked an attestation all credentials need to be updated.
+   *
+   * @param p The parameter object.
+   * @param p.attesterPubKey The [[PublicKey]] of the attester who attest the claim.
+   * @param p.accumulator The new [[Accumulator]].
+   * @returns An updated [[Credential]].
+   */
   public async updateSingle({
     attesterPubKey,
     accumulator,
@@ -23,6 +36,15 @@ export default class Credential extends String {
     )
   }
 
+  /**
+   * This methods updates a credential using a list of new [[Accumulator]]s.
+   * After an attester revoked an attestation all credentials need to be updated.
+   *
+   * @param p The parameter object.
+   * @param p.attesterPubKey The [[PublicKey]] of the attester who attest the claim.
+   * @param p.accumulators The list of new [[Accumulator]]s.
+   * @returns An updated [[Credential]].
+   */
   public async update({
     attesterPubKey,
     accumulators,
@@ -39,6 +61,16 @@ export default class Credential extends String {
     )
   }
 
+  /**
+   * This methods updates a credential.
+   * For that it pulls all [[Accumulator]]s up to [[endIndex]] from the chain.
+   *
+   * @param p The parameter object.
+   * @param p.attesterPubKey The [[PublicKey]] of the attester who attest the claim.
+   * @param p.attesterChainAddress The chain address of the attester.
+   * @param p.endIndex The index of the last accumulator. If not present all new [[Accumulators]] are pulled.
+   * @returns An updated [[Credential]].
+   */
   public async updateFromChain({
     attesterPubKey,
     attesterChainAddress,
@@ -61,6 +93,11 @@ export default class Credential extends String {
     })
   }
 
+  /**
+   * Returns the number of updates done.
+   *
+   * @returns The number of accumulator updates done with this credential.
+   */
   public getUpdateCounter(): number {
     let parsed = this.parseCache
     try {
