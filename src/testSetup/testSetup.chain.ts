@@ -10,7 +10,7 @@ import {
 } from './testConfig'
 import GabiAttesterChain from '../attestation/GabiAttester.chain'
 import GabiClaimerChain from '../claim/GabiClaimer.chain'
-import connect from '../blockchain/BlockchainApiConnection'
+import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Blockchain from '../blockchain/Blockchain'
 import {
   VerificationSession,
@@ -60,7 +60,9 @@ export async function actorSetupChain(): Promise<{
     )
   } catch (e) {
     accumulator1 = await gabiAttester1.createAccumulator()
-    await gabiAttester1.updateAccumulator(accumulator1)
+    await Promise.resolve(gabiAttester1.updateAccumulator(accumulator1)).catch(
+      err => err
+    )
   }
   try {
     accumulator2 = await chain.getLatestAccumulator(
@@ -68,7 +70,9 @@ export async function actorSetupChain(): Promise<{
     )
   } catch (e) {
     accumulator2 = await gabiAttester1.createAccumulator()
-    await gabiAttester2.updateAccumulator(accumulator2)
+    await Promise.resolve(gabiAttester2.updateAccumulator(accumulator2)).catch(
+      err => err
+    )
   }
   return {
     claimers: [gabiClaimer1, gabiClaimer2],
@@ -107,7 +111,7 @@ export async function presentationSetupChain({
     requestedAttributes,
     reqNonRevocationProof,
     reqIndex,
-    address: attester.getPublicIdentity().address,
+    attesterIdentity: attester.getPublicIdentity(),
   })
   // response
   const presentation = await claimer.buildPresentation({
@@ -155,6 +159,7 @@ export async function combinedSetupChain({
   combinedPresentationReq: CombinedPresentationRequest
   combinedSession: CombinedVerificationSession
   verified: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   claims: any[]
 }> {
   if (
@@ -193,7 +198,7 @@ export async function combinedSetupChain({
       requestedAttributes,
       reqNonRevocationProof: reqNonRevocationProof[idx],
       reqIndex: indices[idx],
-      address: attesters[idx].getPublicIdentity().address,
+      attesterIdentity: attesters[idx].getPublicIdentity(),
     })
   )
   // request combined presentation

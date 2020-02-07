@@ -55,6 +55,15 @@ export default class GabiClaimer implements IGabiClaimer {
   private static async genSecret(mnemonic: string): Promise<string> {
     return goWasmExec<string>(WasmHooks.keyFromMnemonic, [mnemonic, ''])
   }
+  /**
+   * Creates an [[AttestationRequest]] using the provided [[InitiateAttestationRequest]].
+   *
+   * @param p The parameter object.
+   * @param p.claim The claim which should get attested.
+   * @param p.startAttestationMsg The [[InitiateAttestationRequest]] provided by the attester.
+   * @param p.attesterPubKey The [[PublicKey]] of the attester.
+   * @returns An [[AttestationRequest]] and a [[ClaimerAttestationSession]] which together with an [[AttestationResponse]] can be used to create a [[Credential]].
+   */
 
   public async requestAttestation({
     claim,

@@ -1,5 +1,5 @@
 /**
- * Blockchain Api Connection enables the building and accessing of the KILT [[Blockchain]] connection. In which it keeps one connection open and allows to reuse the connection for all [[Blockchain]] related tasks.
+ * * Blockchain Api Connection enables the building and accessing of the KILT [[Blockchain]] connection. In which it keeps one connection open and allows to reuse the connection for all [[Blockchain]] related tasks.
  * ***
  * Other modules can access the [[Blockchain]] as such: `const blockchain = await connect()`.
  * @module BlockchainApiConnection
@@ -10,7 +10,7 @@
  * Dummy comment needed for correct doc display, do not remove.
  */
 import { ApiPromise, WsProvider } from '@polkadot/api'
-import Blockchain, { IBlockchainApi } from './Blockchain'
+import Blockchain, { IBlockchainApi } from '../blockchain/Blockchain'
 
 export const DEFAULT_WS_ADDRESS = 'ws://127.0.0.1:9944'
 
@@ -39,9 +39,8 @@ export async function connect(
   return getCached(host)
 }
 
-export function clearCache(): null {
+export function clearCache(): void {
   instance = null
-  return instance
 }
 
 export async function disconnect(

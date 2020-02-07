@@ -5,7 +5,6 @@ import {
 } from '../testSetup/testConfig'
 import GabiClaimer from '../claim/GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
-import { Accumulator } from '../types/Attestation'
 import { Credential } from '../types/Claim'
 import {
   actorSetup,
@@ -16,7 +15,7 @@ import GabiVerifier from './GabiVerifier'
 import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import CombinedRequestBuilder from './CombinedRequestBuilder'
 import { IPresentationRequest } from '../types/Verification'
-
+import Accumulator from '../attestation/Accumulator'
 // close WASM instance after tests ran
 afterAll(() => goWasmClose())
 
@@ -250,7 +249,7 @@ describe('Test combined requests', () => {
       // revoke 2nd credential
       attesters[1].revokeAttestation({
         accumulator: accumulators[1],
-        witness: attestations[1].witness,
+        witnesses: [attestations[1].witness],
       })
       credentials = attestations.map(attestation => attestation.credential)
     })

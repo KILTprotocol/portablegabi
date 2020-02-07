@@ -1,98 +1,35 @@
 import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
-import { Codec } from '@polkadot/types/types'
 import { uint8ArrToString } from './Blockchain.utility'
 import Accumulator from '../attestation/Accumulator'
-
-export type Stats = {
-  chain: Codec
-  nodeName: Codec
-  nodeVersion: Codec
-}
+import { IPublicIdentity } from '../attestation/GabiAttester.chain'
+import chainErrHandler, { BlockchainError } from './ChainError'
 
 export interface IBlockchainApi {
   api: ApiPromise
-  errorHandler: {
-    checkIndex: (address: string, index: number, maxIndex: number) => void
-  }
-  getStats: () => Promise<Stats>
-  listenToBlocks: (limit?: {
-    date?: Date
-    events?: number
-    timeout?: number
-  }) => Promise<void>
+  chainErrHandler: typeof chainErrHandler
   getAccumulatorCount: (address: string) => Promise<number>
   getAccumulator: (address: string, index: number) => Promise<Accumulator>
   getLatestAccumulator: (address: string) => Promise<Accumulator>
-  getLatestRevocationIndex: (address: string) => Promise<number>
+  getRevIndex: (publicIdentity: IPublicIdentity) => Promise<number>
   updateAccumulator: (
     address: KeyringPair,
     accumulator: Accumulator
   ) => Promise<void>
   waitForNextBlock: () => Promise<void>
-  checkReqRevoIndex: (
+  checkReqRevIndex: (
     reqIndex: number | 'latest',
-    address: string
+    identity: IPublicIdentity
   ) => Promise<number>
 }
 
 export default class Blockchain implements IBlockchainApi {
   public api: ApiPromise
 
-  public errorHandler = {
-    checkIndex: (address: string, index: number, maxIndex: number) => {
-      if (index > maxIndex) {
-        throw new Error(
-          `Requested accumulator index "${index}" for address "${address}" out of range [0, ${maxIndex}]`
-        )
-      }
-      if (maxIndex === 0) {
-        throw new Error(`Missing accumulator for address "${address}"`)
-      }
-    },
-  }
+  public chainErrHandler = chainErrHandler
 
   public constructor(api: ApiPromise) {
     this.api = api
-  }
-
-  public async getStats(): Promise<Stats> {
-    const [chain, nodeName, nodeVersion] = await Promise.all([
-      this.api.rpc.system.chain(),
-      this.api.rpc.system.name(),
-      this.api.rpc.system.version(),
-    ])
-    return { chain, nodeName, nodeVersion }
-  }
-
-  public async listenToBlocks(limit?: {
-    date?: Date
-    events?: number
-    timeout?: number
-  }): Promise<void> {
-    let count = 0
-    return new Promise(resolve => {
-      return this.api.rpc.chain
-        .subscribeNewHeads(header => {
-          console.log(`Chain is at block: #${header.number}`)
-        })
-        .then(unsubscribe => {
-          if (limit) {
-            if (limit.timeout) {
-              setTimeout(() => {
-                resolve(unsubscribe())
-              }, limit.timeout)
-            }
-            if (
-              // eslint-disable-next-line no-plusplus
-              (limit.events && ++count === limit.events) ||
-              (limit.date && limit.date.getTime() >= new Date().getTime())
-            ) {
-              resolve(unsubscribe())
-            }
-          }
-        })
-    })
   }
 
   public async waitForNextBlock(): Promise<void> {
@@ -130,7 +67,7 @@ export default class Blockchain implements IBlockchainApi {
     // check for index out of bounds
     if (accUint8Arr.length === 1 && accUint8Arr[0] === 0) {
       const maxIndex = (await this.getAccumulatorCount(address)) - 1
-      this.errorHandler.checkIndex(address, index, maxIndex)
+      this.chainErrHandler.checkAccIndex(address, index, maxIndex)
     }
     // convert Uint8Array back to string
     return new Accumulator(uint8ArrToString(accUint8Arr))
@@ -139,13 +76,37 @@ export default class Blockchain implements IBlockchainApi {
   public async getLatestAccumulator(address: string): Promise<Accumulator> {
     const maxIndex = (await this.getAccumulatorCount(address)) - 1
     if (maxIndex < 0) {
-      throw new Error(`Missing any accumulator for ${address}.`)
+      throw BlockchainError.maxIndexZero(address)
     }
     return this.getAccumulator(address, maxIndex)
   }
 
-  public async getLatestRevocationIndex(address: string): Promise<number> {
-    return this.getAccumulatorCount(address)
+  public async getRevIndex(identity: IPublicIdentity): Promise<number> {
+    const accumulator = await this.getLatestAccumulator(identity.address)
+    return accumulator.getRevIndex(identity.publicKey, identity.address)
+
+    // try {
+    //   const index = await accumulator.getRevIndex(
+    //     identity.publicKey,
+    //     identity.address
+    //   )
+    //   return index
+    // } catch (e) {
+    //   console.log('GETREVINDEX', e)
+    //   return 0
+    // }
+    // return accumulator
+    //   .getRevIndex(identity.publicKey, identity.address)
+    //   .catch(e => {
+    //     console.log('GETREVINDEX', e)
+    //     return 0
+    //   })
+    // return accumulator.getRevIndex(identity.publicKey, identity.address)
+    // return new Promise(resolve => {
+    //   return accumulator
+    //     .getRevIndex(identity.publicKey, identity.address)
+    //     .then(x => resolve(x))
+    // })
   }
 
   public async updateAccumulator(
@@ -159,13 +120,13 @@ export default class Blockchain implements IBlockchainApi {
     console.log('Updated accumulator with hex', hash.toHex())
   }
 
-  public async checkReqRevoIndex(
+  public async checkReqRevIndex(
     reqIndex: number | 'latest',
-    address: string
+    identity: IPublicIdentity
   ): Promise<number> {
-    const maxIndex = await this.getLatestRevocationIndex(address)
+    const maxIndex = await this.getRevIndex(identity)
     if (typeof reqIndex === 'number') {
-      this.errorHandler.checkIndex(address, reqIndex, maxIndex)
+      this.chainErrHandler.checkRevIndex(identity.address, reqIndex, maxIndex)
       return reqIndex
     }
     return maxIndex

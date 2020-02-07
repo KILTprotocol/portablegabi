@@ -3,14 +3,15 @@ import { Keyring } from '@polkadot/api'
 import generate from '@polkadot/util-crypto/mnemonic/generate'
 import GabiAttester from './GabiAttester'
 import IGabiAttester, { Witness, AttesterPublicKey } from '../types/Attestation'
-import connect from '../blockchain/BlockchainApiConnection'
+import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Accumulator from './Accumulator'
 
+export interface IPublicIdentity {
+  publicKey: AttesterPublicKey
+  address: string
+}
 interface IGabiAttesterChain extends IGabiAttester {
-  getPublicIdentity: () => {
-    publicKey: AttesterPublicKey
-    address: string
-  }
+  getPublicIdentity: () => IPublicIdentity
   revokeAttestation: ({
     witnesses,
     accumulator,
@@ -32,11 +33,11 @@ export default class GabiAttesterChain extends GabiAttester
   public static buildFromMnemonic(
     publicKey: string,
     privateKey: string,
-    str: string,
+    mnemonic: string,
     type: 'sr25519' | 'ed25519' = 'sr25519'
   ): GabiAttesterChain {
     const keyring = new Keyring({ type })
-    const keyringPair = keyring.addFromUri(`${str}`)
+    const keyringPair = keyring.addFromUri(`${mnemonic}`)
     return new GabiAttesterChain(publicKey, privateKey, keyringPair)
   }
 
@@ -49,10 +50,7 @@ export default class GabiAttesterChain extends GabiAttester
     this.keyringPair = keyringPair
   }
 
-  public getPublicIdentity(): {
-    publicKey: AttesterPublicKey
-    address: string
-  } {
+  public getPublicIdentity(): IPublicIdentity {
     return {
       publicKey: super.getPubKey(),
       address: this.keyringPair.address,

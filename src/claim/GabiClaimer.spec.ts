@@ -373,7 +373,7 @@ describe('Test claimer functionality', () => {
         )
       )
     })
-    it('Should throw on buildPresentation with pubkey from different attester', async () => {
+    it('Should throw in buildPresentation with pubkey from different attester', async () => {
       await expect(
         gabiClaimer.buildPresentation({
           credential,
@@ -382,7 +382,7 @@ describe('Test claimer functionality', () => {
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
-    it('Should throw on updateCredential with pubkey from different attester', async () => {
+    it('Should throw in updateCredential with pubkey from different attester', async () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
@@ -391,7 +391,7 @@ describe('Test claimer functionality', () => {
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
-    it('Should throw on updateCredential with different accumulator of same attester', async () => {
+    it('Should throw in updateCredential with different accumulator of same attester', async () => {
       const acc = await gabiAttester.createAccumulator()
       await expect(
         gabiClaimer.updateCredential({
@@ -401,7 +401,7 @@ describe('Test claimer functionality', () => {
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
-    it('Should throw on updateCredential with accumulator from different attester', async () => {
+    it('Should throw in updateCredential with accumulator from different attester', async () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
@@ -410,7 +410,7 @@ describe('Test claimer functionality', () => {
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
-    it('Should throw on updateCredential with accumulator + pubkey from different attester', async () => {
+    it('Should throw in updateCredential with accumulator + pubkey from different attester', async () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,

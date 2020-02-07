@@ -1,7 +1,7 @@
 import GabiClaimer from './GabiClaimer'
 
 import { Credential, IUpdateCredential } from '../types/Claim'
-import connect from '../blockchain/BlockchainApiConnection'
+import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Accumulator from '../attestation/Accumulator'
 
 export default class GabiClaimerChain extends GabiClaimer {
@@ -23,7 +23,6 @@ export default class GabiClaimerChain extends GabiClaimer {
     const accumulator =
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       _accumulator || (await chain.getLatestAccumulator(attesterChainAddress!))
-    console.log('Accumulator Update Cred:', accumulator)
     return super.updateCredential({
       credential,
       attesterPubKey,

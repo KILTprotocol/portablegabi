@@ -7,6 +7,7 @@
   "scripts": {
     "_comment": "NODE_ENV=custom is set because otherwise tests won't compile (see https://github.com/polkadot-js/common/issues/321)",
     "test": "yarn build && export NODE_ENV=custom; jest",
+    "testshort": "export NODE_ENV=custom; jest",
     "testWatch": "jest --watch --coverage",
     "lint": "eslint 'src/**'",
     "lint:fix": "yarn lint --fix",
@@ -50,6 +51,7 @@
   "dependencies": {
     "@polkadot/api": "^0.100.1",
     "@polkadot/keyring": "^1.8.1",
+    "@polkadot/rpc-provider": "^1.0.1",
     "@polkadot/types": "^0.100.1",
     "@polkadot/util": "^1.8.1",
     "@polkadot/util-crypto": "^1.8.1"

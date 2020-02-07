@@ -328,6 +328,7 @@ export async function combinedSetup({
   combinedPresentationReq: CombinedPresentationRequest
   combinedSession: CombinedVerificationSession
   verified: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   claims: any[]
 }> {
   if (

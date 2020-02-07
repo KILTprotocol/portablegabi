@@ -8,20 +8,20 @@ import {
   CombinedVerificationSession,
   IPresentationRequestChain,
 } from '../types/Verification'
-import connect from '../blockchain/BlockchainApiConnection'
+import connect from '../blockchainApiConnection/BlockchainApiConnection'
 
 export default class GabiVerifierChain extends GabiVerifier {
   public static async requestPresentationChain({
     requestedAttributes,
     reqNonRevocationProof,
     reqIndex,
-    address,
+    attesterIdentity,
   }: IPresentationRequestChain): Promise<{
     message: PresentationRequest
     session: VerificationSession
   }> {
     const chain = await connect()
-    const reqMinIndex = await chain.checkReqRevoIndex(reqIndex, address)
+    const reqMinIndex = await chain.checkReqRevIndex(reqIndex, attesterIdentity)
     return super.requestPresentation({
       requestedAttributes,
       reqNonRevocationProof,
@@ -42,9 +42,12 @@ export default class GabiVerifierChain extends GabiVerifier {
           requestedAttributes,
           reqNonRevocationProof,
           reqIndex,
-          address,
+          attesterIdentity,
         } = req
-        const reqMinIndex = await chain.checkReqRevoIndex(reqIndex, address)
+        const reqMinIndex = await chain.checkReqRevIndex(
+          reqIndex,
+          attesterIdentity
+        )
         return {
           requestedAttributes,
           reqNonRevocationProof,

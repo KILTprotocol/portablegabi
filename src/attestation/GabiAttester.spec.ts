@@ -122,6 +122,24 @@ describe('Test attester', () => {
         response.map(item => expect(item).not.toEqual(expect.anything()))
       )
     })
+    it('Should not throw when revoking with missing witnesses array', async () => {
+      const updateNew = await gabiAttester.createAccumulator()
+      await expect(
+        gabiAttester.revokeAttestation({
+          accumulator: updateNew,
+          witnesses: (undefined as unknown) as Witness[],
+        })
+      ).resolves.toEqual(expect.anything())
+    })
+    it('Should not throw when revoking with empty witnesses array', async () => {
+      const updateNew = await gabiAttester.createAccumulator()
+      await expect(
+        gabiAttester.revokeAttestation({
+          accumulator: updateNew,
+          witnesses: [],
+        })
+      ).resolves.toEqual(expect.anything())
+    })
     it('Should not throw when revoking with another accumulator of same attester', async () => {
       const updateNew = await gabiAttester.createAccumulator()
       await expect(

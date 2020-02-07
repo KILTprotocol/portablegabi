@@ -32,6 +32,10 @@ describe('Test accumulator', () => {
       accumulator,
     }))
   })
+  it('Checks accumulator is a number', async () => {
+    const revIndex = await accumulator.getRevIndex(gabiAttester.getPubKey())
+    expect(typeof revIndex).toBe('number')
+  })
   it('Checks non-deterministic accumulator creation', async () => {
     const updateNew = gabiAttester.createAccumulator()
     expect(accumulator.valueOf()).not.toStrictEqual(updateNew.valueOf())
@@ -83,6 +87,15 @@ describe('Test accumulator', () => {
       await expect(
         accumulator.getRevIndex(gabiAttester2.getPubKey())
       ).rejects.toThrowError('ecdsa signature was invalid')
+    })
+    it('Should throw when calling getRevIndex on a string', async () => {
+      await expect(
+        new Accumulator('missing revocation index').getRevIndex(
+          gabiAttester.getPubKey()
+        )
+      ).rejects.toThrowError(
+        `Missing revocation index in accumulator "missing revocation index"`
+      )
     })
   })
 })

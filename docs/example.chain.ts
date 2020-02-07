@@ -1,4 +1,7 @@
-import connect from '../src/blockchain/BlockchainApiConnection'
+/* eslint-disable no-console */
+import connect, {
+  disconnect,
+} from '../src/blockchainApiConnection/BlockchainApiConnection'
 import { attestationSetup, presentationSetup } from '../src/testSetup/testSetup'
 import {
   actorSetupChain,
@@ -7,7 +10,6 @@ import {
 import { disclosedAttributes } from '../src/testSetup/testConfig'
 
 async function runChainExample(): Promise<void> {
-  const chain = await connect()
   // get actors
   const {
     attesters: [attester],
@@ -43,9 +45,11 @@ async function runChainExample(): Promise<void> {
   })
   console.log('Waiting for next block...')
   await blockchain.waitForNextBlock()
+
   const accumulatorCount = await blockchain.getAccumulatorCount(
     attester.getPublicIdentity().address
   )
+  const index = await accumulatorAfterRevo.getRevIndex(attester.getPubKey())
   console.log('Post-revocation Count: ', accumulatorCount)
 
   // build credential #1
@@ -53,83 +57,73 @@ async function runChainExample(): Promise<void> {
     claimerSession,
     attestation,
   })
-  console.log(1)
-  //   const credentialUpdated = await claimer.updateCredentialChain({
-  //     credential,
-  //     attesterPubKey: attester.getPubKey(),
-  //     attesterChainAddress: attester.getPublicIdentity().address,
-  //     // _accumulator: accumulatorAfterRevo,
-  //   })
-  console.log(1.5)
+  const credentialUpdated = await claimer.updateCredentialChain({
+    credential,
+    attesterPubKey: attester.getPubKey(),
+    attesterChainAddress: attester.getPublicIdentity().address,
+  })
   // verify credential #1
   const { verified, claim } = await presentationSetupChain({
     claimer,
     attester,
-    credential,
+    credential: credentialUpdated,
     requestedAttributes: disclosedAttributes,
     reqIndex: 'latest',
     reqNonRevocationProof: true,
   })
   console.log('Credential #1 verified?', verified)
   console.log('Claim #1 non-empty?', claim)
-  console.log(2)
-  console.log('accumulatorCount', accumulatorCount)
-  console.log(
-    'revocation events',
-    JSON.parse(accumulatorAfterRevo.valueOf()).e.length
-  )
+
   // build credential2
+  let credRev = await claimer.buildCredential({
+    claimerSession: claimerSessionRev,
+    attestation: attestationRev,
+  })
   try {
-    const credentialRev = await claimer.buildCredential({
-      claimerSession: claimerSessionRev,
-      attestation: attestationRev,
+    credRev = await claimer.updateCredentialChain({
+      credential: credRev,
+      attesterPubKey: attester.getPubKey(),
+      attesterChainAddress: attester.getPublicIdentity().address,
     })
-    console.log(3)
-
-    // verify credential #2.1.
-    const {
-      verified: verifiedRev,
-      claim: claimRev,
-    } = await presentationSetupChain({
-      claimer,
-      attester,
-      credential: credentialRev,
-      requestedAttributes: disclosedAttributes,
-      reqIndex: 'latest',
-      reqNonRevocationProof: true,
-    })
-    console.log(
-      'Expect credential #2.1 not to be verified?',
-      verifiedRev === false,
-      verifiedRev
-    )
-    console.log('Expect claim #2.1 to be null?', claimRev === null)
-
-    // verify credential #2.2
-    const {
-      verified: verifiedRev2,
-      claim: claimRev2,
-    } = await presentationSetup({
-      claimer,
-      attester,
-      credential: credentialRev,
-      requestedAttributes: disclosedAttributes,
-      reqMinIndex:
-        (await chain.getLatestRevocationIndex(
-          attester.getPublicIdentity().address
-        )) + 1,
-      reqNonRevocationProof: true,
-    })
-    console.log(
-      'Expect credential #2.2 not to be verified?',
-      verifiedRev2 === false,
-      verifiedRev2
-    )
-    console.log('Expect claim #2.2 to be null?', claimRev2 === null)
   } catch (e) {
-    console.log('yo')
-    console.error(e)
+    console.log(
+      'Caught expected error when updating revoked credential:',
+      e.message
+    )
   }
+  // verify credential #2.1.
+  const {
+    verified: verifiedRev,
+    claim: claimRev,
+  } = await presentationSetupChain({
+    claimer,
+    attester,
+    credential: credRev,
+    requestedAttributes: disclosedAttributes,
+    reqIndex: 'latest',
+    reqNonRevocationProof: true,
+  })
+  console.log(
+    'Expect credential #2.1 not to be verified?',
+    verifiedRev === false
+  )
+  console.log('Expect claim #2.1 to be null?', claimRev === null)
+
+  // verify credential #2.2
+  const { verified: verifiedRev2, claim: claimRev2 } = await presentationSetup({
+    claimer,
+    attester,
+    credential: credRev,
+    requestedAttributes: disclosedAttributes,
+    reqMinIndex: index,
+    reqNonRevocationProof: true,
+  })
+  console.log(
+    'Expect credential #2.2 not to be verified?',
+    verifiedRev2 === false
+  )
+  console.log('Expect claim #2.2 to be null?', claimRev2 === null)
+  await disconnect()
 }
 
 runChainExample()

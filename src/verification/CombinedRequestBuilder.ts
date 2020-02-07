@@ -11,7 +11,7 @@ import {
 function isOnchain(
   s: IPresentationRequest | IPresentationRequestChain
 ): s is IPresentationRequestChain {
-  return 'address' in s && 'reqIndex' in s
+  return 'attesterIdentity' in s && 'reqIndex' in s
 }
 
 export default class CombinedRequestBuilder<

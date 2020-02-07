@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
 /* eslint-disable-next-line max-classes-per-file */
+import { IPublicIdentity } from '../attestation/GabiAttester.chain'
+
 export interface IPresentationRequest {
   requestedAttributes: string[]
   reqNonRevocationProof: boolean
@@ -9,7 +11,7 @@ export interface IPresentationRequest {
 export interface IPresentationRequestChain
   extends Omit<IPresentationRequest, 'reqMinIndex'> {
   reqIndex: number | 'latest'
-  address: string
+  attesterIdentity: IPublicIdentity
 }
 
 export interface IVerifiedPresentation {
