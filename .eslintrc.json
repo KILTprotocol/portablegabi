@@ -36,7 +36,6 @@
       }
     ],
     "@typescript-eslint/interface-name-prefix": ["error", "always"],
-    "@typescript-eslint/prefer-interface": "off",
     "@typescript-eslint/array-type": [
       "error",
       {
@@ -44,12 +43,14 @@
       }
     ],
     "@typescript-eslint/ban-ts-ignore": "warn",
-    "jsdoc/require-description": "warn",
+    "jsdoc/require-description": "error",
+    "jsdoc/require-returns": "error",
+    "jsdoc/require-param-description": "error",
     "jsdoc/require-description-complete-sentence": "warn",
-    "jsdoc/no-types": "warn",
+    "jsdoc/no-types": "off",
     "jsdoc/require-param-type": "off",
     "jsdoc/require-returns-type": "off",
-    "jsdoc/require-jsdoc": "off",
+    "jsdoc/require-jsdoc": "error",
     "jsdoc/check-examples": [
       "warn",
       {
