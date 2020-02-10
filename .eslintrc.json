@@ -69,7 +69,15 @@
         "@typescript-eslint/no-object-literal-type-assertion": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "no-underscore-dangle": "off",
-        "global-require": "off"
+        "global-require": "off",
+        "jsdoc/require-description": "off",
+        "jsdoc/require-returns": "off",
+        "jsdoc/require-param-description": "off",
+        "jsdoc/require-description-complete-sentence": "off",
+        "jsdoc/no-types": "off",
+        "jsdoc/require-param-type": "off",
+        "jsdoc/require-returns-type": "off",
+        "jsdoc/require-jsdoc": "off"
       }
     }
   ],
