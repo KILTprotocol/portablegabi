@@ -24,6 +24,9 @@ import Accumulator from '../attestation/Accumulator'
 //   inputCredentials?: any
 // }
 
+/**
+ * @param outcome
+ */
 async function expectCombinedSetupToBe(
   outcome: boolean,
   ...[

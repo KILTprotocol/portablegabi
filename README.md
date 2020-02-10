@@ -47,7 +47,10 @@ const claimer = await GabiClaimer.create()
 /* (2) Attester Setup */
 
 // (2.1) Create key pair and attester
-const attester = GabiAttester.create()
+const attester = await GabiAttester.create(
+  365 * 24 * 60 * 60 * 1000,
+  70
+) // Takes very long due to finding safe prime numbers, ~10 minutes
 
 // (2.1) Create accumulator (for revocation)
 const accumulator = await attester.createAccumulator()

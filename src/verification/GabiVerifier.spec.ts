@@ -18,16 +18,32 @@ import GabiAttester from '../attestation/GabiAttester'
 import Accumulator from '../attestation/Accumulator'
 import Credential from '../claim/Credential'
 
+/**
+ * @param verified
+ * @param presentationClaim
+ */
 function expectFailure(verified: boolean, presentationClaim: any): void {
   expect(presentationClaim).toBeNull()
   expect(verified).toBe(false)
 }
+/**
+ * @param verified
+ * @param presentationClaim
+ */
 function expectSuccess(verified: boolean, presentationClaim: any): void {
   expect(presentationClaim).toEqual(expect.anything())
   expect(verified).toBe(true)
 }
 
 // run presentationSetup and expect the outcome to be verified: false, claim: null
+/**
+ * @param claimer
+ * @param attester
+ * @param credential
+ * @param requestedAttributes
+ * @param index
+ * @param reqNonRevocationProof
+ */
 async function expectVerificationFailed(
   claimer: GabiClaimer,
   attester: GabiAttester,
@@ -49,6 +65,14 @@ async function expectVerificationFailed(
 }
 
 // run presentationSetup and expect the outcome to be verified: true, claim is defined
+/**
+ * @param claimer
+ * @param attester
+ * @param credential
+ * @param requestedAttributes
+ * @param index
+ * @param reqNonRevocationProof
+ */
 async function expectVerificationSucceeded(
   ...[
     claimer,

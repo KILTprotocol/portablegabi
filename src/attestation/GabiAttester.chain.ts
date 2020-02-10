@@ -28,9 +28,14 @@ export default class GabiAttesterChain extends GabiAttester
   }
 
   public static async create(
+    validityDuration: number,
+    maxAttributes: number,
     keypairType: KeypairType = 'sr25519'
   ): Promise<GabiAttesterChain> {
-    const { publicKey, privateKey } = await super.genKeyPair()
+    const { publicKey, privateKey } = await super.genKeyPair(
+      validityDuration,
+      maxAttributes
+    )
     const mnemonic = this.generateMnemonic()
     return this.buildFromMnemonic(publicKey, privateKey, mnemonic, keypairType)
   }

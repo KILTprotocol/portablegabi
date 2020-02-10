@@ -1,3 +1,4 @@
+/* eslint-disable jsdoc/require-returns */
 import GabiClaimer from '../claim/GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
 
