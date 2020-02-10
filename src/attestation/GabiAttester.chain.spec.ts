@@ -98,7 +98,7 @@ describe('Test GabiAttester on chain', () => {
     const mnemonics = new Array(5)
       .fill(0)
       .map(() => GabiAttesterChain.generateMnemonic())
-    mnemonics.map((mnemonic, idx) => {
+    mnemonics.forEach((mnemonic, idx) => {
       expect(typeof mnemonic).toBe('string')
       expect(mnemonic.split(' ')).toHaveLength(12)
       expect(mnemonic).not.toBe(mnemonics[(idx + 1) % mnemonics.length])
