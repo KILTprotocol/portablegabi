@@ -525,11 +525,10 @@ class GoWasm extends Go {
         process.on('exit', code => {
           // Node.js exits if no event handler is pending
           if (code === 0 && !go.exited) {
-            console.log('exited with 0')
             // deadlock, make Go print error and stack traces
             go._pendingEvent = { id: 0 }
-            go.exited = false
-            go._resume()
+            go.exited = true
+            // go._resume()
           }
         })
         go.run(result.instance)
@@ -558,7 +557,7 @@ class GoWasm extends Go {
           resolve(...messages)
         })
       }).catch(e => {
-        throw new WasmError(e)
+        throw new WasmError(`${fn}: \n${e}`)
       })
     }
     throw new Error(`Function ${fn} missing in WASM`)
@@ -567,6 +566,11 @@ class GoWasm extends Go {
   close() {
     process.exitCode = 0
     this.exit(0)
+    this.exited = true
+    this._pendingEvent = null
+    this._scheduledTimeouts = null
+    this._nextCallbackTimeoutID = null
+    return this._resolveExitPromise()
   }
 }
 module.exports.GoWasm = GoWasm
