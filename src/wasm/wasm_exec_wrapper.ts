@@ -5,6 +5,8 @@ const goWasm = require('./wasm_exec')
 
 const GoInstance = goWasm.GoWasm.init()
 
+export const goWasmInit = () => Promise.resolve(GoInstance)
+
 const goWasmExec = <T>(
   goHook: WasmHooks,
   args?: Array<string | number | boolean | string[]>
