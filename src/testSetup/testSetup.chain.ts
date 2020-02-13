@@ -1,4 +1,5 @@
 /* eslint-disable import/prefer-default-export */
+import { KeypairType } from '@polkadot/util-crypto/types'
 import Accumulator from '../attestation/Accumulator'
 import {
   pubKey,
@@ -11,7 +12,6 @@ import {
 import GabiAttesterChain from '../attestation/GabiAttester.chain'
 import GabiClaimerChain from '../claim/GabiClaimer.chain'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
-import Blockchain from '../blockchain/Blockchain'
 import {
   VerificationSession,
   PresentationRequest,
@@ -22,42 +22,43 @@ import {
 import { Presentation, Credential, CombinedPresentation } from '../types/Claim'
 import { attestationSetup } from './testSetup'
 import GabiVerifierChain from '../verification/GabiVerifier.chain'
-
-export const blockchain = (): Promise<Blockchain> => Promise.resolve(connect())
+import { PgabiModName } from '../types/Chain'
 
 // creates instances for two claimers, attesters and corresponding accumulators each
-export async function actorSetupChain(): Promise<{
+export async function actorSetupChain({
+  pgabiModName = 'portablegabiPallet',
+  mnemonics = chainCfg.URIs,
+  keypairTypes = ['sr25519', 'sr25519'],
+}: {
+  pgabiModName?: PgabiModName
+  mnemonics?: [string, string]
+  keypairTypes?: [KeypairType, KeypairType]
+}): Promise<{
   claimers: GabiClaimerChain[]
   attesters: GabiAttesterChain[]
   accumulators: Accumulator[]
 }> {
-  const chain = await blockchain()
-  const gabiClaimer1 = await GabiClaimerChain.buildFromScratch<
-    GabiClaimerChain
-  >()
-  const gabiClaimer2 = await GabiClaimerChain.buildFromScratch<
-    GabiClaimerChain
-  >()
-  const gabiAttester1 = GabiAttesterChain.buildFromMnemonic(
+  const chain = await connect({ pgabiModName })
+  const gabiClaimer1 = await GabiClaimerChain.create<GabiClaimerChain>()
+  const gabiClaimer2 = await GabiClaimerChain.create<GabiClaimerChain>()
+  const gabiAttester1 = await GabiAttesterChain.buildFromMnemonic(
     pubKey,
     privKey,
-    chainCfg.attester1.mnemonic,
-    'ed25519'
+    mnemonics[0],
+    keypairTypes[0]
   )
-  const gabiAttester2 = GabiAttesterChain.buildFromMnemonic(
+  const gabiAttester2 = await GabiAttesterChain.buildFromMnemonic(
     pubKey2,
     privKey2,
-    chainCfg.attester2.mnemonic,
-    'ed25519'
+    mnemonics[1],
+    keypairTypes[1]
   )
 
   // get accumulators or calculate new ones if non existent on chain
   let accumulator1
   let accumulator2
   try {
-    accumulator1 = await chain.getLatestAccumulator(
-      gabiAttester1.getPublicIdentity().address
-    )
+    accumulator1 = await chain.getLatestAccumulator(gabiAttester1.address)
   } catch (e) {
     accumulator1 = await gabiAttester1.createAccumulator()
     await Promise.resolve(gabiAttester1.updateAccumulator(accumulator1)).catch(
@@ -65,9 +66,7 @@ export async function actorSetupChain(): Promise<{
     )
   }
   try {
-    accumulator2 = await chain.getLatestAccumulator(
-      gabiAttester2.getPublicIdentity().address
-    )
+    accumulator2 = await chain.getLatestAccumulator(gabiAttester2.address)
   } catch (e) {
     accumulator2 = await gabiAttester1.createAccumulator()
     await Promise.resolve(gabiAttester2.updateAccumulator(accumulator2)).catch(
@@ -116,7 +115,7 @@ export async function presentationSetupChain({
   // response
   const presentation = await claimer.buildPresentation({
     credential,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
     presentationReq,
   })
   // verify
@@ -126,7 +125,7 @@ export async function presentationSetupChain({
   } = await GabiVerifierChain.verifyPresentation({
     proof: presentation,
     verifierSession,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
   })
   return {
     verifierSession,
@@ -137,7 +136,6 @@ export async function presentationSetupChain({
   }
 }
 
-// TODO: This only makes sense if we test requestCombinedPresentationChain
 export async function combinedSetupChain({
   claimer,
   attesters,
@@ -170,7 +168,7 @@ export async function combinedSetupChain({
   ) {
     throw new Error('Array lengths dont match up in combined setup')
   }
-  const attesterPubKeys = attesters.map(attester => attester.getPubKey())
+  const attesterPubKeys = attesters.map(attester => attester.publicKey)
   // build credentials if inputCredentials is missing
   let credentials: Credential[]
   if (

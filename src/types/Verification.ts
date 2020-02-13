@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
 /* eslint-disable-next-line max-classes-per-file */
-import { IPublicIdentity } from '../attestation/GabiAttester.chain'
+import { IPublicIdentity } from './Attestation'
 
 export interface IPresentationRequest {
   requestedAttributes: string[]

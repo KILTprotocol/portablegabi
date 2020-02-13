@@ -1,35 +1,26 @@
+import { hexToString } from '@polkadot/util'
 import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
-import { uint8ArrToString } from './Blockchain.utility'
-import Accumulator from '../attestation/Accumulator'
-import { IPublicIdentity } from '../attestation/GabiAttester.chain'
 import chainErrHandler, { BlockchainError } from './ChainError'
-
-export interface IBlockchainApi {
-  api: ApiPromise
-  chainErrHandler: typeof chainErrHandler
-  getAccumulatorCount: (address: string) => Promise<number>
-  getAccumulator: (address: string, index: number) => Promise<Accumulator>
-  getLatestAccumulator: (address: string) => Promise<Accumulator>
-  getRevIndex: (publicIdentity: IPublicIdentity) => Promise<number>
-  updateAccumulator: (
-    address: KeyringPair,
-    accumulator: Accumulator
-  ) => Promise<void>
-  waitForNextBlock: () => Promise<void>
-  checkReqRevIndex: (
-    reqIndex: number | 'latest',
-    identity: IPublicIdentity
-  ) => Promise<number>
-}
+import { IPublicIdentity } from '../types/Attestation'
+import { IBlockchainApi, IPortablegabiApi, PgabiModName } from '../types/Chain'
+import Accumulator from '../attestation/Accumulator'
 
 export default class Blockchain implements IBlockchainApi {
-  public api: ApiPromise
+  public api: ApiPromise & IPortablegabiApi<PgabiModName>
+  private chainmod: PgabiModName
 
   public chainErrHandler = chainErrHandler
 
-  public constructor(api: ApiPromise) {
-    this.api = api
+  public constructor(
+    chainmod: PgabiModName,
+    api: ApiPromise & IPortablegabiApi<typeof chainmod>
+  ) {
+    this.api = api as ApiPromise & IPortablegabiApi<typeof chainmod>
+    if (!(chainmod in api.query)) {
+      throw BlockchainError.missingModule(chainmod)
+    }
+    this.chainmod = chainmod as typeof chainmod
   }
 
   public async waitForNextBlock(): Promise<void> {
@@ -44,9 +35,7 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   public async getAccumulatorCount(address: string): Promise<number> {
-    const count = await this.api.query.portablegabiPallet.accumulatorCount(
-      address
-    )
+    const count = await this.api.query[this.chainmod].accumulatorCount(address)
     return parseInt(count.toString(), 10)
   }
 
@@ -54,23 +43,15 @@ export default class Blockchain implements IBlockchainApi {
     address: string,
     index: number
   ): Promise<Accumulator> {
-    // Omit registry key to read values
-    const {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      registry: _,
-      ...accumulator
-    } = await this.api.query.portablegabiPallet.accumulatorList([
+    const codec = await this.api.query[this.chainmod].accumulatorList([
       address,
       index,
     ])
-    const accUint8Arr: number[] = Object.values(accumulator)
-    // check for index out of bounds
-    if (accUint8Arr.length === 1 && accUint8Arr[0] === 0) {
+    if (codec.isEmpty || (!codec.isEmpty && codec.toString().length < 2)) {
       const maxIndex = (await this.getAccumulatorCount(address)) - 1
       this.chainErrHandler.checkAccIndex(address, index, maxIndex)
     }
-    // convert Uint8Array back to string
-    return new Accumulator(uint8ArrToString(accUint8Arr))
+    return new Accumulator(hexToString(codec.toString()))
   }
 
   public async getLatestAccumulator(address: string): Promise<Accumulator> {
@@ -84,40 +65,16 @@ export default class Blockchain implements IBlockchainApi {
   public async getRevIndex(identity: IPublicIdentity): Promise<number> {
     const accumulator = await this.getLatestAccumulator(identity.address)
     return accumulator.getRevIndex(identity.publicKey, identity.address)
-
-    // try {
-    //   const index = await accumulator.getRevIndex(
-    //     identity.publicKey,
-    //     identity.address
-    //   )
-    //   return index
-    // } catch (e) {
-    //   console.log('GETREVINDEX', e)
-    //   return 0
-    // }
-    // return accumulator
-    //   .getRevIndex(identity.publicKey, identity.address)
-    //   .catch(e => {
-    //     console.log('GETREVINDEX', e)
-    //     return 0
-    //   })
-    // return accumulator.getRevIndex(identity.publicKey, identity.address)
-    // return new Promise(resolve => {
-    //   return accumulator
-    //     .getRevIndex(identity.publicKey, identity.address)
-    //     .then(x => resolve(x))
-    // })
   }
 
   public async updateAccumulator(
     address: KeyringPair,
     _accumulator: Accumulator
   ): Promise<void> {
-    const accumulator = await this.api.tx.portablegabiPallet.updateAccumulator(
+    const update = await this.api.tx[this.chainmod].updateAccumulator(
       _accumulator.valueOf()
     )
-    const hash = await accumulator.signAndSend(address)
-    console.log('Updated accumulator with hex', hash.toHex())
+    await update.signAndSend(address)
   }
 
   public async checkReqRevIndex(

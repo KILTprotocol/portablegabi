@@ -1,4 +1,6 @@
 import chainErrHandler, { BlockchainError } from './ChainError'
+import Blockchain from './Blockchain'
+import api from './__mocks__/BlockchainApi'
 
 function expectError(
   fn: typeof chainErrHandler[keyof typeof chainErrHandler],
@@ -18,6 +20,17 @@ describe('Test chainErrHandler', () => {
   const address = 'dummyAddress'
   let maxIndex = 0
   let index = 0
+  it('Should throw missingModule error', () => {
+    // Note: This only throws because the mocked api is solely defined for 'portablegabi'
+    try {
+      const chain = new Blockchain('portablegabiPallet', api as any)
+      expect(chain).toThrow()
+    } catch (e) {
+      expect(e.message).toBe(
+        BlockchainError.missingModule('portablegabiPallet').message
+      )
+    }
+  })
   describe('Test accumulator index error handling', () => {
     it('Should throw "Missing accumulator..."', () => {
       maxIndex = -1

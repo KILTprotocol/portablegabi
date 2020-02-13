@@ -1,10 +1,15 @@
 import GabiClaimer from './GabiClaimer'
 
-import { Credential, IUpdateCredential } from '../types/Claim'
+import {
+  Credential,
+  IUpdateCredential,
+  IGabiClaimerChain,
+} from '../types/Claim'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Accumulator from '../attestation/Accumulator'
 
-export default class GabiClaimerChain extends GabiClaimer {
+export default class GabiClaimerChain extends GabiClaimer
+  implements IGabiClaimerChain {
   public async updateCredentialChain({
     credential,
     attesterPubKey,

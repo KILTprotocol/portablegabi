@@ -4,7 +4,7 @@ import GabiAttester from '../src/attestation/GabiAttester'
 import GabiVerifier from '../src/verification/GabiVerifier'
 import { goWasmClose } from '../src/wasm/wasm_exec_wrapper'
 import CombinedRequestBuilder from '../src/verification/CombinedRequestBuilder'
-import { Witness } from '../src/types/Attestation'
+import { Witness, AttesterPublicKey } from '../src/types/Attestation'
 import { Credential } from '../src/types/Claim'
 import Accumulator from '../src/attestation/Accumulator'
 
@@ -80,7 +80,7 @@ const issuanceProcess = async ({
   } = await claimer.requestAttestation({
     startAttestationMsg,
     claim,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
   })
   console.timeEnd('Claimer requests attestation')
 
@@ -130,7 +130,7 @@ const verify = async (
   const proof = await claimer.buildPresentation({
     credential,
     presentationReq,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
   })
   console.timeEnd('Claimer reveals attributes')
 
@@ -141,7 +141,7 @@ const verify = async (
   } = await GabiVerifier.verifyPresentation({
     proof,
     verifierSession,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
   })
   console.timeEnd('Verifier verifies attributes')
   console.log('Verified claim: ', verifiedClaim)
@@ -155,12 +155,12 @@ const runWorkflow = async (): Promise<void> => {
   const { disclosedAttributes, claim, privKey, pubKey } = testEnv1
 
   console.time('build attester')
-  const gabiAttester = new GabiAttester(pubKey, privKey)
+  const gabiAttester = new GabiAttester(new AttesterPublicKey(pubKey), privKey)
   console.timeEnd('build attester')
 
   console.time('Build claimer identity')
   // const gabiClaimer = await GabiClaimer.buildFromMnemonic(mnemonic)
-  const gabiClaimer = await GabiClaimer.buildFromScratch()
+  const gabiClaimer = await GabiClaimer.create()
   console.timeEnd('Build claimer identity')
 
   console.time('Build accumulator')
@@ -195,7 +195,7 @@ const runWorkflow = async (): Promise<void> => {
   console.time('accumulator credential')
   credential = await gabiClaimer.updateCredential({
     credential,
-    attesterPubKey: gabiAttester.getPubKey(),
+    attesterPubKey: gabiAttester.publicKey,
     accumulator,
   })
   console.timeEnd('accumulator credential')
@@ -217,16 +217,22 @@ const runCombinedWorkflow = async (): Promise<void> => {
   } = testEnv2
 
   console.time('build attester')
-  const gabiAttester1 = new GabiAttester(pubKey1, privKey1)
+  const gabiAttester1 = new GabiAttester(
+    new AttesterPublicKey(pubKey1),
+    privKey1
+  )
   console.timeEnd('build attester')
 
   console.time('build attester')
-  const gabiAttester2 = new GabiAttester(pubKey2, privKey2)
+  const gabiAttester2 = new GabiAttester(
+    new AttesterPublicKey(pubKey2),
+    privKey2
+  )
   console.timeEnd('build attester')
 
   console.time('Build claimer identity')
   // const gabiClaimer = await GabiClaimer.buildFromMnemonic(mnemonic)
-  const gabiClaimer = await GabiClaimer.buildFromScratch()
+  const gabiClaimer = await GabiClaimer.create()
   console.timeEnd('Build claimer identity')
 
   console.time('Build accumulator')
@@ -268,14 +274,14 @@ const runCombinedWorkflow = async (): Promise<void> => {
   const proof = await gabiClaimer.buildCombinedPresentation({
     credentials: [credential1, credential2],
     combinedPresentationReq: message,
-    attesterPubKeys: [gabiAttester1.getPubKey(), gabiAttester2.getPubKey()],
+    attesterPubKeys: [gabiAttester1.publicKey, gabiAttester2.publicKey],
   })
   console.timeEnd('Build combined presentation')
 
   console.time('verify combined presentation')
   const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
     proof,
-    attesterPubKeys: [gabiAttester1.getPubKey(), gabiAttester2.getPubKey()],
+    attesterPubKeys: [gabiAttester1.publicKey, gabiAttester2.publicKey],
     verifierSession: session,
   })
   console.timeEnd('verify combined presentation')
@@ -288,12 +294,12 @@ const runMixedVerification = async (): Promise<void> => {
   const { disclosedAttributes, claim, privKey, pubKey } = testEnv1
 
   console.time('build attester')
-  const gabiAttester = new GabiAttester(pubKey, privKey)
+  const gabiAttester = new GabiAttester(new AttesterPublicKey(pubKey), privKey)
   console.timeEnd('build attester')
 
   console.time('Build claimer identity')
   // const gabiClaimer = await GabiClaimer.buildFromMnemonic(mnemonic)
-  const gabiClaimer = await GabiClaimer.buildFromScratch()
+  const gabiClaimer = await GabiClaimer.create()
   console.timeEnd('Build claimer identity')
 
   console.time('Build accumulator')
@@ -325,7 +331,7 @@ const runMixedVerification = async (): Promise<void> => {
   const proof = await gabiClaimer.buildPresentation({
     credential,
     presentationReq,
-    attesterPubKey: gabiAttester.getPubKey(),
+    attesterPubKey: gabiAttester.publicKey,
   })
   console.timeEnd('Claimer reveals attributes')
 
@@ -336,7 +342,7 @@ const runMixedVerification = async (): Promise<void> => {
   } = await GabiVerifier.verifyPresentation({
     proof,
     verifierSession: verifierSession2,
-    attesterPubKey: gabiAttester.getPubKey(),
+    attesterPubKey: gabiAttester.publicKey,
   })
   console.timeEnd('Verifier verifies attributes')
   console.log('Verified claim: ', verifiedClaim)

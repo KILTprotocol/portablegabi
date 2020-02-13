@@ -8,15 +8,19 @@ import {
   presentationSetupChain,
 } from '../src/testSetup/testSetup.chain'
 import { disclosedAttributes } from '../src/testSetup/testConfig'
+import { PgabiModName } from '../src/types/Chain'
 
 async function runChainExample(): Promise<void> {
+  const pgabiModName: PgabiModName = 'portablegabiPallet'
+  const blockchain = await connect({
+    pgabiModName,
+  })
   // get actors
   const {
     attesters: [attester],
     claimers: [claimer],
     accumulators: [accumulator],
-  } = await actorSetupChain()
-  const blockchain = await connect()
+  } = await actorSetupChain({ pgabiModName })
 
   // do 2 attestations
   const { claimerSession, attestation } = await attestationSetup({
@@ -34,23 +38,27 @@ async function runChainExample(): Promise<void> {
     accumulator,
   })
   // revoke attestation #2
+  console.log('Chain is running...')
+  console.group()
   console.log(
     'Pre-revocation Count:',
-    await blockchain.getAccumulatorCount(attester.getPublicIdentity().address)
+    await blockchain.getAccumulatorCount(attester.address)
   )
   //   await attester.updateAccumulator(accumulator)
   const accumulatorAfterRevo = await attester.revokeAttestation({
     witnesses: [witnessRev],
     accumulator,
   })
+  console.log('Revoked credential #2')
   console.log('Waiting for next block...')
   await blockchain.waitForNextBlock()
 
   const accumulatorCount = await blockchain.getAccumulatorCount(
-    attester.getPublicIdentity().address
+    attester.address
   )
-  const index = await accumulatorAfterRevo.getRevIndex(attester.getPubKey())
+  const index = await accumulatorAfterRevo.getRevIndex(attester.publicKey)
   console.log('Post-revocation Count: ', accumulatorCount)
+  console.groupEnd()
 
   // build credential #1
   const credential = await claimer.buildCredential({
@@ -59,8 +67,8 @@ async function runChainExample(): Promise<void> {
   })
   const credentialUpdated = await claimer.updateCredentialChain({
     credential,
-    attesterPubKey: attester.getPubKey(),
-    attesterChainAddress: attester.getPublicIdentity().address,
+    attesterPubKey: attester.publicKey,
+    attesterChainAddress: attester.address,
   })
   // verify credential #1
   const { verified, claim } = await presentationSetupChain({
@@ -71,9 +79,6 @@ async function runChainExample(): Promise<void> {
     reqIndex: 'latest',
     reqNonRevocationProof: true,
   })
-  console.log('Credential #1 verified?', verified)
-  console.log('Claim #1 non-empty?', claim)
-
   // build credential2
   let credRev = await claimer.buildCredential({
     claimerSession: claimerSessionRev,
@@ -82,12 +87,12 @@ async function runChainExample(): Promise<void> {
   try {
     credRev = await claimer.updateCredentialChain({
       credential: credRev,
-      attesterPubKey: attester.getPubKey(),
-      attesterChainAddress: attester.getPublicIdentity().address,
+      attesterPubKey: attester.publicKey,
+      attesterChainAddress: attester.address,
     })
   } catch (e) {
     console.log(
-      'Caught expected error when updating revoked credential:',
+      'Caught expected error when updating revoked credential\n',
       e.message
     )
   }
@@ -103,11 +108,6 @@ async function runChainExample(): Promise<void> {
     reqIndex: 'latest',
     reqNonRevocationProof: true,
   })
-  console.log(
-    'Expect credential #2.1 not to be verified?',
-    verifiedRev === false
-  )
-  console.log('Expect claim #2.1 to be null?', claimRev === null)
 
   // verify credential #2.2
   const { verified: verifiedRev2, claim: claimRev2 } = await presentationSetup({
@@ -118,11 +118,11 @@ async function runChainExample(): Promise<void> {
     reqMinIndex: index,
     reqNonRevocationProof: true,
   })
-  console.log(
-    'Expect credential #2.2 not to be verified?',
-    verifiedRev2 === false
-  )
-  console.log('Expect claim #2.2 to be null?', claimRev2 === null)
+  console.table({
+    isVerified: [verified, verifiedRev, verifiedRev2],
+    isEmpty: [claim === null, claimRev === null, claimRev2 === null],
+    expected: ['verified', 'revoked', 'revoked'],
+  })
   await disconnect()
 }
 

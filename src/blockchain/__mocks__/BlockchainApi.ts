@@ -1,26 +1,26 @@
 import Accumulator from '../../attestation/Accumulator'
-import { strToUint8Arr } from '../Blockchain.utility'
+import { Codec } from '@polkadot/types/types'
+import { stringToHex } from '@polkadot/util'
 
 const api = {
   tx: {
-    portablegabiPallet: {
+    portablegabi: {
       // mocked updateAccumulator returns value of input accumulator by default
       updateAccumulator: jest.fn(
         async (accumulator: Accumulator): Promise<void> => {
           // mock new accumulator list
-          await api.query.portablegabiPallet.accumulatorList.mockReturnValue({
-            registry: {},
-            ...strToUint8Arr(accumulator.valueOf()),
-          } as any)
+          await api.query.portablegabi.accumulatorList.mockReturnValue(
+            (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
+          )
         }
       ),
     },
   },
   query: {
-    portablegabiPallet: {
+    portablegabi: {
       // mocked accumulatorList returns string of input address by default
       accumulatorList: jest.fn(async ([address]: [string]) => {
-        return { registry: {}, ...strToUint8Arr(address) }
+        return (stringToHex(address) as unknown) as Promise<Codec>
       }),
       // mocked accumulatorCount returns string length of input address by default
       accumulatorCount: jest.fn(async (address: string) => address.length),
@@ -42,4 +42,3 @@ const api = {
 }
 
 export default api
- 

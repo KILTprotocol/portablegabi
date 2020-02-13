@@ -40,8 +40,8 @@ export async function actorSetup(): Promise<{
 }> {
   const gabiAttester1 = new GabiAttester(pubKey, privKey)
   const gabiAttester2 = new GabiAttester(pubKey2, privKey2)
-  const gabiClaimer1 = await GabiClaimer.buildFromScratch()
-  const gabiClaimer2 = await GabiClaimer.buildFromScratch()
+  const gabiClaimer1 = await GabiClaimer.create()
+  const gabiClaimer2 = await GabiClaimer.create()
   const accumulator1 = await gabiAttester1.createAccumulator()
   const accumulator2 = await gabiAttester2.createAccumulator()
 
@@ -81,7 +81,7 @@ export async function attestationSetup({
   } = await claimer.requestAttestation({
     startAttestationMsg: initiateAttestationReq,
     claim,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
   })
   // Attester issues attestation
   const { attestation, witness } = await attester.issueAttestation({
@@ -139,14 +139,14 @@ export async function presentationSetup({
   // response
   const presentation = await claimer.buildPresentation({
     credential,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
     presentationReq,
   })
   // verify
   const { verified, claim: aClaim } = await GabiVerifier.verifyPresentation({
     proof: presentation,
     verifierSession,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
   })
   return {
     verifierSession,
@@ -216,7 +216,7 @@ export async function mixedAttestationsSetup({
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
     claim,
-    attesterPubKey: gabiAttester2.getPubKey(),
+    attesterPubKey: gabiAttester2.publicKey,
   })
   // E12: Mixed data, should use startAttestationMsg2
   const {
@@ -225,16 +225,16 @@ export async function mixedAttestationsSetup({
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: initiateAttestationReq,
     claim,
-    attesterPubKey: gabiAttester2.getPubKey(),
+    attesterPubKey: gabiAttester2.publicKey,
   })
-  // E21: Mixed data, should use gabiAttester2.getPubKey()
+  // E21: Mixed data, should use gabiAttester2.publicKey
   const {
     message: attestationRequestE21,
     session: claimerSessionE21,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
     claim,
-    attesterPubKey: gabiAttester.getPubKey(),
+    attesterPubKey: gabiAttester.publicKey,
   })
 
   // (3) Issue attestation
@@ -339,7 +339,7 @@ export async function combinedSetup({
   ) {
     throw new Error('Array lengths dont match up in combined setup')
   }
-  const attesterPubKeys = attesters.map(attester => attester.getPubKey())
+  const attesterPubKeys = attesters.map(attester => attester.publicKey)
   // build credentials if inputCredentials is missing
   let credentials: Credential[]
   if (

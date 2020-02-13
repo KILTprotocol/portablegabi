@@ -1,4 +1,9 @@
 export class BlockchainError extends Error {
+  public static missingModule = (modName: string): BlockchainError =>
+    new BlockchainError(
+      `Cannot find module "${modName}" on chain. Did you mean to use one of the defaults? "portablegabi" or "portablegabiPallet"`
+    )
+
   public static maxIndexZero = (address: string): BlockchainError =>
     new BlockchainError(`Missing accumulator for address "${address}"`)
 

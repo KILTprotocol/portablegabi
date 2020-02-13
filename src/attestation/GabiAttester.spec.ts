@@ -1,4 +1,3 @@
-import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import GabiAttester from './GabiAttester'
 import { privKey, pubKey, claim } from '../testSetup/testConfig'
 import {
@@ -15,9 +14,6 @@ import {
 import GabiClaimer from '../claim/GabiClaimer'
 import { AttestationRequest, ClaimError } from '../types/Claim'
 import Accumulator from './Accumulator'
-
-// close WASM instance after tests ran
-afterAll(() => goWasmClose())
 
 describe('Test attester', () => {
   let gabiAttester: GabiAttester
@@ -181,7 +177,7 @@ describe('Test attester', () => {
           JSON.stringify(tamperObj)
         ),
         claim,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       await expect(
         gabiAttester.issueAttestation({
@@ -207,7 +203,7 @@ describe('Test attester', () => {
           JSON.stringify(tamperObj)
         ),
         claim,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       await expect(
         gabiAttester.issueAttestation({

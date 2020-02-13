@@ -17,11 +17,11 @@ describe('Test GabiAttester on chain', () => {
   let attesterChainAddress: string
   let attesterPubKey: AttesterPublicKey
   beforeAll(async () => {
-    api.query.portablegabiPallet.accumulatorList.mockReturnValueOnce([] as any)
+    api.query.portablegabi.accumulatorList.mockReturnValueOnce([] as any)
     ;({
       attesters: [attester],
       claimers: [claimer],
-    } = await actorSetupChain())
+    } = await actorSetupChain({}))
     accumulator = await attester.createAccumulator()
     ;({ credential } = await attestationSetup({
       claimer,
@@ -42,17 +42,13 @@ describe('Test GabiAttester on chain', () => {
       attesterPubKey,
       attesterChainAddress,
     })
-    expect(api.query.portablegabiPallet.accumulatorList).toHaveBeenCalledTimes(
-      1
-    )
-    expect(api.query.portablegabiPallet.accumulatorCount).toHaveBeenCalledTimes(
-      1
-    )
-    expect(api.query.portablegabiPallet.accumulatorList).toHaveBeenCalledWith([
+    expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
+    expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+    expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledWith([
       attesterChainAddress,
       attesterChainAddress.length - 1,
     ])
-    expect(api.query.portablegabiPallet.accumulatorCount).toHaveBeenCalledWith(
+    expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledWith(
       attesterChainAddress
     )
     expect(credUpdated).toEqual(expect.anything())
@@ -64,8 +60,8 @@ describe('Test GabiAttester on chain', () => {
       attesterPubKey,
       _accumulator: accumulator,
     })
-    expect(api.query.portablegabiPallet.accumulatorList).not.toHaveBeenCalled()
-    expect(api.query.portablegabiPallet.accumulatorCount).not.toHaveBeenCalled()
+    expect(api.query.portablegabi.accumulatorList).not.toHaveBeenCalled()
+    expect(api.query.portablegabi.accumulatorCount).not.toHaveBeenCalled()
     expect(credUpdated).toEqual(expect.anything())
     expect(credUpdated).not.toStrictEqual(credential)
   })
@@ -76,8 +72,8 @@ describe('Test GabiAttester on chain', () => {
       attesterChainAddress,
       _accumulator: accumulator,
     })
-    expect(api.query.portablegabiPallet.accumulatorList).not.toHaveBeenCalled()
-    expect(api.query.portablegabiPallet.accumulatorCount).not.toHaveBeenCalled()
+    expect(api.query.portablegabi.accumulatorList).not.toHaveBeenCalled()
+    expect(api.query.portablegabi.accumulatorCount).not.toHaveBeenCalled()
     expect(credUpdated).toEqual(expect.anything())
     expect(credUpdated).not.toStrictEqual(credential)
   })
@@ -92,15 +88,15 @@ describe('Test GabiAttester on chain', () => {
     )
   })
   it('Should create + update fresh accumulators when missing on chain for attester in setup', async () => {
-    api.query.portablegabiPallet.accumulatorCount.mockResolvedValue(0)
-    api.query.portablegabiPallet.accumulatorList.mockResolvedValue([] as any)
-    const { accumulators } = await actorSetupChain()
-    expect(api.tx.portablegabiPallet.updateAccumulator).toHaveBeenCalledTimes(2)
-    expect(api.tx.portablegabiPallet.updateAccumulator).toHaveBeenCalledWith(
-      accumulators[0]
+    api.query.portablegabi.accumulatorCount.mockResolvedValue(0)
+    api.query.portablegabi.accumulatorList.mockResolvedValue([] as any)
+    const { accumulators } = await actorSetupChain({})
+    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(2)
+    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
+      accumulators[0].valueOf()
     )
-    expect(api.tx.portablegabiPallet.updateAccumulator).toHaveBeenCalledWith(
-      accumulators[1]
+    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
+      accumulators[1].valueOf()
     )
   })
 })

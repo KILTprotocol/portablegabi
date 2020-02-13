@@ -10,6 +10,10 @@ export default interface IGabiClaimer {
   buildCombinedPresentation: Function
   updateCredential: Function
 }
+
+export interface IGabiClaimerChain {
+  updateCredentialChain: Function
+}
 export class ClaimError extends Error {
   public static duringParsing = new ClaimError(
     'invalid request: could not parse json'

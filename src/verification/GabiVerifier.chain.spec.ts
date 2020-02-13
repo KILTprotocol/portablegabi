@@ -1,3 +1,5 @@
+import { Codec } from '@polkadot/types/types'
+import { stringToHex } from '@polkadot/util'
 import GabiAttesterChain from '../attestation/GabiAttester.chain'
 import {
   actorSetupChain,
@@ -8,10 +10,8 @@ import Accumulator from '../attestation/Accumulator'
 import { attestationSetup } from '../testSetup/testSetup'
 import api from '../blockchain/__mocks__/BlockchainApi'
 import { Credential } from '../types/Claim'
-// import { AttesterPublicKey } from '../types/Attestation'
 import GabiClaimerChain from '../claim/GabiClaimer.chain'
 import { BlockchainError } from '../blockchain/ChainError'
-import { strToUint8Arr } from '../blockchain/Blockchain.utility'
 import { disclosedAttributes } from '../testSetup/testConfig'
 import CombinedRequestBuilder from './CombinedRequestBuilder'
 
@@ -22,24 +22,20 @@ describe('Test GabiAttester on chain', () => {
   let attester: GabiAttesterChain
   let accumulator: Accumulator
   let credential: Credential
-  //   let attesterChainAddress: string
-  //   let attesterPubKey: AttesterPublicKey
   beforeAll(async () => {
-    api.query.portablegabiPallet.accumulatorList.mockReturnValueOnce([] as any)
+    api.query.portablegabi.accumulatorList.mockReturnValueOnce(
+      (0x00 as unknown) as Promise<Codec>
+    )
     ;({
       attesters: [attester],
       claimers: [claimer],
-    } = await actorSetupChain())
+    } = await actorSetupChain({}))
     accumulator = await attester.createAccumulator()
     ;({ credential } = await attestationSetup({
       claimer,
       attester,
       accumulator,
     }))
-    // ;({
-    //   address: attesterChainAddress,
-    //   publicKey: attesterPubKey,
-    // } = attester.getPublicIdentity())
     await attester.updateAccumulator(accumulator).catch(e => {
       expect(e.message).toBe("Cannot read property 'signAndSend' of undefined")
     })
@@ -53,12 +49,8 @@ describe('Test GabiAttester on chain', () => {
       })
       expect(claim).toEqual(expect.anything())
       expect(verified).toBe(true)
-      expect(
-        api.query.portablegabiPallet.accumulatorCount
-      ).toHaveBeenCalledTimes(1)
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
     })
     it('Should verify claim when setting reqIndex to 0', async () => {
       const { claim, verified } = await presentationSetupChain({
@@ -69,18 +61,13 @@ describe('Test GabiAttester on chain', () => {
       })
       expect(claim).toEqual(expect.anything())
       expect(verified).toBe(true)
-      expect(
-        api.query.portablegabiPallet.accumulatorCount
-      ).toHaveBeenCalledTimes(1)
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
     })
     it('Should verify combined request when both indices set to latest', async () => {
-      api.query.portablegabiPallet.accumulatorList.mockResolvedValue({
-        registry: {},
-        ...strToUint8Arr(accumulator.valueOf()),
-      } as any)
+      api.query.portablegabi.accumulatorList.mockResolvedValue(
+        (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
+      )
       const { verified, claims } = await combinedSetupChain({
         claimer,
         attesters: [attester, attester],
@@ -93,15 +80,12 @@ describe('Test GabiAttester on chain', () => {
       expect(claims).toHaveLength(2)
       expect(claims[0]).toEqual(expect.anything())
       expect(claims[1]).toEqual(expect.anything())
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(2)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(2)
     })
     it('Should verify combined request when both indices set to latest', async () => {
-      api.query.portablegabiPallet.accumulatorList.mockResolvedValue({
-        registry: {},
-        ...strToUint8Arr(accumulator.valueOf()),
-      } as any)
+      api.query.portablegabi.accumulatorList.mockResolvedValue(
+        (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
+      )
       const { verified, claims } = await combinedSetupChain({
         claimer,
         attesters: [attester, attester],
@@ -114,9 +98,7 @@ describe('Test GabiAttester on chain', () => {
       expect(claims).toHaveLength(2)
       expect(claims[0]).toEqual(expect.anything())
       expect(claims[1]).toEqual(expect.anything())
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(2)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(2)
       const { verified: verified2, claims: claims2 } = await combinedSetupChain(
         {
           claimer,
@@ -131,9 +113,7 @@ describe('Test GabiAttester on chain', () => {
       expect(claims2).toHaveLength(2)
       expect(claims2[0]).toEqual(expect.anything())
       expect(claims2[1]).toEqual(expect.anything())
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(4)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(4)
     })
     it('Should verify combined request when sending credentials', async () => {
       const { credential: credential2 } = await attestationSetup({
@@ -141,10 +121,9 @@ describe('Test GabiAttester on chain', () => {
         attester,
         accumulator,
       })
-      api.query.portablegabiPallet.accumulatorList.mockResolvedValue({
-        registry: {},
-        ...strToUint8Arr(accumulator.valueOf()),
-      } as any)
+      api.query.portablegabi.accumulatorList.mockResolvedValue(
+        (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
+      )
       const { verified, claims } = await combinedSetupChain({
         claimer,
         attesters: [attester, attester],
@@ -158,9 +137,7 @@ describe('Test GabiAttester on chain', () => {
       expect(claims).toHaveLength(2)
       expect(claims[0]).toEqual(expect.anything())
       expect(claims[1]).toEqual(expect.anything())
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(2)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(2)
     })
     it('Should create chain combined request', async () => {
       const builder = new CombinedRequestBuilder().requestPresentation({
@@ -171,12 +148,8 @@ describe('Test GabiAttester on chain', () => {
       })
       await builder.finalise()
       expect(builder).toEqual(expect.anything())
-      expect(
-        api.query.portablegabiPallet.accumulatorCount
-      ).toHaveBeenCalledTimes(1)
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
     })
   })
   describe('Negative tests', () => {
@@ -193,17 +166,13 @@ describe('Test GabiAttester on chain', () => {
       ).rejects.toThrowError(
         BlockchainError.indexOutOfRange(
           'revocation',
-          attester.getPublicIdentity().address,
+          attester.address,
           reqIndex,
           maxRevIndex
         )
       )
-      expect(
-        api.query.portablegabiPallet.accumulatorCount
-      ).toHaveBeenCalledTimes(1)
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
     })
     it('Should throw revocation indexOutOfRange error when setting reqIndex > maxRevIndex', async () => {
       reqIndex = maxRevIndex + 1
@@ -217,25 +186,22 @@ describe('Test GabiAttester on chain', () => {
       ).rejects.toThrowError(
         BlockchainError.indexOutOfRange(
           'revocation',
-          attester.getPublicIdentity().address,
+          attester.address,
           reqIndex,
           maxRevIndex
         )
       )
-      expect(
-        api.query.portablegabiPallet.accumulatorCount
-      ).toHaveBeenCalledTimes(1)
-      expect(
-        api.query.portablegabiPallet.accumulatorList
-      ).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+      expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
     })
     it('Should throw revocation indexOutOfRange error when accumulator does not have revocation index', async () => {
       reqIndex = 0
-      const invalidAccumulator = 'accumulatorWithouRevocationIndex'
-      api.query.portablegabiPallet.accumulatorList.mockResolvedValue({
-        registry: {},
-        ...strToUint8Arr(invalidAccumulator),
-      } as any)
+      const invalidAccumulator = new Accumulator(
+        'accumulatorWithouRevocationIndex'
+      )
+      api.query.portablegabi.accumulatorList.mockResolvedValue(
+        (stringToHex(invalidAccumulator.valueOf()) as unknown) as Promise<Codec>
+      )
       await expect(
         presentationSetupChain({
           claimer,
@@ -243,9 +209,7 @@ describe('Test GabiAttester on chain', () => {
           credential,
           reqIndex,
         })
-      ).rejects.toThrowError(
-        BlockchainError.missingRevIndex(attester.getPublicIdentity().address)
-      )
+      ).rejects.toThrowError(BlockchainError.missingRevIndex(attester.address))
     })
     it('Should throw on combinedSetupChain for mixed input array lengths', async () => {
       await expect(

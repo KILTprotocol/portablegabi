@@ -68,7 +68,7 @@ const {
 } = await claimer.requestAttestation({
   startAttestationMsg,
   claim: JSON.stringify(claim),
-  attesterPubKey: attester.getPubKey(),
+  attesterPubKey: attester.publicKey,
 })
 
 // (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
@@ -100,7 +100,7 @@ const {
 const proof = await claimer.buildPresentation({
   credential,
   presentationReq,
-  attesterPubKey: attester.getPubKey(),
+  attesterPubKey: attester.publicKey,
 })
 
 // (4.3) Verifier verifies attributes
@@ -110,7 +110,7 @@ const {
 } = await GabiVerifier.verifyPresentation({
   proof,
   verifierSession,
-  attesterPubKey: attester.getPubKey(),
+  attesterPubKey: attester.publicKey,
 })
 
 /* (5) Revocation */
@@ -122,7 +122,7 @@ update = await attester.revokeAttestation({ update, witness: other_witness })
 // This will only work for non revoked credentials
 credential = await claimer.updateCredential({
     credential,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
     update,
   })
 

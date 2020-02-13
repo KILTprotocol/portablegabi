@@ -12,12 +12,9 @@ import {
   attestationSetup,
 } from '../testSetup/testSetup'
 import GabiVerifier from './GabiVerifier'
-import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import CombinedRequestBuilder from './CombinedRequestBuilder'
 import { IPresentationRequest } from '../types/Verification'
 import Accumulator from '../attestation/Accumulator'
-// close WASM instance after tests ran
-afterAll(() => goWasmClose())
 
 async function expectCombinedSetupToBe(
   outcome: boolean,
@@ -119,7 +116,7 @@ describe('Test combined requests', () => {
       claimers[0].buildCombinedPresentation({
         credentials,
         combinedPresentationReq,
-        attesterPubKeys: [attesters[1].getPubKey(), attesters[0].getPubKey()],
+        attesterPubKeys: [attesters[1].publicKey, attesters[0].publicKey],
       })
     ).rejects.toThrow('ecdsa signature was invalid')
 
@@ -127,11 +124,11 @@ describe('Test combined requests', () => {
     const combPresentation = await claimers[0].buildCombinedPresentation({
       credentials,
       combinedPresentationReq,
-      attesterPubKeys: attesters.map(attester => attester.getPubKey()),
+      attesterPubKeys: attesters.map(attester => attester.publicKey),
     })
     const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
       proof: combPresentation,
-      attesterPubKeys: [attesters[1].getPubKey(), attesters[0].getPubKey()],
+      attesterPubKeys: [attesters[1].publicKey, attesters[0].publicKey],
       verifierSession: combinedSession,
     })
     expect(verified).toBe(false)
@@ -287,5 +284,4 @@ describe('Test combined requests', () => {
       })
     })
   })
-  it.todo('? Combine two single presentations into combined proof')
 })

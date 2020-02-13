@@ -4,7 +4,6 @@ import {
   actorSetup,
 } from '../testSetup/testSetup'
 import { disclosedAttributes, claim } from '../testSetup/testConfig'
-import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import { VerificationSession, PresentationRequest } from '../types/Verification'
 import { ICredential, IProof } from '../testSetup/testTypes'
 import GabiVerifier from './GabiVerifier'
@@ -13,9 +12,6 @@ import { Witness } from '../types/Attestation'
 import { Credential, Presentation } from '../types/Claim'
 import GabiAttester from '../attestation/GabiAttester'
 import Accumulator from '../attestation/Accumulator'
-
-// close WASM instance after tests ran
-afterAll(() => goWasmClose())
 
 function expectFailure(verified: boolean, presentationClaim: any): void {
   expect(presentationClaim).toBeNull()
@@ -103,7 +99,7 @@ describe('Test verifier functionality', () => {
       attester: gabiAttester,
       credential,
     }))
-    revocationIndex = await accumulator.getRevIndex(gabiAttester.getPubKey())
+    revocationIndex = await accumulator.getRevIndex(gabiAttester.publicKey)
   }, 10000)
 
   describe('Positive tests', () => {
@@ -140,7 +136,7 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         credential,
         disclosedAttributes,
-        await accumulator.getRevIndex(gabiAttester.getPubKey())
+        await accumulator.getRevIndex(gabiAttester.publicKey)
       )
     })
     it('Verifies current accumulator index is 0 for imported gabiAttester', async () => {
@@ -159,7 +155,7 @@ describe('Test verifier functionality', () => {
       }
       const uCred = await gabiClaimer.updateCredential({
         credential: new Credential(JSON.stringify(tamperedCredential)),
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
         accumulator,
       })
       await expectVerificationSucceeded(
@@ -183,7 +179,7 @@ describe('Test verifier functionality', () => {
       const proof2 = await gabiClaimer.buildPresentation({
         credential,
         presentationReq: presentationReq2,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expect(proof2).toBeDefined()
       // create 3rd session
@@ -198,7 +194,7 @@ describe('Test verifier functionality', () => {
       const proof3 = await gabiClaimer.buildPresentation({
         credential,
         presentationReq: presentationReq3,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expect(proof3).toBeDefined()
       const {
@@ -207,7 +203,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: proof2,
         verifierSession: verifierSession2,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expectSuccess(verified2, verifiedClaim2)
       const {
@@ -216,7 +212,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: proof3,
         verifierSession: verifierSession3,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expectSuccess(verified3, verifiedClaim3)
 
@@ -308,7 +304,7 @@ describe('Test verifier functionality', () => {
         accumulator,
         witnesses: [witnessRev],
       })
-      const newIndex = await accAfterRev.getRevIndex(gabiAttester.getPubKey())
+      const newIndex = await accAfterRev.getRevIndex(gabiAttester.publicKey)
       expect(newIndex).toBe(revocationIndex + 1)
       await expectVerificationFailed(
         gabiClaimer,
@@ -347,7 +343,7 @@ describe('Test verifier functionality', () => {
       // test for update
       const credToBeRevokedUpdated = await gabiClaimer.updateCredential({
         credential: credToBeRevokedBuilt,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
         accumulator,
       })
       await expectVerificationFailed(
@@ -412,7 +408,7 @@ describe('Test verifier functionality', () => {
 
       const uCred = await gabiClaimer.updateCredential({
         credential: new Credential(JSON.stringify(tamperedCredential)),
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
         accumulator,
       })
       await expectVerificationFailed(
@@ -438,7 +434,7 @@ describe('Test verifier functionality', () => {
 
       const uCred = await gabiClaimer.updateCredential({
         credential: new Credential(JSON.stringify(tamperedCredential)),
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
         accumulator,
       })
       await expect(
@@ -464,7 +460,7 @@ describe('Test verifier functionality', () => {
       const proof2 = await gabiClaimer.buildPresentation({
         credential,
         presentationReq: presentationReq2, // from 2nd session
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expect(proof2).toBeDefined()
       const {
@@ -473,7 +469,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: proof2, // from 2nd session
         verifierSession, // from 1st session
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expectFailure(verified2, verifiedClaim2)
       const {
@@ -482,7 +478,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: presentation, // from 1st session
         verifierSession: verifierSession2, // from 2nd session
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expectFailure(verified3, verifiedClaim3)
     })
@@ -503,7 +499,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: presentation,
         verifierSession,
-        attesterPubKey: gabiAttester2.getPubKey(),
+        attesterPubKey: gabiAttester2.publicKey,
       })
       expectFailure(verified2, verifiedClaim2)
     })
@@ -578,5 +574,4 @@ describe('Test verifier functionality', () => {
       )
     })
   })
-  it.todo('requestCombinedPresentation')
 })

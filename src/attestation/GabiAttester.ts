@@ -13,25 +13,26 @@ import IGabiAttester, {
 
 export default class GabiAttester implements IGabiAttester {
   private readonly privateKey: string
-  private readonly publicKey: string
+  readonly publicKey: AttesterPublicKey
 
   // generate keypair
-  public static async buildFromScratch(): Promise<GabiAttester> {
+  public static async genKeyPair(): Promise<{
+    privateKey: string
+    publicKey: string
+  }> {
     const validityDuration = 365 * 24 * 60 * 60 * 1000 * 1000 * 1000 // 365 days in nanoseconds
-    const { privateKey, publicKey } = await goWasmExec(WasmHooks.genKeypair, [
-      70,
-      validityDuration,
-    ])
-    return new GabiAttester(publicKey, privateKey)
+    return goWasmExec(WasmHooks.genKeypair, [70, validityDuration])
   }
 
-  public constructor(publicKey: string, privateKey: string) {
+  // create new instance
+  public static async create(): Promise<GabiAttester> {
+    const { publicKey, privateKey } = await this.genKeyPair()
+    return new GabiAttester(new AttesterPublicKey(publicKey), privateKey)
+  }
+
+  public constructor(publicKey: AttesterPublicKey, privateKey: string) {
     this.publicKey = publicKey
     this.privateKey = privateKey
-  }
-
-  public getPubKey(): AttesterPublicKey {
-    return new AttesterPublicKey(this.publicKey)
   }
 
   // start attestation
@@ -41,7 +42,7 @@ export default class GabiAttester implements IGabiAttester {
   }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.startAttestationSession,
-      [this.privateKey, this.publicKey]
+      [this.privateKey, this.publicKey.valueOf()]
     )
     return {
       message: new InitiateAttestationRequest(message),
@@ -53,7 +54,7 @@ export default class GabiAttester implements IGabiAttester {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.createAccumulator, [
         this.privateKey,
-        this.publicKey,
+        this.publicKey.valueOf(),
       ])
     )
   }
@@ -76,12 +77,11 @@ export default class GabiAttester implements IGabiAttester {
       witness: string
     }>(WasmHooks.issueAttestation, [
       this.privateKey,
-      this.publicKey,
+      this.publicKey.valueOf(),
       attestationSession.valueOf(),
       attestationRequest.valueOf(),
       accumulator.valueOf(),
     ])
-
     return {
       attestation: new Attestation(attestation),
       witness: new Witness(witness),
@@ -99,7 +99,7 @@ export default class GabiAttester implements IGabiAttester {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.revokeAttestation, [
         this.privateKey,
-        this.publicKey,
+        this.publicKey.valueOf(),
         accumulator.valueOf(),
         JSON.stringify(
           (witnesses || []).map(witness => JSON.parse(witness.valueOf()))

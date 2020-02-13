@@ -1,9 +1,10 @@
+import { stringToHex } from '@polkadot/util'
+import { Codec } from '@polkadot/types/types'
 import Accumulator from '../attestation/Accumulator'
 import { BlockchainError } from './ChainError'
 import { actorSetupChain } from '../testSetup/testSetup.chain'
 import api from './__mocks__/BlockchainApi'
 import BlockchainMock from './__mocks__/Blockchain'
-import { strToUint8Arr } from './Blockchain.utility'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 
 jest.mock('../blockchainApiConnection/BlockchainApiConnection')
@@ -31,13 +32,12 @@ describe('chain mocks', () => {
       expect(accu.valueOf()).toBe(dummyAddress)
     })
     it('Should getLatestAccumulator', async () => {
-      api.query.portablegabiPallet.accumulatorCount.mockResolvedValueOnce(
+      api.query.portablegabi.accumulatorCount.mockResolvedValueOnce(
         Promise.resolve(100)
       )
-      api.query.portablegabiPallet.accumulatorList.mockResolvedValueOnce({
-        registry: {},
-        ...strToUint8Arr('dummyAccumulator'),
-      } as any)
+      api.query.portablegabi.accumulatorList.mockResolvedValueOnce(
+        (stringToHex('dummyAccumulator') as unknown) as Promise<Codec>
+      )
       const accumulator: Accumulator = await BlockchainMock.getLatestAccumulator(
         dummyAddress
       )
@@ -46,10 +46,9 @@ describe('chain mocks', () => {
     it('Should updateAccumulator', async () => {
       const newAccumulator = new Accumulator('newAccumulator')
       // set current accumulator
-      api.query.portablegabiPallet.accumulatorList.mockResolvedValueOnce({
-        registry: {},
-        ...strToUint8Arr('currAccumulator'),
-      } as any)
+      api.query.portablegabi.accumulatorList.mockResolvedValueOnce(
+        (stringToHex('currAccumulator') as unknown) as Promise<Codec>
+      )
       const currAccumulator = await BlockchainMock.getLatestAccumulator(
         dummyAddress
       )
@@ -66,12 +65,11 @@ describe('chain mocks', () => {
     it('Should return revocation index of 0 for fresh accumulator', async () => {
       const {
         attesters: [attester],
-      } = await actorSetupChain()
+      } = await actorSetupChain({})
       const accumulator = await attester.createAccumulator()
-      api.query.portablegabiPallet.accumulatorList.mockReturnValueOnce({
-        registry: {},
-        ...strToUint8Arr(accumulator.valueOf()),
-      } as any)
+      api.query.portablegabi.accumulatorList.mockReturnValueOnce(
+        (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
+      )
       await expect(
         BlockchainMock.getRevIndex(attester.getPublicIdentity())
       ).resolves.toBe(0)
@@ -81,12 +79,12 @@ describe('chain mocks', () => {
     it('Should throw for empty accumulatorList (maxIndex === -1)', async () => {
       const accCount = 0
       const requestedIndex = 1
-      api.query.portablegabiPallet.accumulatorCount.mockResolvedValueOnce(
+      api.query.portablegabi.accumulatorCount.mockResolvedValueOnce(
         Promise.resolve(accCount)
       )
-      api.query.portablegabiPallet.accumulatorList.mockReturnValue([
-        emptyValue,
-      ] as any)
+      api.query.portablegabi.accumulatorList.mockReturnValue(
+        (emptyValue as unknown) as Promise<Codec>
+      )
       await expect(
         BlockchainMock.getAccumulator(dummyAddress, requestedIndex)
       ).rejects.toThrowError(BlockchainError.maxIndexZero(dummyAddress))
@@ -94,12 +92,12 @@ describe('chain mocks', () => {
     it('Should throw when requesting accumulator index > maxIndex', async () => {
       const accCount = 1
       const requestedIndex = 2
-      api.query.portablegabiPallet.accumulatorCount.mockResolvedValueOnce(
+      api.query.portablegabi.accumulatorCount.mockResolvedValueOnce(
         Promise.resolve(accCount)
       )
-      api.query.portablegabiPallet.accumulatorList.mockReturnValue([
-        emptyValue,
-      ] as any)
+      api.query.portablegabi.accumulatorList.mockReturnValue(
+        (emptyValue as unknown) as Promise<Codec>
+      )
       await expect(
         BlockchainMock.getAccumulator(dummyAddress, requestedIndex)
       ).rejects.toThrowError(
@@ -114,12 +112,12 @@ describe('chain mocks', () => {
     it('Should throw when requesting accumulator for index < 0', async () => {
       const accCount = 1
       const requestedIndex = -1
-      api.query.portablegabiPallet.accumulatorCount.mockResolvedValueOnce(
+      api.query.portablegabi.accumulatorCount.mockResolvedValueOnce(
         Promise.resolve(accCount)
       )
-      api.query.portablegabiPallet.accumulatorList.mockResolvedValueOnce([
-        emptyValue,
-      ] as any)
+      api.query.portablegabi.accumulatorList.mockReturnValue(
+        (emptyValue as unknown) as Promise<Codec>
+      )
       await expect(
         BlockchainMock.getAccumulator(dummyAddress, requestedIndex)
       ).rejects.toThrowError(
@@ -133,12 +131,12 @@ describe('chain mocks', () => {
     })
     it('Should throw when requesting latest accumulator for empty list', async () => {
       const accCount = 0
-      api.query.portablegabiPallet.accumulatorCount.mockResolvedValueOnce(
+      api.query.portablegabi.accumulatorCount.mockResolvedValueOnce(
         Promise.resolve(accCount)
       )
-      api.query.portablegabiPallet.accumulatorList.mockReturnValue([
-        emptyValue,
-      ] as any)
+      api.query.portablegabi.accumulatorList.mockReturnValue(
+        (emptyValue as unknown) as Promise<Codec>
+      )
       await expect(
         BlockchainMock.getLatestAccumulator(dummyAddress)
       ).rejects.toThrowError(BlockchainError.maxIndexZero(dummyAddress))

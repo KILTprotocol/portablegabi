@@ -15,7 +15,6 @@ import {
   Spy,
   IProof,
 } from '../testSetup/testTypes'
-import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import {
   Attestation,
   InitiateAttestationRequest,
@@ -45,37 +44,56 @@ async function buildCredentialError(
   ).rejects.toThrowError('Proof of correctness on signature does not verify')
 }
 
-// close WASM instance after tests ran
-afterAll(() => goWasmClose())
-
 describe('Test claimer creation', () => {
   let gabiClaimer: GabiClaimer
   beforeEach(async () => {
-    gabiClaimer = await GabiClaimer.buildFromScratch()
+    gabiClaimer = await GabiClaimer.create()
   })
   it('Builds claimer from scratch', async () => {
-    const claimer = await GabiClaimer.buildFromScratch()
-    expect(claimer).toHaveProperty('secret')
+    const claimerWithoutPass = await GabiClaimer.create()
+    expect(claimerWithoutPass).toHaveProperty('secret')
     expect(gabiClaimer).toHaveProperty('secret')
-    expect(claimer).not.toBe(gabiClaimer)
+    expect(claimerWithoutPass).not.toStrictEqual(gabiClaimer)
+    const claimerWithPass = await GabiClaimer.create('password')
+    expect(claimerWithPass).toHaveProperty('secret')
+    expect(gabiClaimer).toHaveProperty('secret')
+    expect(claimerWithPass).not.toStrictEqual(gabiClaimer)
+    expect(claimerWithPass).not.toStrictEqual(claimerWithoutPass)
   })
   it('Builds claimer from empty mnemonic seed', async () => {
-    const claimer = await GabiClaimer.buildFromMnemonic('')
-    expect(claimer).toHaveProperty(
+    const claimerWithoutPass = await GabiClaimer.buildFromMnemonic('')
+    expect(claimerWithoutPass).toHaveProperty(
       'secret',
       '{"MasterSecret":"HdWjkfn17XNA/01FE6q5zORPlJel5+2F/YGIdrbrQC4="}'
     )
-    expect(claimer).not.toBe(gabiClaimer)
+    expect(claimerWithoutPass).not.toStrictEqual(gabiClaimer)
+    const claimerWithPass = await GabiClaimer.buildFromMnemonic('', 'password')
+    expect(claimerWithPass).toHaveProperty(
+      'secret',
+      '{"MasterSecret":"Ugc7cbbFMn0UzRGkxgahlb6GxLohyWp2/6G2L6GrCVo="}'
+    )
+    expect(claimerWithPass).not.toStrictEqual(gabiClaimer)
+    expect(claimerWithPass).not.toStrictEqual(claimerWithoutPass)
   })
   it('Builds claimer from non-empty mnemonic seed', async () => {
-    const claimer = await GabiClaimer.buildFromMnemonic(
+    const claimerWithoutPass = await GabiClaimer.buildFromMnemonic(
       'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
     )
-    expect(claimer).toHaveProperty(
+    expect(claimerWithoutPass).toHaveProperty(
       'secret',
       '{"MasterSecret":"ZaWdr/rKSi4/cZNZbsZlMtx71K1foTFbp/QUJXMsrbk="}'
     )
-    expect(claimer).not.toBe(gabiClaimer)
+    expect(claimerWithoutPass).not.toStrictEqual(gabiClaimer)
+    const claimerWithPass = await GabiClaimer.buildFromMnemonic(
+      'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken',
+      'password'
+    )
+    expect(claimerWithPass).toHaveProperty(
+      'secret',
+      '{"MasterSecret":"PvsekZdNUr2t+l4WW/m3jloFRBUlIHtBhdIueW19KlM="}'
+    )
+    expect(claimerWithPass).not.toStrictEqual(gabiClaimer)
+    expect(claimerWithPass).not.toStrictEqual(claimerWithoutPass)
   })
 })
 
@@ -174,7 +192,7 @@ describe('Test claimer functionality', () => {
       const request = await gabiClaimer.requestAttestation({
         startAttestationMsg: initiateAttestationReq,
         claim,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expect(request).toBeDefined()
       expect(typeof request).toBe('object')
@@ -192,7 +210,7 @@ describe('Test claimer functionality', () => {
         gabiClaimer.requestAttestation({
           startAttestationMsg: initiateAttestationReq,
           claim: {},
-          attesterPubKey: gabiAttester.getPubKey(),
+          attesterPubKey: gabiAttester.publicKey,
         })
       ).rejects.toThrowError(ClaimError.claimMissing)
     })
@@ -201,7 +219,7 @@ describe('Test claimer functionality', () => {
         gabiClaimer.requestAttestation({
           startAttestationMsg: initiateAttestationReq,
           claim: ('string' as unknown) as object,
-          attesterPubKey: gabiAttester.getPubKey(),
+          attesterPubKey: gabiAttester.publicKey,
         })
       ).rejects.toThrowError(ClaimError.notAnObject('string'))
     })
@@ -210,7 +228,7 @@ describe('Test claimer functionality', () => {
         gabiClaimer.requestAttestation({
           startAttestationMsg: initiateAttestationReq,
           claim: [1],
-          attesterPubKey: gabiAttester.getPubKey(),
+          attesterPubKey: gabiAttester.publicKey,
         })
       ).rejects.toThrowError(ClaimError.duringParsing)
     })
@@ -268,7 +286,7 @@ describe('Test claimer functionality', () => {
       const timeBeforeUpdate = new Date().getTime()
       const updatedCred = await gabiClaimer.updateCredential({
         credential,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
         accumulator,
       })
       const timeAfterUpdate = new Date().getTime()
@@ -307,14 +325,14 @@ describe('Test claimer functionality', () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
-          attesterPubKey: gabiAttester.getPubKey(),
+          attesterPubKey: gabiAttester.publicKey,
           accumulator: revUpdate,
         })
       ).rejects.toThrowError('revoked')
     })
     it('Should not throw when two claimers interchange credential', async () => {
       // reason: credential is a secret one should not share
-      const gabiClaimer2 = await GabiClaimer.buildFromScratch()
+      const gabiClaimer2 = await GabiClaimer.create()
       const sameCredFromOtherClaimer = await gabiClaimer2.buildCredential({
         claimerSession,
         attestation,
@@ -329,7 +347,7 @@ describe('Test claimer functionality', () => {
       await expect(
         gabiClaimer.updateCredential({
           credential: diffCredFromOtherClaimer,
-          attesterPubKey: gabiAttester.getPubKey(),
+          attesterPubKey: gabiAttester.publicKey,
           accumulator,
         })
       ).resolves.toEqual(expect.anything())
@@ -378,7 +396,7 @@ describe('Test claimer functionality', () => {
         gabiClaimer.buildPresentation({
           credential,
           presentationReq,
-          attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
+          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
@@ -386,7 +404,7 @@ describe('Test claimer functionality', () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
-          attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
+          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
           accumulator,
         })
       ).rejects.toThrow('ecdsa signature was invalid')
@@ -396,7 +414,7 @@ describe('Test claimer functionality', () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
-          attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
+          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
           accumulator: acc,
         })
       ).rejects.toThrow('ecdsa signature was invalid')
@@ -405,7 +423,7 @@ describe('Test claimer functionality', () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
-          attesterPubKey: gabiAttester.getPubKey(),
+          attesterPubKey: gabiAttester.publicKey,
           accumulator: accumulator2, // should be gabiAttester to be valid
         })
       ).rejects.toThrow('ecdsa signature was invalid')
@@ -414,11 +432,10 @@ describe('Test claimer functionality', () => {
       await expect(
         gabiClaimer.updateCredential({
           credential,
-          attesterPubKey: gabiAttester2.getPubKey(), // should be gabiAttester to be valid
+          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
           accumulator: accumulator2, // should be gabiAttester to be valid
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
   })
-  it.todo('chain: ')
 })
