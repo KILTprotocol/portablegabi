@@ -64,6 +64,46 @@ async function expectVerificationSucceeded(
   return { verified, presentationClaim }
 }
 
+function expectProofsNotToRevealData(proofA: IProof, proofB: IProof): boolean {
+  let checkValues: any[]
+  // proof.A
+  expect(proofA.proof.A).not.toStrictEqual(proofB.proof.A)
+  // proof.a_discloses
+  expect(proofA.proof.a_disclosed).toStrictEqual(proofB.proof.a_disclosed)
+  // proof.a_responses
+  checkValues = Object.values(proofB.proof.a_responses)
+  Object.values(proofA.proof.a_responses).map(val =>
+    expect(checkValues).not.toContain(val)
+  )
+  // proof.c
+  expect(proofA.proof.c).not.toStrictEqual(proofB.proof.c)
+  // proof.e_response
+  expect(proofA.proof.e_response).not.toStrictEqual(proofB.proof.e_response)
+  // proof.nonrev_proof
+  expect(proofA.proof.nonrev_proof.C_r).not.toStrictEqual(
+    proofB.proof.nonrev_proof.C_r
+  )
+  expect(proofA.proof.nonrev_proof.C_u).not.toStrictEqual(
+    proofB.proof.nonrev_proof.C_u
+  )
+  // proof.nonrev_proof.responses
+  checkValues = Object.values(proofB.proof.nonrev_proof.responses)
+  Object.values(proofA.proof.nonrev_proof.responses).map(val =>
+    expect(checkValues).not.toContain(val)
+  )
+  // sacc = signed accumulator, i.e. this should equal
+  expect(proofA.proof.nonrev_proof.sacc).toStrictEqual(
+    proofB.proof.nonrev_proof.sacc
+  )
+  // proof.nonrev_response
+  expect(proofA.proof.nonrev_response).not.toStrictEqual(
+    proofB.proof.nonrev_response
+  )
+  // proof.v_response
+  expect(proofA.proof.v_response).not.toStrictEqual(proofB.proof.v_response)
+  return true
+}
+
 describe('Test verifier functionality', () => {
   let gabiClaimer: GabiClaimer
   let gabiAttester: GabiAttester
@@ -166,6 +206,37 @@ describe('Test verifier functionality', () => {
         revocationIndex
       )
     })
+    it('Should reveal claimers information when multiple verifiers send same challenge', async () => {
+      // verifier #2 sends same challenge (i.e. presentationRequest) as verifier #1
+      const {
+        session: vSessionFakedReq,
+      } = await GabiVerifier.requestPresentation({
+        requestedAttributes: disclosedAttributes,
+        reqNonRevocationProof: true,
+        reqMinIndex: 0,
+      })
+      const presFakedReq = await gabiClaimer.buildPresentation({
+        credential,
+        attesterPubKey: gabiAttester.publicKey,
+        presentationReq,
+      })
+      expect(presentation).not.toStrictEqual(presFakedReq)
+      expect(
+        expectProofsNotToRevealData(
+          JSON.parse(presentation.valueOf()),
+          JSON.parse(presFakedReq.valueOf())
+        )
+      ).toBe(true)
+      const {
+        verified: verifiedFakedReq,
+        claim: claimFakedReq,
+      } = await GabiVerifier.verifyPresentation({
+        proof: presFakedReq,
+        verifierSession: vSessionFakedReq,
+        attesterPubKey: gabiAttester.publicKey,
+      })
+      expectFailure(verifiedFakedReq, claimFakedReq)
+    })
     it('Should not reveal any personal information when contacting multiple verifiers', async () => {
       // create 2nd session
       const {
@@ -217,53 +288,12 @@ describe('Test verifier functionality', () => {
       expectSuccess(verified3, verifiedClaim3)
 
       // pairwise comparison
-      let checkValues: any[]
       const proofArr: IProof[] = [presentation, proof2, proof3].map(proof =>
         JSON.parse(proof.valueOf())
       )
       // start to compare prev = proofArr[2] with curr = proofArr[0], then set prev[i+1] to curr[i] and curr[i+1] to proofArr[i+1]
       proofArr.reduce((prevProof, currProof) => {
-        // proof.A
-        expect(currProof.proof.A).not.toStrictEqual(prevProof.proof.A)
-        // proof.a_discloses
-        expect(currProof.proof.a_disclosed).toStrictEqual(
-          prevProof.proof.a_disclosed
-        )
-        // proof.a_responses
-        checkValues = Object.values(prevProof.proof.a_responses)
-        Object.values(currProof.proof.a_responses).map(val =>
-          expect(checkValues).not.toContain(val)
-        )
-        // proof.c
-        expect(currProof.proof.c).not.toStrictEqual(prevProof.proof.c)
-        // proof.e_response
-        expect(currProof.proof.e_response).not.toStrictEqual(
-          prevProof.proof.e_response
-        )
-        // proof.nonrev_proof
-        expect(currProof.proof.nonrev_proof.C_r).not.toStrictEqual(
-          prevProof.proof.nonrev_proof.C_r
-        )
-        expect(currProof.proof.nonrev_proof.C_u).not.toStrictEqual(
-          prevProof.proof.nonrev_proof.C_u
-        )
-        // proof.nonrev_proof.responses
-        checkValues = Object.values(prevProof.proof.nonrev_proof.responses)
-        Object.values(currProof.proof.nonrev_proof.responses).map(val =>
-          expect(checkValues).not.toContain(val)
-        )
-        // sacc = signed accumulator, i.e. this should equal
-        expect(currProof.proof.nonrev_proof.sacc).toStrictEqual(
-          prevProof.proof.nonrev_proof.sacc
-        )
-        // proof.nonrev_response
-        expect(currProof.proof.nonrev_response).not.toStrictEqual(
-          prevProof.proof.nonrev_response
-        )
-        // proof.v_response
-        expect(currProof.proof.v_response).not.toStrictEqual(
-          prevProof.proof.v_response
-        )
+        expect(expectProofsNotToRevealData(prevProof, currProof)).toBe(true)
         return currProof
       }, proofArr[proofArr.length - 1])
     })
