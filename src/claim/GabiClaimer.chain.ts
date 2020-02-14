@@ -6,7 +6,6 @@ import {
   IGabiClaimerChain,
 } from '../types/Claim'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
-import Accumulator from '../attestation/Accumulator'
 
 export default class GabiClaimerChain extends GabiClaimer
   implements IGabiClaimerChain {
@@ -14,20 +13,15 @@ export default class GabiClaimerChain extends GabiClaimer
     credential,
     attesterPubKey,
     attesterChainAddress,
-    _accumulator,
+    index,
   }: Omit<IUpdateCredential, 'accumulator'> & {
-    attesterChainAddress?: string
-    _accumulator?: Accumulator
+    attesterChainAddress: string
+    index?: number
   }): Promise<Credential> {
     const chain = await connect()
-    if (!_accumulator && !attesterChainAddress) {
-      throw new Error(
-        "Missing either accumulator or attester's chain address to run updateCredentialClaim"
-      )
-    }
-    const accumulator =
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      _accumulator || (await chain.getLatestAccumulator(attesterChainAddress!))
+    const accumulator = index
+      ? await chain.getAccumulator(attesterChainAddress, index)
+      : await chain.getLatestAccumulator(attesterChainAddress)
     return super.updateCredential({
       credential,
       attesterPubKey,

@@ -42,8 +42,8 @@ describe('Test GabiAttester on chain', () => {
       attesterPubKey,
       attesterChainAddress,
     })
-    expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+    expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
     expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledWith([
       attesterChainAddress,
       attesterChainAddress.length - 1,
@@ -54,38 +54,24 @@ describe('Test GabiAttester on chain', () => {
     expect(credUpdated).toEqual(expect.anything())
     expect(credUpdated).not.toStrictEqual(credential)
   })
-  it('Should update credential with accumulator input', async () => {
-    const credUpdated = await claimer.updateCredentialChain({
-      credential,
-      attesterPubKey,
-      _accumulator: accumulator,
-    })
-    expect(api.query.portablegabi.accumulatorList).not.toHaveBeenCalled()
-    expect(api.query.portablegabi.accumulatorCount).not.toHaveBeenCalled()
-    expect(credUpdated).toEqual(expect.anything())
-    expect(credUpdated).not.toStrictEqual(credential)
-  })
-  it('Should update credential with both address and accumulator input', async () => {
+  it('Should update credential with index input', async () => {
     const credUpdated = await claimer.updateCredentialChain({
       credential,
       attesterPubKey,
       attesterChainAddress,
-      _accumulator: accumulator,
+      index: 0,
     })
-    expect(api.query.portablegabi.accumulatorList).not.toHaveBeenCalled()
-    expect(api.query.portablegabi.accumulatorCount).not.toHaveBeenCalled()
+    expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+    expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(1)
+    expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledWith([
+      attesterChainAddress,
+      attesterChainAddress.length - 1,
+    ])
+    expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledWith(
+      attesterChainAddress
+    )
     expect(credUpdated).toEqual(expect.anything())
     expect(credUpdated).not.toStrictEqual(credential)
-  })
-  it('Should throw when calling updateCredentialChain with neither address nor accumulator', async () => {
-    await expect(
-      claimer.updateCredentialChain({
-        credential,
-        attesterPubKey,
-      })
-    ).rejects.toThrowError(
-      "Missing either accumulator or attester's chain address to run updateCredentialClaim"
-    )
   })
   it('Should create + update fresh accumulators when missing on chain for attester in setup', async () => {
     api.query.portablegabi.accumulatorCount.mockResolvedValue(0)
