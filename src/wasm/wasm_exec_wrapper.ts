@@ -1,15 +1,16 @@
 import WasmHooks from './WasmHooks'
+import IGoWasm from '../types/Wasm'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const goWasm = require('./wasm_exec')
 
-const GoInstance = goWasm.GoWasm.init()
+const GoInstance: Promise<IGoWasm> = goWasm.GoWasm.init()
 
-export const goWasmInit = () => Promise.resolve(GoInstance)
+export const goWasmInit = (): Promise<IGoWasm> => Promise.resolve(GoInstance)
 
 const goWasmExec = <T>(
   goHook: WasmHooks,
-  args?: Array<string | number | boolean | string[]>
+  args?: Array<string | number | boolean>
 ): Promise<T> =>
   Promise.resolve(GoInstance).then(wasm => wasm.execWasmFn(goHook, args))
 
