@@ -26,7 +26,7 @@ const DEFAULT_PARAMS: Params = {
   pgabiModName: DEFAULT_MOD_NAME,
 }
 
-let instance: Promise<IBlockchainApi> | null
+let connectionCache: Promise<IBlockchainApi> | null = null
 
 export async function buildConnection({
   host = DEFAULT_WS_ADDRESS,
@@ -49,12 +49,10 @@ export async function getCached({
   types = {},
   pgabiModName = DEFAULT_MOD_NAME,
 }: Params = DEFAULT_PARAMS): Promise<IBlockchainApi> {
-  if (!instance) {
-    instance = buildConnection({ host, types, pgabiModName }) as Promise<
-      IBlockchainApi
-    >
+  if (!connectionCache) {
+    connectionCache = buildConnection({ host, types, pgabiModName })
   }
-  return instance as Promise<IBlockchainApi>
+  return connectionCache
 }
 
 export async function connect({
@@ -66,7 +64,7 @@ export async function connect({
 }
 
 export function clearCache(): void {
-  instance = null
+  connectionCache = null
 }
 
 export async function disconnect(
