@@ -11,7 +11,7 @@ import { attestationSetup } from '../testSetup/testSetup'
 import api from '../blockchain/__mocks__/BlockchainApi'
 import { Credential } from '../types/Claim'
 import GabiClaimerChain from '../claim/GabiClaimer.chain'
-import { BlockchainError } from '../blockchain/ChainError'
+import BlockchainError from '../blockchain/ChainError'
 import { disclosedAttributes } from '../testSetup/testConfig'
 import CombinedRequestBuilder from './CombinedRequestBuilder'
 

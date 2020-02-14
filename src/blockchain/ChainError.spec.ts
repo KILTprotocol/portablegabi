@@ -1,10 +1,11 @@
-import chainErrHandler, { BlockchainError } from './ChainError'
+import BlockchainError, { checkAccIndex, checkRevIndex } from './ChainError'
 import Blockchain from './Blockchain'
 import api from './__mocks__/BlockchainApi'
 
 function expectError(
-  fn: typeof chainErrHandler[keyof typeof chainErrHandler],
-  fnArgs: Parameters<typeof chainErrHandler[keyof typeof chainErrHandler]>,
+  fn: typeof checkAccIndex | typeof checkRevIndex,
+  // fn: typeof chainErrHandler[keyof typeof chainErrHandler],
+  fnArgs: Parameters<typeof checkAccIndex | typeof checkRevIndex>,
   expectedError: BlockchainError
 ): void {
   let errorMessage = ''
@@ -35,7 +36,7 @@ describe('Test chainErrHandler', () => {
     it('Should throw "Missing accumulator..."', () => {
       maxIndex = -1
       expectError(
-        chainErrHandler.checkAccIndex,
+        checkAccIndex,
         [address, index, maxIndex],
         BlockchainError.maxIndexZero(address)
       )
@@ -44,7 +45,7 @@ describe('Test chainErrHandler', () => {
       index = 2
       maxIndex = 1
       expectError(
-        chainErrHandler.checkAccIndex,
+        checkAccIndex,
         [address, index, maxIndex],
         BlockchainError.indexOutOfRange('accumulator', address, index, maxIndex)
       )
@@ -53,7 +54,7 @@ describe('Test chainErrHandler', () => {
       index = -1
       maxIndex = 2
       expectError(
-        chainErrHandler.checkAccIndex,
+        checkAccIndex,
         [address, index, maxIndex],
         BlockchainError.indexOutOfRange('accumulator', address, index, maxIndex)
       )
@@ -63,7 +64,7 @@ describe('Test chainErrHandler', () => {
       maxIndex = 2
       let errorMessage
       try {
-        chainErrHandler.checkAccIndex(address, index, maxIndex)
+        checkAccIndex(address, index, maxIndex)
       } catch (e) {
         errorMessage = e.message
       }
@@ -75,7 +76,7 @@ describe('Test chainErrHandler', () => {
       index = 0
       maxIndex = -1
       expectError(
-        chainErrHandler.checkRevIndex,
+        checkRevIndex,
         [address, index, maxIndex],
         BlockchainError.missingRevIndex(address)
       )
@@ -84,7 +85,7 @@ describe('Test chainErrHandler', () => {
       index = 2
       maxIndex = 1
       expectError(
-        chainErrHandler.checkRevIndex,
+        checkRevIndex,
         [address, index, maxIndex],
         BlockchainError.indexOutOfRange('revocation', address, index, maxIndex)
       )
@@ -93,7 +94,7 @@ describe('Test chainErrHandler', () => {
       index = -1
       maxIndex = 2
       expectError(
-        chainErrHandler.checkRevIndex,
+        checkRevIndex,
         [address, index, maxIndex],
         BlockchainError.indexOutOfRange('revocation', address, index, maxIndex)
       )
@@ -103,7 +104,7 @@ describe('Test chainErrHandler', () => {
       maxIndex = 2
       let errorMessage
       try {
-        chainErrHandler.checkRevIndex(address, index, maxIndex)
+        checkRevIndex(address, index, maxIndex)
       } catch (e) {
         errorMessage = e.message
       }

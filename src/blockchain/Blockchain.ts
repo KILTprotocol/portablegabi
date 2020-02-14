@@ -1,7 +1,7 @@
 import { hexToString } from '@polkadot/util'
 import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
-import chainErrHandler, { BlockchainError } from './ChainError'
+import BlockchainError, { checkAccIndex, checkRevIndex } from './ChainError'
 import { IPublicIdentity } from '../types/Attestation'
 import { IBlockchainApi, IPortablegabiApi, PgabiModName } from '../types/Chain'
 import Accumulator from '../attestation/Accumulator'
@@ -9,8 +9,6 @@ import Accumulator from '../attestation/Accumulator'
 export default class Blockchain implements IBlockchainApi {
   public api: ApiPromise & IPortablegabiApi<PgabiModName>
   private chainmod: PgabiModName
-
-  public chainErrHandler = chainErrHandler
 
   public constructor(
     chainmod: PgabiModName,
@@ -49,7 +47,7 @@ export default class Blockchain implements IBlockchainApi {
     ])
     if (codec.isEmpty || (!codec.isEmpty && codec.toString().length < 2)) {
       const maxIndex = (await this.getAccumulatorCount(address)) - 1
-      this.chainErrHandler.checkAccIndex(address, index, maxIndex)
+      checkAccIndex(address, index, maxIndex)
     }
     return new Accumulator(hexToString(codec.toString()))
   }
@@ -83,7 +81,7 @@ export default class Blockchain implements IBlockchainApi {
   ): Promise<number> {
     const maxIndex = await this.getRevIndex(identity)
     if (typeof reqIndex === 'number') {
-      this.chainErrHandler.checkRevIndex(identity.address, reqIndex, maxIndex)
+      checkRevIndex(identity.address, reqIndex, maxIndex)
       return reqIndex
     }
     return maxIndex

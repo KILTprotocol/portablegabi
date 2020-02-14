@@ -1,7 +1,7 @@
 import { stringToHex } from '@polkadot/util'
 import { Codec } from '@polkadot/types/types'
 import Accumulator from '../attestation/Accumulator'
-import { BlockchainError } from './ChainError'
+import BlockchainError from './ChainError'
 import { actorSetupChain } from '../testSetup/testSetup.chain'
 import api from './__mocks__/BlockchainApi'
 import BlockchainMock from './__mocks__/Blockchain'

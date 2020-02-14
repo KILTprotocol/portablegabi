@@ -19,6 +19,10 @@ export class AttesterPublicKey extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }
+export class AttesterPrivateKey extends String {
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: int
+}
 export class AttesterAttestationSession extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int

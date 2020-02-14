@@ -2,7 +2,6 @@ import { Codec } from '@polkadot/types/types'
 import { SubmittableExtrinsic } from '@polkadot/api/types'
 import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
-import chainErrHandler from '../blockchain/ChainError'
 import Accumulator from '../attestation/Accumulator'
 import { IPublicIdentity } from './Attestation'
 
@@ -25,7 +24,6 @@ export interface IPortablegabiApi<T extends PgabiModName> {
 
 export interface IBlockchainApi {
   api: ApiPromise & IPortablegabiApi<PgabiModName>
-  chainErrHandler: typeof chainErrHandler
   getAccumulatorCount: (address: string) => Promise<number>
   getAccumulator: (address: string, index: number) => Promise<Accumulator>
   getLatestAccumulator: (address: string) => Promise<Accumulator>
