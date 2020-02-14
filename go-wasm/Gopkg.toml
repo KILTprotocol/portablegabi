@@ -26,7 +26,7 @@
 
 
 [[constraint]]
-  branch = "export_fields"
+  branch = "master"
   name = "github.com/privacybydesign/gabi"
   source = "https://github.com/weichweich/gabi.git"
 

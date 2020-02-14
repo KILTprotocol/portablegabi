@@ -169,7 +169,7 @@ func GetAccumulatorIndex(this js.Value, inputs []js.Value) (interface{}, error) 
 	if err != nil {
 		return 0, err
 	}
-	acc, _, err := update.Verify(revPubKey, 0)
+	acc, err := update.Verify(revPubKey)
 	if err != nil {
 		return 0, err
 	}

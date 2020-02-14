@@ -18,12 +18,12 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:0886f4871903067916897c67caeb787f81c9a155391da901aa25f26802953ec6"
+  digest = "1:31bb879cd46c543afb1ab0a08cb051bf795d247a870dd82e622f345812903d8a"
   name = "github.com/fxamacker/cbor"
   packages = ["."]
   pruneopts = "UT"
-  revision = "6faee5e1f8b6270f9bdcfefbc9bdfa8c026de629"
-  version = "v1.5.0"
+  revision = "19c21f85d9c2bc9f86fa34b7e308e7814c8e9f31"
+  version = "v1.5.1"
 
 [[projects]]
   digest = "1:aacef5f5e45685f2aeda5534d0a750dee6859de7e9088cdd06192787bb01ae6d"
@@ -32,6 +32,14 @@
   pruneopts = "UT"
   revision = "a6af135bd4e28680facf08a3d206b454abc877a4"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+  version = "v1.0.2"
 
 [[projects]]
   branch = "master"
@@ -58,12 +66,20 @@
   version = "v1.1.3"
 
 [[projects]]
-  digest = "1:f550c302300c239c89d4a1d79f2093f67a344e2fbfd2acd7acef1fcf47c0ad6f"
+  digest = "1:9b6ec330cdda76d7b8fb3cb4238d7ab8ee98f672859fcb3dcc7dd395312f5770"
   name = "github.com/multiformats/go-multihash"
   packages = ["."]
   pruneopts = "UT"
-  revision = "572861f2e56f271cbbcab31a85a24453e676c8c8"
-  version = "v0.0.10"
+  revision = "6b39927dce4869bc1726861b65ada415ee1f7fc7"
+  version = "v0.0.13"
+
+[[projects]]
+  digest = "1:6be8092c93e6eb9ec606a153d16fa042e087be8be9a91f49515dfe0d0b504a5f"
+  name = "github.com/multiformats/go-varint"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "99465703c4a9cf53a0235e52608cb055e9d39c29"
+  version = "v0.0.5"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -74,8 +90,8 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "export_fields"
-  digest = "1:45926e2f0986b15b31fb86610d49975f40afb2eacf58e70dfcbf3f1a223a9e62"
+  branch = "master"
+  digest = "1:a13b9e0a02e56d26cda2c928b2cc75fbf3b73189cb41d06978fdd60a1bc6382c"
   name = "github.com/privacybydesign/gabi"
   packages = [
     ".",
@@ -87,8 +103,16 @@
     "signed",
   ]
   pruneopts = "UT"
-  revision = "990109a4bff525a0e43b84f909d56c860a25d70b"
+  revision = "1839fda66fea7349e12943cc12d286da860f5587"
   source = "https://github.com/weichweich/gabi.git"
+
+[[projects]]
+  digest = "1:04457f9f6f3ffc5fea48e71d62f2ca256637dee0a04d710288e27e05c8b41976"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
+  version = "v1.4.2"
 
 [[projects]]
   digest = "1:919bb3aa6d9d0b67648c219fa4925312bc3c2872da19e818fa769e9c97a2b643"
@@ -138,15 +162,18 @@
     "sha3",
   ]
   pruneopts = "UT"
-  revision = "69ecbb4d6d5dab05e49161c6e77ea40a030884e1"
+  revision = "1d94cc7ab1c630336ab82ccb9c9cda72a875c382"
 
 [[projects]]
   branch = "master"
-  digest = "1:e1f7cd50bff4fa30d44c45fef943ade1959587a5adc8e7943c2e5d806140679f"
+  digest = "1:700e2d5dcdf3ecf8e2035cbdb175ea7e9a7635665e4950145150c999d4267857"
   name = "golang.org/x/sys"
-  packages = ["cpu"]
+  packages = [
+    "cpu",
+    "unix",
+  ]
   pruneopts = "UT"
-  revision = "d101bd2416d505c0448a6ce8a282482678040a89"
+  revision = "12a6c2dcc1e4cb348b57847c73987099e261714b"
 
 [[projects]]
   digest = "1:55b110c99c5fdc4f14930747326acce56b52cfce60b24b1c03ef686ac0e46bb1"

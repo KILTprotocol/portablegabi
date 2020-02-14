@@ -135,5 +135,4 @@ func TestCreateAccumulator(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err)
 	require.NotNil(t, update)
-
 }
