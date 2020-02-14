@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
+import { mnemonicGenerate } from '@polkadot/util-crypto'
 import {
   attestationSetup,
   mixedAttestationsSetup,
@@ -54,7 +55,10 @@ describe('Test claimer creation', () => {
     expect(claimerWithoutPass).toHaveProperty('secret')
     expect(gabiClaimer).toHaveProperty('secret')
     expect(claimerWithoutPass).not.toStrictEqual(gabiClaimer)
-    const claimerWithPass = await GabiClaimer.create('password')
+    const claimerWithPass = await GabiClaimer.buildFromMnemonic(
+      mnemonicGenerate(),
+      'password'
+    )
     expect(claimerWithPass).toHaveProperty('secret')
     expect(gabiClaimer).toHaveProperty('secret')
     expect(claimerWithPass).not.toStrictEqual(gabiClaimer)
