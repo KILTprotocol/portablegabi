@@ -37,10 +37,13 @@ export default class GabiClaimer implements IGabiClaimer {
 
   public static async buildFromMnemonic<T extends GabiClaimer>(
     mnemonic: string,
-    password?: string
+    password = ''
   ): Promise<T> {
     // secret's structure unmarshalled is { MasterSecret: string }
-    const secret = await GabiClaimer.genSecret(mnemonic, password)
+    const secret = await goWasmExec<string>(WasmHooks.keyFromMnemonic, [
+      mnemonic,
+      password,
+    ])
     return new this(secret) as T
   }
 
@@ -53,12 +56,6 @@ export default class GabiClaimer implements IGabiClaimer {
     this.secret = secret
   }
 
-  private static async genSecret(
-    mnemonic: string,
-    password = ''
-  ): Promise<string> {
-    return goWasmExec<string>(WasmHooks.keyFromMnemonic, [mnemonic, password])
-  }
   /**
    * Creates an [[AttestationRequest]] using the provided [[InitiateAttestationRequest]].
    *
