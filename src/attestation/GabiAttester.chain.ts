@@ -13,6 +13,7 @@ import {
   AttesterPublicKey,
   IGabiAttesterChain,
   IPublicIdentity,
+  AttesterPrivateKey,
 } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Accumulator from './Accumulator'
@@ -31,17 +32,12 @@ export default class GabiAttesterChain extends GabiAttester
   ): Promise<GabiAttesterChain> {
     const { publicKey, privateKey } = await super.genKeyPair()
     const mnemonic = this.generateMnemonic()
-    return this.buildFromMnemonic(
-      new AttesterPublicKey(publicKey),
-      privateKey,
-      mnemonic,
-      keypairType
-    )
+    return this.buildFromMnemonic(publicKey, privateKey, mnemonic, keypairType)
   }
 
   public static async buildFromMnemonic(
     publicKey: AttesterPublicKey,
-    privateKey: string,
+    privateKey: AttesterPrivateKey,
     mnemonic: string,
     type: KeypairType = 'sr25519'
   ): Promise<GabiAttesterChain> {
@@ -58,7 +54,7 @@ export default class GabiAttesterChain extends GabiAttester
 
   public static async buildFromURI(
     publicKey: AttesterPublicKey,
-    privateKey: string,
+    privateKey: AttesterPrivateKey,
     uri: string,
     type: KeypairType = 'sr25519'
   ): Promise<GabiAttesterChain> {
@@ -70,7 +66,7 @@ export default class GabiAttesterChain extends GabiAttester
 
   public constructor(
     publicKey: AttesterPublicKey,
-    privateKey: string,
+    privateKey: AttesterPrivateKey,
     keyringPair: KeyringPair
   ) {
     super(publicKey, privateKey)

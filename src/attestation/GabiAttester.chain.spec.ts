@@ -8,7 +8,7 @@ import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import GabiClaimerChain from '../claim/GabiClaimer.chain'
 import { attestationSetup } from '../testSetup/testSetup'
 import api from '../blockchain/__mocks__/BlockchainApi'
-import { AttesterPublicKey } from '../types/Attestation'
+import { AttesterPublicKey, AttesterPrivateKey } from '../types/Attestation'
 
 jest.mock('../blockchainApiConnection/BlockchainApiConnection')
 
@@ -36,7 +36,7 @@ describe('Test GabiAttester on chain', () => {
       address: attesterAddress,
     } = await GabiAttesterChain.buildFromMnemonic(
       new AttesterPublicKey('pb'),
-      'pk',
+      new AttesterPrivateKey('pk'),
       mnemonic,
       'sr25519'
     )
@@ -44,7 +44,7 @@ describe('Test GabiAttester on chain', () => {
       address: attesterAddressFromURI,
     } = await GabiAttesterChain.buildFromURI(
       new AttesterPublicKey('pb'),
-      'pk',
+      new AttesterPrivateKey('pk'),
       mnemonic,
       'sr25519'
     )
@@ -72,7 +72,7 @@ describe('Test GabiAttester on chain', () => {
       address: attesterAddress,
     } = await GabiAttesterChain.buildFromMnemonic(
       new AttesterPublicKey('pb'),
-      'pk',
+      new AttesterPrivateKey('pk'),
       mnemonic,
       'ed25519'
     )
@@ -80,7 +80,7 @@ describe('Test GabiAttester on chain', () => {
       address: attesterAddressFromURI,
     } = await GabiAttesterChain.buildFromURI(
       new AttesterPublicKey('pb'),
-      'pk',
+      new AttesterPrivateKey('pk'),
       mnemonic,
       'ed25519'
     )
