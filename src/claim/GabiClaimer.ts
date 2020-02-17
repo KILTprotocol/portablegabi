@@ -151,6 +151,8 @@ export default class GabiClaimer implements IGabiClaimer {
     )
   }
 
+  // TODO figure why static does not implement interface.
+  // eslint-disable-next-line class-methods-use-this
   public async updateCredential({
     credential,
     attesterPubKey,
@@ -158,7 +160,6 @@ export default class GabiClaimer implements IGabiClaimer {
   }: IUpdateCredential): Promise<Credential> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.updateCredential, [
-        this.secret,
         credential.valueOf(),
         accumulator.valueOf(),
         attesterPubKey.valueOf(),

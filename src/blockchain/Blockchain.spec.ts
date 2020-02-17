@@ -73,7 +73,7 @@ describe('chain mocks', () => {
       await expect(
         BlockchainMock.getRevIndex(attester.getPublicIdentity())
       ).resolves.toBe(0)
-    })
+    }, 10000)
   })
   describe('Negative tests', () => {
     it('Should throw for empty accumulatorList (maxIndex === -1)', async () => {

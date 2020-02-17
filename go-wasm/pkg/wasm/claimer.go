@@ -167,28 +167,24 @@ func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, e
 
 // UpdateCredential updates the non revocation witness using the provided update.
 func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
-	if len(inputs) < 4 {
+	if len(inputs) < 3 {
 		return nil, errors.New("Missing inputs to update credential")
 	}
-	claimer := &credentials.Claimer{}
 	credential := &credentials.AttestedClaim{}
 	update := &revocation.Update{}
 	issuerPubKey := &gabi.PublicKey{}
 
-	if err := json.Unmarshal([]byte(inputs[0].String()), claimer); err != nil {
+	if err := json.Unmarshal([]byte(inputs[0].String()), credential); err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(inputs[1].String()), credential); err != nil {
+	if err := json.Unmarshal([]byte(inputs[1].String()), update); err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(inputs[2].String()), update); err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal([]byte(inputs[3].String()), issuerPubKey); err != nil {
+	if err := json.Unmarshal([]byte(inputs[2].String()), issuerPubKey); err != nil {
 		return nil, err
 	}
 
-	if err := claimer.UpdateCredential(issuerPubKey, credential, update); err != nil {
+	if err := credential.Update(issuerPubKey, update); err != nil {
 		return nil, err
 	}
 	return credential, nil

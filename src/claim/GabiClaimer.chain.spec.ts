@@ -52,7 +52,7 @@ describe('Test GabiAttester on chain', () => {
       attesterChainAddress
     )
     expect(credUpdated).toEqual(expect.anything())
-    expect(credUpdated).not.toStrictEqual(credential)
+    expect(credUpdated.valueOf()).toStrictEqual(credential.valueOf())
   })
   it('Should update credential with index input', async () => {
     const credUpdated = await claimer.updateCredentialChain({
@@ -71,7 +71,7 @@ describe('Test GabiAttester on chain', () => {
       attesterChainAddress
     )
     expect(credUpdated).toEqual(expect.anything())
-    expect(credUpdated).not.toStrictEqual(credential)
+    expect(credUpdated.valueOf()).toStrictEqual(credential.valueOf())
   })
   it('Should create + update fresh accumulators when missing on chain for attester in setup', async () => {
     api.query.portablegabi.accumulatorCount.mockResolvedValue(0)

@@ -21,6 +21,7 @@ async function runChainExample(): Promise<void> {
     claimers: [claimer],
     accumulators: [accumulator],
   } = await actorSetupChain({ pgabiModName })
+  console.log(accumulator.valueOf())
 
   // do 2 attestations
   const { claimerSession, attestation } = await attestationSetup({

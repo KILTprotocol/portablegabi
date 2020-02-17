@@ -260,9 +260,6 @@ describe('Test claimer functionality', () => {
       expect(cred).toBeDefined()
       const credObj: ICredential<typeof claim> = JSON.parse(cred.valueOf())
       expect(credObj).toHaveProperty('claim', claim)
-      expect(
-        new Date(credObj.credential.nonrevWitness.Updated).getTime()
-      ).toBeLessThan(0)
       // compare signatures
       const aSigObj: IIssueAttestation = JSON.parse(attestation.valueOf())
       expect(Object.keys(aSigObj.signature)).toStrictEqual(
@@ -287,38 +284,14 @@ describe('Test claimer functionality', () => {
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)
     })
     it('Updates credential and compares both versions (without revoking)', async () => {
-      const timeBeforeUpdate = new Date().getTime()
       const updatedCred = await gabiClaimer.updateCredential({
         credential,
         attesterPubKey: gabiAttester.publicKey,
         accumulator,
       })
-      const timeAfterUpdate = new Date().getTime()
       expect(updatedCred).toBeDefined()
       expect(credential).toBeDefined()
-      const credObj: ICredential<typeof claim> = JSON.parse(
-        credential.valueOf()
-      )
-      const cred2Obj: ICredential<typeof claim> = JSON.parse(
-        updatedCred.valueOf()
-      )
-      const { Updated: nonUpdatedDate } = credObj.credential.nonrevWitness
-      const { Updated: updatedDate } = cred2Obj.credential.nonrevWitness
-      expect(nonUpdatedDate).not.toStrictEqual(updatedDate)
-      expect(new Date(nonUpdatedDate).getTime()).toBeLessThan(
-        new Date(updatedDate).getTime()
-      )
-      expect(new Date(updatedDate).getTime()).toBeGreaterThan(timeBeforeUpdate)
-      expect(new Date(updatedDate).getTime()).toBeLessThan(timeAfterUpdate)
-
-      // create deep clone of credential with updatedDate
-      const credObjWithUpdatedDate: ICredential<typeof claim> = JSON.parse(
-        JSON.stringify({
-          ...credObj,
-        })
-      )
-      credObjWithUpdatedDate.credential.nonrevWitness.Updated = updatedDate
-      expect(credObjWithUpdatedDate).toStrictEqual(cred2Obj)
+      expect(updatedCred).toStrictEqual(credential)
     })
     it('Should throw when updating a revoked credential', async () => {
       const revUpdate = await gabiAttester.revokeAttestation({
