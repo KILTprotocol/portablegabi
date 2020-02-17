@@ -157,6 +157,7 @@ describe('Test claimer functionality', () => {
       claimer: gabiClaimer,
       attester: gabiAttester,
       credential,
+      accumulator,
     }))
     ;({
       gabiAttester2,
@@ -203,7 +204,7 @@ describe('Test claimer functionality', () => {
       expect(Object.keys(request)).toContain('session')
       expect(Object.keys(request)).toContain('message')
     })
-    it('Checks for correct data in requestAttestion', async () => {
+    it('Checks for correct data in requestAttestation', async () => {
       expect(initiateAttestationReq).toBeDefined()
       expect(attesterSession).toBeDefined()
       expect(attestationRequest).toBeDefined()

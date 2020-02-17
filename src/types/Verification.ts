@@ -5,12 +5,10 @@ import { IPublicIdentity } from './Attestation'
 export interface IPresentationRequest {
   requestedAttributes: string[]
   reqNonRevocationProof: boolean
-  reqMinIndex: number
+  reqUpdatedAfter: Date
 }
 
-export interface IPresentationRequestChain
-  extends Omit<IPresentationRequest, 'reqMinIndex'> {
-  reqIndex: number | 'latest'
+export interface IPresentationRequestChain extends IPresentationRequest {
   attesterIdentity: IPublicIdentity
 }
 

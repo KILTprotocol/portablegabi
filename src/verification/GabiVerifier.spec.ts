@@ -28,7 +28,8 @@ async function expectVerificationFailed(
   attester: GabiAttester,
   credential: Credential,
   requestedAttributes: string[],
-  index: number,
+  reqUpdatedAfter: Date,
+  accumulator: Accumulator,
   reqNonRevocationProof = true
 ): Promise<{ verified: boolean; presentationClaim: any }> {
   const { verified, claim: presentationClaim } = await presentationSetup({
@@ -36,8 +37,9 @@ async function expectVerificationFailed(
     attester,
     credential,
     requestedAttributes,
-    reqMinIndex: index,
+    reqUpdatedAfter,
     reqNonRevocationProof,
+    accumulator,
   })
   expectFailure(verified, presentationClaim)
   return { verified, presentationClaim }
@@ -49,7 +51,8 @@ async function expectVerificationSucceeded(
   attester: GabiAttester,
   credential: Credential,
   requestedAttributes: string[],
-  index: number,
+  reqUpdatedAfter: Date,
+  accumulator: Accumulator,
   reqNonRevocationProof = true
 ): Promise<{ verified: boolean; presentationClaim: any }> {
   const { verified, claim: presentationClaim } = await presentationSetup({
@@ -57,8 +60,9 @@ async function expectVerificationSucceeded(
     attester,
     credential,
     requestedAttributes,
-    reqMinIndex: index,
+    reqUpdatedAfter,
     reqNonRevocationProof,
+    accumulator,
   })
   expectSuccess(verified, presentationClaim)
   return { verified, presentationClaim }
@@ -138,6 +142,7 @@ describe('Test verifier functionality', () => {
       claimer: gabiClaimer,
       attester: gabiAttester,
       credential,
+      accumulator,
     }))
     revocationIndex = await accumulator.getRevIndex(gabiAttester.publicKey)
   }, 10000)
@@ -176,7 +181,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         credential,
         disclosedAttributes,
-        await accumulator.getRevIndex(gabiAttester.publicKey)
+        new Date(),
+        accumulator
       )
     })
     it('Verifies current accumulator index is 0 for imported gabiAttester', async () => {
@@ -203,7 +209,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         uCred,
         disclosedAttributes,
-        revocationIndex
+        new Date(),
+        accumulator
       )
     })
     it('Should reveal claimers information when multiple verifiers send same challenge', async () => {
@@ -213,7 +220,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: 0,
+        reqUpdatedAfter: new Date(),
       })
       const presFakedReq = await gabiClaimer.buildPresentation({
         credential,
@@ -234,6 +241,7 @@ describe('Test verifier functionality', () => {
         proof: presFakedReq,
         verifierSession: vSessionFakedReq,
         attesterPubKey: gabiAttester.publicKey,
+        accumulator,
       })
       expectFailure(verifiedFakedReq, claimFakedReq)
     })
@@ -245,7 +253,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: revocationIndex,
+        reqUpdatedAfter: new Date(),
       })
       const proof2 = await gabiClaimer.buildPresentation({
         credential,
@@ -260,7 +268,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: revocationIndex,
+        reqUpdatedAfter: new Date(),
       })
       const proof3 = await gabiClaimer.buildPresentation({
         credential,
@@ -275,6 +283,7 @@ describe('Test verifier functionality', () => {
         proof: proof2,
         verifierSession: verifierSession2,
         attesterPubKey: gabiAttester.publicKey,
+        accumulator,
       })
       expectSuccess(verified2, verifiedClaim2)
       const {
@@ -284,6 +293,7 @@ describe('Test verifier functionality', () => {
         proof: proof3,
         verifierSession: verifierSession3,
         attesterPubKey: gabiAttester.publicKey,
+        accumulator,
       })
       expectSuccess(verified3, verifiedClaim3)
 
@@ -308,16 +318,11 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         credential,
         disclosedAttributes,
-        revocationIndex
+        new Date(),
+        accumulator
       )
       // expect failure for current index
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        credential,
-        disclosedAttributes,
-        revocationIndex + 1
-      )
+      // TODO: new test?
     })
     it('Should not verify when sending credential created with too old index', async () => {
       const {
@@ -341,14 +346,16 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         credToBeRevoked,
         disclosedAttributes,
-        newIndex
+        new Date(),
+        accAfterRev
       )
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         credToBeRevoked,
         disclosedAttributes,
-        revocationIndex
+        new Date(),
+        accumulator
       )
       // test for build
       const credToBeRevokedBuilt = await gabiClaimer.buildCredential({
@@ -361,14 +368,16 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         credToBeRevokedBuilt,
         disclosedAttributes,
-        newIndex
+        new Date(),
+        accAfterRev
       )
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         credToBeRevokedBuilt,
         disclosedAttributes,
-        revocationIndex
+        new Date(),
+        accumulator
       )
       // test for update
       const credToBeRevokedUpdated = await gabiClaimer.updateCredential({
@@ -381,18 +390,20 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         credToBeRevokedUpdated,
         disclosedAttributes,
-        newIndex
+        new Date(),
+        accAfterRev
       )
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         credToBeRevokedUpdated,
         disclosedAttributes,
-        revocationIndex
+        new Date(),
+        accumulator
       )
     })
     it('Should verify even after revocation when reqNonRevocationProof === false', async () => {
-      await gabiAttester.revokeAttestation({
+      const newAcc = await gabiAttester.revokeAttestation({
         accumulator,
         witnesses: [witness],
       })
@@ -402,7 +413,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         credential,
         disclosedAttributes,
-        revocationIndex + 1,
+        new Date(),
+        accumulator,
         false
       )
       // expect failure with reqNonRevocationProof === true
@@ -411,7 +423,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         credential,
         disclosedAttributes,
-        revocationIndex + 1,
+        new Date(),
+        newAcc,
         true
       )
     })
@@ -424,7 +437,7 @@ describe('Test verifier functionality', () => {
           attester: gabiAttester,
           credential,
           requestedAttributes: [],
-          reqMinIndex: revocationIndex,
+          accumulator,
         })
       ).rejects.toThrow('requested attributes should not be empty')
     })
@@ -446,7 +459,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         uCred,
         disclosedAttributes,
-        revocationIndex
+        new Date(),
+        accumulator
       )
     })
     it('Should not verify after re-arrenging attributes of credential', async () => {
@@ -473,7 +487,8 @@ describe('Test verifier functionality', () => {
           gabiAttester,
           uCred,
           disclosedAttributes,
-          revocationIndex + 1
+          new Date(),
+          accumulator
         )
       ).rejects.toThrow('missing magic byte')
     })
@@ -485,7 +500,7 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: revocationIndex,
+        reqUpdatedAfter: new Date(),
       })
       const proof2 = await gabiClaimer.buildPresentation({
         credential,
@@ -500,6 +515,7 @@ describe('Test verifier functionality', () => {
         proof: proof2, // from 2nd session
         verifierSession, // from 1st session
         attesterPubKey: gabiAttester.publicKey,
+        accumulator,
       })
       expectFailure(verified2, verifiedClaim2)
       const {
@@ -509,6 +525,7 @@ describe('Test verifier functionality', () => {
         proof: presentation, // from 1st session
         verifierSession: verifierSession2, // from 2nd session
         attesterPubKey: gabiAttester.publicKey,
+        accumulator,
       })
       expectFailure(verified3, verifiedClaim3)
     })
@@ -520,6 +537,7 @@ describe('Test verifier functionality', () => {
           attester: gabiAttester2,
           credential,
           requestedAttributes: disclosedAttributes,
+          accumulator,
         })
       ).rejects.toThrow('ecdsa signature was invalid')
       // use use gabiAttester2's pk instead of gabiAttester's one
@@ -530,24 +548,9 @@ describe('Test verifier functionality', () => {
         proof: presentation,
         verifierSession,
         attesterPubKey: gabiAttester2.publicKey,
+        accumulator,
       })
       expectFailure(verified2, verifiedClaim2)
-    })
-    it('Should not verify when sending index out of accumulator range', async () => {
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        credential,
-        disclosedAttributes,
-        revocationIndex + 1
-      )
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        credential,
-        disclosedAttributes,
-        -1 // should be non negative
-      )
     })
     it('Should throw when a requested attribute is missing', async () => {
       const addedAttribute = 'thisDoesNotExit'
@@ -558,6 +561,7 @@ describe('Test verifier functionality', () => {
           attester: gabiAttester,
           credential,
           requestedAttributes,
+          accumulator,
         })
       ).rejects.toThrow(
         `could not find attribute with name '${addedAttribute}'`
@@ -582,7 +586,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         new Credential(JSON.stringify(credObj)),
         disclosedAttributes,
-        revocationIndex
+        new Date(),
+        accumulator
       )
       credObj2.claim = {
         anythingButCtype: credObj.claim.contents,
@@ -600,7 +605,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         new Credential(JSON.stringify(credObj2)),
         disclosedAttributes,
-        revocationIndex
+        new Date(),
+        accumulator
       )
     })
   })

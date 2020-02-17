@@ -23,7 +23,7 @@ async function expectCombinedSetupToBe(
     attesters,
     accumulators,
     disclosedAttsArr,
-    minIndices,
+    reqUpdatesAfter,
     reqNonRevocationProof,
     inputCredentials,
   }: {
@@ -31,7 +31,7 @@ async function expectCombinedSetupToBe(
     attesters: GabiAttester[]
     accumulators: Accumulator[]
     disclosedAttsArr: string[][]
-    minIndices: number[]
+    reqUpdatesAfter: Date[]
     reqNonRevocationProof: boolean[]
     inputCredentials?: any
   }
@@ -47,7 +47,7 @@ async function expectCombinedSetupToBe(
     attesters,
     accumulators,
     disclosedAttsArr,
-    minIndices,
+    reqUpdatesAfter,
     reqNonRevocationProof,
     inputCredentials,
   })
@@ -73,12 +73,12 @@ describe('Test combined requests', () => {
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: 0,
+        reqUpdatedAfter: new Date(),
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributesCombined,
         reqNonRevocationProof: true,
-        reqMinIndex: 0,
+        reqUpdatedAfter: new Date(),
       })
       .finalise()
     expect(message).toEqual(expect.anything())
@@ -103,12 +103,12 @@ describe('Test combined requests', () => {
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: 0,
+        reqUpdatedAfter: new Date(),
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
-        reqMinIndex: 0,
+        reqUpdatedAfter: new Date(),
       })
       .finalise()
     // (1) test swapped attesters pubkey positions in buildCombinedPresentation
@@ -130,6 +130,7 @@ describe('Test combined requests', () => {
       proof: combPresentation,
       attesterPubKeys: [attesters[1].publicKey, attesters[0].publicKey],
       verifierSession: combinedSession,
+      accumulators,
     })
     expect(verified).toBe(false)
     expect(claims).not.toEqual(expect.anything())
@@ -140,7 +141,7 @@ describe('Test combined requests', () => {
       attesters,
       accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-      minIndices: [0, 0],
+      reqUpdatesAfter: [new Date(), new Date()],
       reqNonRevocationProof: [true, true],
     })
   })
@@ -151,7 +152,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
-        minIndices: [0, 0],
+        reqUpdatesAfter: [new Date(), new Date()],
         reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow(
@@ -163,7 +164,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [[], disclosedAttributes],
-        minIndices: [0, 0],
+        reqUpdatesAfter: [new Date(), new Date()],
         reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow(
@@ -177,46 +178,10 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
-        minIndices: [0],
+        reqUpdatesAfter: [new Date()],
         reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow('Array lengths dont match up in combined setup')
-  })
-  it('Should throw for negative index input', async () => {
-    await expect(
-      combinedSetup({
-        claimer: claimers[0],
-        attesters,
-        accumulators,
-        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [0, -1],
-        reqNonRevocationProof: [true, true],
-      })
-    ).rejects.toThrow(
-      'cannot unmarshal number -1 into Go struct field PartialPresentationRequest.reqMinIndex of type uint64'
-    )
-    await expect(
-      combinedSetup({
-        claimer: claimers[0],
-        attesters,
-        accumulators,
-        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [-1, -1],
-        reqNonRevocationProof: [true, true],
-      })
-    ).rejects.toThrow(
-      'cannot unmarshal number -1 into Go struct field PartialPresentationRequest.reqMinIndex of type uint64'
-    )
-  })
-  it('Should not verify with incorrect indices', async () => {
-    await expectCombinedSetupToBe(false, {
-      claimer: claimers[0],
-      attesters,
-      accumulators,
-      disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-      minIndices: [1000, 1000],
-      reqNonRevocationProof: [true, true],
-    })
   })
   it('Should work for any number of combinations', async () => {
     // to keep the runtime small, we test only 5 combinations, but this can be set to any number
@@ -227,7 +192,7 @@ describe('Test combined requests', () => {
       attesters: range.map((_, idx) => attesters[idx % 2]),
       accumulators: range.map((_, idx) => accumulators[idx % 2]),
       disclosedAttsArr: new Array(n).fill(disclosedAttributes),
-      minIndices: range,
+      reqUpdatesAfter: range,
       reqNonRevocationProof: new Array(n).fill(true),
     })
   })
@@ -250,24 +215,13 @@ describe('Test combined requests', () => {
       })
       credentials = attestations.map(attestation => attestation.credential)
     })
-    it('Should not verify if current index is requested', async () => {
-      await expectCombinedSetupToBe(false, {
-        claimer: claimers[0],
-        attesters,
-        accumulators,
-        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [0, 1],
-        reqNonRevocationProof: [true, true],
-        inputCredentials: credentials,
-      })
-    })
     it('Should verify if outdated index is requested', async () => {
       await expectCombinedSetupToBe(true, {
         claimer: claimers[0],
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [0, 0],
+        reqUpdatesAfter: [new Date(), new Date()],
         reqNonRevocationProof: [true, true],
         inputCredentials: credentials,
       })
@@ -278,7 +232,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        minIndices: [0, 1],
+        reqUpdatesAfter: [new Date(), new Date()],
         reqNonRevocationProof: [true, false],
         inputCredentials: credentials,
       })

@@ -21,8 +21,8 @@ import {
 } from '../types/Verification'
 import { Presentation, Credential, CombinedPresentation } from '../types/Claim'
 import { attestationSetup } from './testSetup'
-import GabiVerifierChain from '../verification/GabiVerifier.chain'
 import { PgabiModName } from '../types/Chain'
+import GabiVerifier from '../verification/GabiVerifier'
 
 // creates instances for two claimers, attesters and corresponding accumulators each
 export async function actorSetupChain({
@@ -85,15 +85,17 @@ export async function presentationSetupChain({
   claimer,
   attester,
   credential,
+  accumulator,
   requestedAttributes = disclosedAttributes,
-  reqIndex = 'latest',
+  reqUpdatedAfter = new Date(),
   reqNonRevocationProof = true,
 }: {
   claimer: GabiClaimerChain
   attester: GabiAttesterChain
   credential: Credential
+  accumulator: Accumulator
   requestedAttributes?: string[]
-  reqIndex?: number | 'latest'
+  reqUpdatedAfter?: Date
   reqNonRevocationProof?: boolean
 }): Promise<{
   verifierSession: VerificationSession
@@ -106,11 +108,10 @@ export async function presentationSetupChain({
   const {
     session: verifierSession,
     message: presentationReq,
-  } = await GabiVerifierChain.requestPresentationChain({
+  } = await GabiVerifier.requestPresentation({
     requestedAttributes,
     reqNonRevocationProof,
-    reqIndex,
-    attesterIdentity: attester.getPublicIdentity(),
+    reqUpdatedAfter,
   })
   // response
   const presentation = await claimer.buildPresentation({
@@ -119,13 +120,11 @@ export async function presentationSetupChain({
     presentationReq,
   })
   // verify
-  const {
-    verified,
-    claim: aClaim,
-  } = await GabiVerifierChain.verifyPresentation({
+  const { verified, claim: aClaim } = await GabiVerifier.verifyPresentation({
     proof: presentation,
     verifierSession,
     attesterPubKey: attester.publicKey,
+    accumulator,
   })
   return {
     verifierSession,
@@ -141,7 +140,7 @@ export async function combinedSetupChain({
   attesters,
   accumulators,
   disclosedAttsArr,
-  indices,
+  reqUpdatesAfter,
   reqNonRevocationProof,
   inputCredentials,
 }: {
@@ -149,7 +148,7 @@ export async function combinedSetupChain({
   attesters: GabiAttesterChain[]
   accumulators: Accumulator[]
   disclosedAttsArr: string[][]
-  indices: Array<number | 'latest'>
+  reqUpdatesAfter: Date[]
   reqNonRevocationProof: boolean[]
   inputCredentials?: Credential[]
 }): Promise<{
@@ -163,8 +162,8 @@ export async function combinedSetupChain({
   if (
     attesters.length !== accumulators.length ||
     accumulators.length !== disclosedAttsArr.length ||
-    disclosedAttsArr.length !== indices.length ||
-    indices.length !== reqNonRevocationProof.length
+    disclosedAttsArr.length !== reqUpdatesAfter.length ||
+    reqUpdatesAfter.length !== reqNonRevocationProof.length
   ) {
     throw new Error('Array lengths dont match up in combined setup')
   }
@@ -195,7 +194,7 @@ export async function combinedSetupChain({
     (requestedAttributes, idx) => ({
       requestedAttributes,
       reqNonRevocationProof: reqNonRevocationProof[idx],
-      reqIndex: indices[idx],
+      reqUpdatedAfter: reqUpdatesAfter[idx],
       attesterIdentity: attesters[idx].getPublicIdentity(),
     })
   )
@@ -203,7 +202,7 @@ export async function combinedSetupChain({
   const {
     message: combinedPresentationReq,
     session: combinedSession,
-  } = await GabiVerifierChain.requestCombinedPresentationChain(requests)
+  } = await GabiVerifier.requestCombinedPresentation(requests)
 
   // build presentation
   const combinedPresentation = await claimer.buildCombinedPresentation({
@@ -212,13 +211,11 @@ export async function combinedSetupChain({
     attesterPubKeys,
   })
   // verify presentation
-  const {
-    verified,
-    claims,
-  } = await GabiVerifierChain.verifyCombinedPresentation({
+  const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
     proof: combinedPresentation,
     attesterPubKeys,
     verifierSession: combinedSession,
+    accumulators,
   })
   return {
     combinedPresentationReq,

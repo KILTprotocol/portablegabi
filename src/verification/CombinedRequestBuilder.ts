@@ -1,5 +1,4 @@
 import GabiVerifier from './GabiVerifier'
-import GabiVerifierChain from './GabiVerifier.chain'
 import {
   CombinedVerificationSession,
   CombinedPresentationRequest,
@@ -11,7 +10,7 @@ import {
 function isOnchain(
   s: IPresentationRequest | IPresentationRequestChain
 ): s is IPresentationRequestChain {
-  return 'attesterIdentity' in s && 'reqIndex' in s
+  return 'attesterIdentity' in s
 }
 
 export default class CombinedRequestBuilder<
@@ -33,7 +32,7 @@ export default class CombinedRequestBuilder<
     session: CombinedVerificationSession
   }> {
     if (isOnchain(this.partialRequests[0])) {
-      return GabiVerifierChain.requestCombinedPresentationChain(
+      return GabiVerifier.requestCombinedPresentation(
         this.partialRequests as IPresentationRequestChain[]
       )
     }

@@ -7,9 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"syscall/js"
+	"time"
 
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
 	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/revocation"
 )
 
 // RequestPresentation creates a message which request the discloser of
@@ -24,7 +26,11 @@ func RequestPresentation(this js.Value, inputs []js.Value) (interface{}, error) 
 	if err := json.Unmarshal([]byte(inputs[2].String()), &requestedAttributes); err != nil {
 		return nil, err
 	}
-	session, msg := credentials.RequestPresentation(SysParams, requestedAttributes, inputs[0].Bool(), (uint64)(inputs[1].Int()))
+	updateAfter, err := time.Parse(TimeFormat, inputs[1].String())
+	if err != nil {
+		return nil, err
+	}
+	session, msg := credentials.RequestPresentation(SysParams, requestedAttributes, inputs[0].Bool(), updateAfter)
 
 	return map[string]interface{}{
 		"session": session,
@@ -57,13 +63,14 @@ func RequestCombinedPresentation(this js.Value, inputs []js.Value) (interface{},
 // startVerificationSession) and the public key of the attester which attested
 // the claim
 func VerifyPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
-	if len(inputs) < 3 {
+	if len(inputs) < 4 {
 		return nil, errors.New("missing inputs")
 	}
 
 	proof := &credentials.PresentationResponse{}
 	session := &credentials.VerifierSession{}
 	attesterPubKey := &gabi.PublicKey{}
+	update := &revocation.Update{}
 	if err := json.Unmarshal([]byte(inputs[0].String()), proof); err != nil {
 		return nil, fmt.Errorf("could not parse string: '%s' into credentials.PresentationResponse", inputs[0].String())
 	}
@@ -73,7 +80,10 @@ func VerifyPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 	if err := json.Unmarshal([]byte(inputs[2].String()), attesterPubKey); err != nil {
 		return nil, fmt.Errorf("could not parse string: '%s' into gabi.PublicKey", inputs[2].String())
 	}
-	verified, rebuildClaim, err := credentials.VerifyPresentation(attesterPubKey, proof, session)
+	if err := json.Unmarshal([]byte(inputs[3].String()), update); err != nil {
+		return nil, fmt.Errorf("could not parse string: '%s' into revocation.Update", inputs[2].String())
+	}
+	verified, rebuildClaim, err := credentials.VerifyPresentation(attesterPubKey, update.SignedAccumulator, proof, session)
 	if err != nil {
 		return nil, err
 	}
@@ -88,13 +98,14 @@ func VerifyPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 // startVerificationSession) and the public key of the attester which attested
 // the claim
 func VerifyCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
-	if len(inputs) < 3 {
+	if len(inputs) < 4 {
 		return nil, errors.New("missing inputs")
 	}
-	
+
 	proof := &credentials.CombinedPresentationResponse{}
 	session := &credentials.CombinedVerifierSession{}
 	attesterPubKeys := []*gabi.PublicKey{}
+	updates := []*revocation.Update{}
 	if err := json.Unmarshal([]byte(inputs[0].String()), proof); err != nil {
 		return nil, err
 	}
@@ -104,7 +115,16 @@ func VerifyCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, 
 	if err := json.Unmarshal([]byte(inputs[2].String()), &attesterPubKeys); err != nil {
 		return nil, err
 	}
-	verified, rebuildClaims, err := credentials.VerifyCombinedPresentation(attesterPubKeys, proof, session)
+	if err := json.Unmarshal([]byte(inputs[3].String()), &updates); err != nil {
+		return nil, err
+	}
+	signedAccs := make([]*revocation.SignedAccumulator, len(updates))
+	for i, u := range updates {
+		signedAccs[i] = u.SignedAccumulator
+	}
+
+	verified, rebuildClaims, err := credentials.VerifyCombinedPresentation(attesterPubKeys,
+		signedAccs, proof, session)
 	if err != nil {
 		return nil, err
 	}

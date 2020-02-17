@@ -111,14 +111,16 @@ export async function presentationSetup({
   attester,
   credential,
   requestedAttributes = disclosedAttributes,
-  reqMinIndex = 0,
+  accumulator,
+  reqUpdatedAfter = new Date(),
   reqNonRevocationProof = true,
 }: {
   claimer: GabiClaimer
   attester: GabiAttester
   credential: Credential
+  accumulator: Accumulator
   requestedAttributes?: string[]
-  reqMinIndex?: number
+  reqUpdatedAfter?: Date
   reqNonRevocationProof?: boolean
 }): Promise<{
   verifierSession: VerificationSession
@@ -134,7 +136,7 @@ export async function presentationSetup({
   } = await GabiVerifier.requestPresentation({
     requestedAttributes,
     reqNonRevocationProof,
-    reqMinIndex,
+    reqUpdatedAfter,
   })
   // response
   const presentation = await claimer.buildPresentation({
@@ -147,6 +149,7 @@ export async function presentationSetup({
     proof: presentation,
     verifierSession,
     attesterPubKey: attester.publicKey,
+    accumulator,
   })
   return {
     verifierSession,
@@ -157,7 +160,7 @@ export async function presentationSetup({
   }
 }
 
-// creates mixed attestions that will fail buildCredential in almost all cases
+// creates mixed attestations that will fail buildCredential in almost all cases
 export async function mixedAttestationsSetup({
   gabiClaimer,
   gabiAttester,
@@ -312,7 +315,7 @@ export async function combinedSetup({
   attesters,
   accumulators,
   disclosedAttsArr,
-  minIndices,
+  reqUpdatesAfter,
   reqNonRevocationProof,
   inputCredentials,
 }: {
@@ -320,7 +323,7 @@ export async function combinedSetup({
   attesters: GabiAttester[]
   accumulators: Accumulator[]
   disclosedAttsArr: string[][]
-  minIndices: number[]
+  reqUpdatesAfter: Date[]
   reqNonRevocationProof: boolean[]
   inputCredentials?: Credential[]
 }): Promise<{
@@ -334,8 +337,8 @@ export async function combinedSetup({
   if (
     attesters.length !== accumulators.length ||
     accumulators.length !== disclosedAttsArr.length ||
-    disclosedAttsArr.length !== minIndices.length ||
-    minIndices.length !== reqNonRevocationProof.length
+    disclosedAttsArr.length !== reqUpdatesAfter.length ||
+    reqUpdatesAfter.length !== reqNonRevocationProof.length
   ) {
     throw new Error('Array lengths dont match up in combined setup')
   }
@@ -366,7 +369,7 @@ export async function combinedSetup({
     (requestedAttributes, idx) => ({
       requestedAttributes,
       reqNonRevocationProof: reqNonRevocationProof[idx],
-      reqMinIndex: minIndices[idx],
+      reqUpdatedAfter: reqUpdatesAfter[idx],
     })
   )
   // request combined presentation
@@ -385,6 +388,7 @@ export async function combinedSetup({
     proof: combinedPresentation,
     attesterPubKeys,
     verifierSession: combinedSession,
+    accumulators,
   })
   return {
     combinedPresentationReq,

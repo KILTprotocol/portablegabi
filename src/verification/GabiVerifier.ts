@@ -1,3 +1,4 @@
+import Accumulator from '../attestation/Accumulator'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
 import {
@@ -16,14 +17,18 @@ export default class GabiVerifier {
   public static async requestPresentation({
     requestedAttributes,
     reqNonRevocationProof,
-    reqMinIndex,
+    reqUpdatedAfter: reqUpdateAfter,
   }: IPresentationRequest): Promise<{
     message: PresentationRequest
     session: VerificationSession
   }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.requestPresentation,
-      [reqNonRevocationProof, reqMinIndex, JSON.stringify(requestedAttributes)]
+      [
+        reqNonRevocationProof,
+        reqUpdateAfter.toISOString(),
+        JSON.stringify(requestedAttributes),
+      ]
     )
     return {
       message: new PresentationRequest(message),
@@ -51,10 +56,12 @@ export default class GabiVerifier {
     proof,
     verifierSession,
     attesterPubKey,
+    accumulator,
   }: {
     proof: Presentation
     verifierSession: VerificationSession
     attesterPubKey: AttesterPublicKey
+    accumulator: Accumulator
   }): Promise<IVerifiedPresentation> {
     const response = await goWasmExec<{
       verified: string
@@ -63,6 +70,7 @@ export default class GabiVerifier {
       proof.valueOf(),
       verifierSession.valueOf(),
       attesterPubKey.valueOf(),
+      accumulator.valueOf(),
     ])
     return {
       verified: response.verified === 'true',
@@ -74,10 +82,12 @@ export default class GabiVerifier {
     proof,
     verifierSession,
     attesterPubKeys,
+    accumulators,
   }: {
     proof: CombinedPresentation
     verifierSession: CombinedVerificationSession
     attesterPubKeys: AttesterPublicKey[]
+    accumulators: Accumulator[]
   }): Promise<IVerifiedCombinedPresentation> {
     const response = await goWasmExec<{
       verified: string
@@ -86,6 +96,7 @@ export default class GabiVerifier {
       proof.valueOf(),
       verifierSession.valueOf(),
       `[${attesterPubKeys.join(',')}]`,
+      `[${accumulators.join(',')}]`,
     ])
     return {
       verified: response.verified === 'true',
