@@ -4,7 +4,7 @@ This TypeScript module of Portable Gabi enables the use of [Idemix](http://www.r
 
 A user (in the following referred to as "claimer") claiming something (e.g. citizenship in a specific country, ownership of a valid driver's license) can request an attestation from a trusted entity ("attester") and present these claims to multiple verifiers without revealing sensitive information uniquely tied to the claimer. The claimer can chose which attributes of the claim to disclose to a verifier.
 
-Note that due to the usage of a Go WASM (--> callbacks), all functions are asynchronous. It can happen that NodeJs does not exit automatically since we keep the WASM instance open. We recommend calling `goWasmExec()` from `/src/wasm/wasm_exec_wrapper` at the end.
+Note that due to the usage of a Go WASM via callbacks, all functions are asynchronous. It can happen that NodeJS does not exit automatically since we keep the WASM instance open. We recommend calling `goWasmClose()` from [wasm_exec_wrapper](src/wasm/wasm_exec_wrapper.ts) at the end.
 
 ## Installing
 
@@ -24,9 +24,9 @@ pushd go-wasm && go test ./... && popd
 
 ## Example
 
-The complete process is showcased in the [example file](docs/example.ts). Note that the key generation `GabiAttester.buildFromScratch()` takes about 10 minutes due to finding huge prime numbers being very slow in WASM.
+Please see the [example files](docs/examples/) for a showcase of on- and off-chain usage with single or combined credentials.
 
-```javascript
+```typescript
 /* (1) Claimer Setup */
 
 // (1.1) Example claim
@@ -40,7 +40,7 @@ const claim = {
 }
 
 // (1.2) Create claimer identity: Either from scratch or mnemonic seed
-const claimer = await GabiClaimer.buildFromScratch()
+const claimer = await GabiClaimer.create()
 const claimer = await GabiClaimer.buildFromMnemonic(
   'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
 )
@@ -51,20 +51,20 @@ const claimer = await GabiClaimer.buildFromMnemonic(
 const attester = await GabiAttester.buildFromScratch() // Takes very long due to finding safe prime numbers, ~10 minutes
 
 // (2.1) Create accumulator (for revocation)
-let update = await attester.createAccumulator()
+const accumulator = await attester.createAccumulator()
 
 /* (3) Attestation */
 
 // (3.1) Attester sends two nonces to claimer
 const {
   message: startAttestationMsg,
-  session: AttesterAttestationSession,
+  session: attestationSession,
 } = await attester.startAttestation()
 
 // (3.2) Claimer requests attestation
 const {
   message: attestationRequest,
-  session: claimerSignSession,
+  session: claimerSession,
 } = await claimer.requestAttestation({
   startAttestationMsg,
   claim: JSON.stringify(claim),
@@ -73,14 +73,14 @@ const {
 
 // (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
 const { attestation, witness } = await attester.issueAttestation({
-  attestationSession: AttesterAttestationSession,
+  attestationSession,
   attestationRequest,
-  update,
+  accumulator,
 })
 
 // (3.4) Claimer builds credential from attester's signature
 const credential = await claimer.buildCredential({
-  claimerSignSession,
+  claimerSession,
   attestation,
 })
 
@@ -92,8 +92,8 @@ const {
   message: presentationReq,
 } = await GabiVerifier.requestPresentation({
   requestedAttributes: ['contents.age', 'contents.city'],
-  requestNonRevocationProof: true,
-  minIndex: 1,
+  reqNonRevocationProof: true,
+  reqMinIndex: 0,
 })
 
 // (4.2) Claimer reveals attributes
@@ -105,8 +105,8 @@ const proof = await claimer.buildPresentation({
 
 // (4.3) Verifier verifies attributes
 const {
-  claim: verifiedClaim,
   verified,
+  claim: verifiedClaim,
 } = await GabiVerifier.verifyPresentation({
   proof,
   verifierSession,
@@ -116,19 +116,18 @@ const {
 /* (5) Revocation */
 
 // revoke witness of a credential
-update = await attester.revokeAttestation({ update, witness: other_witness })
+const accumulatorAfterRevocation = await attester.revokeAttestation({
+  update,
+  witness: other_witness,
+})
 
 // all claimers have to update their own credential with the new update.
-// This will only work for non revoked credentials
+// this will only work for non revoked credentials
 credential = await claimer.updateCredential({
-    credential,
-    attesterPubKey: attester.publicKey,
-    update,
-  })
-
-/* (6) Close WASM Instance */
-await goWasmClose()
-
+  credential,
+  attesterPubKey: attester.publicKey,
+  accumulator: accumulatorAfterRevocation,
+})
 ```
 
 ## Limitations
