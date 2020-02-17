@@ -4,10 +4,37 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/gabi/revocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestUpdateAttestedClaim(t *testing.T) {
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
+	require.NoError(t, err)
+
+	sigMsg := &gabi.IssueSignatureMessage{}
+	err = json.Unmarshal(byteAttestationResponse, sigMsg)
+	require.NoError(t, err)
+
+	claimer := &Claimer{}
+	err = json.Unmarshal(byteClaimer, claimer)
+	require.NoError(t, err)
+
+	cred := &AttestedClaim{}
+	err = json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+
+	update := &revocation.Update{}
+	err = json.Unmarshal(byteUpdate, update)
+	require.NoError(t, err)
+
+	err = cred.Update(attester.PublicKey, update)
+	assert.NoError(t, err, "Could not request attributes")
+}
 
 func TestGetAttributeIndices(t *testing.T) {
 	cred := &AttestedClaim{}

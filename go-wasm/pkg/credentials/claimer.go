@@ -7,7 +7,6 @@ import (
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/pkg/common"
-	"github.com/privacybydesign/gabi/revocation"
 	"github.com/tyler-smith/go-bip39"
 )
 
@@ -69,26 +68,6 @@ func (user *Claimer) BuildCredential(signature *gabi.IssueSignatureMessage, sess
 	attributes := session.Claim.ToAttributes()
 
 	return NewAttestedClaim(session.Cb, attributes, signature)
-}
-
-// UpdateCredential updates the non revocation witness using the provided update.
-func (user *Claimer) UpdateCredential(attesterPubK *gabi.PublicKey, attestation *AttestedClaim, update *revocation.Update) (*AttestedClaim, error) {
-	pubRevKey, err := attesterPubK.RevocationKey()
-	if err != nil {
-		return nil, err
-	}
-	witness := attestation.Credential.NonRevocationWitness
-
-	err = witness.Verify(pubRevKey)
-	if err != nil {
-		return nil, err
-	}
-
-	err = witness.Update(pubRevKey, update)
-	if err != nil {
-		return nil, err
-	}
-	return attestation, nil
 }
 
 // BuildPresentation reveals the attributes which are requested by the verifier.

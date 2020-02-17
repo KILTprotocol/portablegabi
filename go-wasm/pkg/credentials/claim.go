@@ -14,6 +14,7 @@ import (
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/gabi/revocation"
 )
 
 // Separator is used to separate JSON keys from each other.
@@ -128,6 +129,26 @@ func (attestedClaim *AttestedClaim) getAttributes() ([]*Attribute, error) {
 		return nil, errors.New("expected attributes inside credential to be sorted")
 	}
 	return attributes, nil
+}
+
+// Update updates the non revocation witness using the provided update.
+func (attestedClaim *AttestedClaim) Update(attesterPubK *gabi.PublicKey, update *revocation.Update) error {
+	pubRevKey, err := attesterPubK.RevocationKey()
+	if err != nil {
+		return err
+	}
+	witness := attestedClaim.Credential.NonRevocationWitness
+
+	err = witness.Verify(pubRevKey)
+	if err != nil {
+		return err
+	}
+
+	err = witness.Update(pubRevKey, update)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func newClaimFromAttribute(attributes []*Attribute) (Claim, error) {

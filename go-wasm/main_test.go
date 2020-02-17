@@ -11,6 +11,7 @@ import (
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/revocation"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -120,8 +121,21 @@ func TestCredential(t *testing.T) {
 
 	update, err = attester.RevokeAttestation(update, []*revocation.Witness{cred2.Credential.NonRevocationWitness})
 	require.NoError(t, err, "Could not revoke!")
-	cred, err = claimer.UpdateCredential(attester.PublicKey, cred, update)
+
+	err = cred2.Update(attester.PublicKey, update)
+	assert.Error(t, err, "The revoked credential should not be able to update")
+
+	// marshal credential to ensure that credential changed after update
+	btsCred, err := json.Marshal(cred)
+	require.NoError(t, err)
+
+	err = cred.Update(attester.PublicKey, update)
 	require.NoError(t, err, "Could not update cred!")
+
+	btsUpdatedCred, err := json.Marshal(cred)
+	require.NoError(t, err)
+	require.NotEqual(t, string(btsCred), string(btsUpdatedCred))
+
 	// increase the accumulator index and ensure that the witness was updates!
 	verify(t, attester, claimer, cred, claim, 1)
 }

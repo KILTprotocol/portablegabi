@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/privacybydesign/gabi"
-	"github.com/privacybydesign/gabi/revocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,32 +65,6 @@ func TestBuildCredential(t *testing.T) {
 	cred, err := claimer.BuildCredential(attestation, session)
 	assert.NoError(t, err)
 	assert.NotNil(t, cred)
-}
-
-func TestUpdateCredential(t *testing.T) {
-	attester := &Attester{}
-	err := json.Unmarshal(byteAttester, attester)
-	require.NoError(t, err)
-
-	sigMsg := &gabi.IssueSignatureMessage{}
-	err = json.Unmarshal(byteAttestationResponse, sigMsg)
-	require.NoError(t, err)
-
-	claimer := &Claimer{}
-	err = json.Unmarshal(byteClaimer, claimer)
-	require.NoError(t, err)
-
-	cred := &AttestedClaim{}
-	err = json.Unmarshal(byteCredential, cred)
-	require.NoError(t, err)
-
-	update := &revocation.Update{}
-	err = json.Unmarshal(byteUpdate, update)
-	require.NoError(t, err)
-
-	credR, err := claimer.UpdateCredential(attester.PublicKey, cred, update)
-	assert.NoError(t, err, "Could not request attributes")
-	assert.NotNil(t, credR)
 }
 
 func TestBuildPresentation(t *testing.T) {

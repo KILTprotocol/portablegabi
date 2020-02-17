@@ -187,5 +187,9 @@ func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	if err := json.Unmarshal([]byte(inputs[3].String()), issuerPubKey); err != nil {
 		return nil, err
 	}
-	return claimer.UpdateCredential(issuerPubKey, credential, update)
+
+	if err := claimer.UpdateCredential(issuerPubKey, credential, update); err != nil {
+		return nil, err
+	}
+	return credential, nil
 }
