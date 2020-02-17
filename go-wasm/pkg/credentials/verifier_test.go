@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/revocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +14,7 @@ func TestRequestPresentation(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	assert.True(t, success, "Error in sysparams")
 	disclosedAttr := []string{"contents.special", "ctype"}
-	session1, msg1 := RequestPresentation(sysParams, disclosedAttr, true, 1)
+	session1, msg1 := RequestPresentation(sysParams, disclosedAttr, true, earlier)
 	require.NotNil(t, msg1)
 	require.NotNil(t, session1)
 	require.Equal(t, msg1.Nonce, session1.Nonce)
@@ -21,7 +22,7 @@ func TestRequestPresentation(t *testing.T) {
 	require.Equal(t, msg1.PartialPresentationRequest.RequestedAttributes, disclosedAttr)
 
 	// nonce should be random
-	_, msg2 := RequestPresentation(sysParams, disclosedAttr, true, 1)
+	_, msg2 := RequestPresentation(sysParams, disclosedAttr, true, earlier)
 	require.NotEqual(t, msg1.Nonce, msg2.Nonce)
 }
 
@@ -32,12 +33,12 @@ func TestRequestCombinedPresentation(t *testing.T) {
 		PartialPresentationRequest{
 			RequestedAttributes:   []string{"contents.special", "ctype"},
 			ReqNonRevocationProof: true,
-			ReqMinIndex:           1,
+			ReqUpdateAfter:        earlier,
 		},
 		PartialPresentationRequest{
 			RequestedAttributes:   []string{"contents.age", "ctype"},
 			ReqNonRevocationProof: false,
-			ReqMinIndex:           1,
+			ReqUpdateAfter:        earlier,
 		},
 	}
 	session1, msg1 := RequestCombinedPresentation(sysParams, disclosedAttrs)
@@ -56,6 +57,10 @@ func TestVerifyPresentation(t *testing.T) {
 	err := json.Unmarshal(byteAttester, attester)
 	require.NoError(t, err)
 
+	update := &revocation.Update{}
+	err = json.Unmarshal(byteUpdate, update)
+	require.NoError(t, err)
+
 	presentationResponse := &PresentationResponse{}
 	err = json.Unmarshal(bytePresentationResponse, presentationResponse)
 	require.NoError(t, err)
@@ -64,7 +69,8 @@ func TestVerifyPresentation(t *testing.T) {
 	err = json.Unmarshal(byteVerifierSession, verifierSession)
 	require.NoError(t, err)
 
-	ok, claim, err := VerifyPresentation(attester.PublicKey, presentationResponse, verifierSession)
+	ok, claim, err := VerifyPresentation(attester.PublicKey, update.SignedAccumulator,
+		presentationResponse, verifierSession)
 	assert.True(t, ok)
 	require.NoError(t, err)
 	require.NotNil(t, claim)
@@ -82,6 +88,10 @@ func TestVerifyCombinedPresentation(t *testing.T) {
 	err := json.Unmarshal(byteAttester, attester)
 	require.NoError(t, err)
 
+	update := &revocation.Update{}
+	err = json.Unmarshal(byteUpdate, update)
+	require.NoError(t, err)
+
 	presentationResponse := &CombinedPresentationResponse{}
 	err = json.Unmarshal(byteCombPresentationResponse, presentationResponse)
 	require.NoError(t, err)
@@ -90,7 +100,13 @@ func TestVerifyCombinedPresentation(t *testing.T) {
 	err = json.Unmarshal(byteCombVerifierSession, verifierSession)
 	require.NoError(t, err)
 
-	ok, claims, err := VerifyCombinedPresentation([]*gabi.PublicKey{attester.PublicKey, attester.PublicKey}, presentationResponse, verifierSession)
+	ok, claims, err := VerifyCombinedPresentation([]*gabi.PublicKey{
+		attester.PublicKey,
+		attester.PublicKey,
+	}, []*revocation.SignedAccumulator{
+		update.SignedAccumulator,
+		update.SignedAccumulator,
+	}, presentationResponse, verifierSession)
 	assert.True(t, ok)
 	require.NoError(t, err)
 	require.NotNil(t, claims)
@@ -101,6 +117,10 @@ func TestVerifyCombinedPresentationLessKeys(t *testing.T) {
 	err := json.Unmarshal(byteAttester, attester)
 	require.NoError(t, err)
 
+	update := &revocation.Update{}
+	err = json.Unmarshal(byteUpdate, update)
+	require.NoError(t, err)
+
 	presentationResponse := &CombinedPresentationResponse{}
 	err = json.Unmarshal(byteCombPresentationResponse, presentationResponse)
 	require.NoError(t, err)
@@ -109,7 +129,10 @@ func TestVerifyCombinedPresentationLessKeys(t *testing.T) {
 	err = json.Unmarshal(byteCombVerifierSession, verifierSession)
 	require.NoError(t, err)
 
-	ok, claims, err := VerifyCombinedPresentation([]*gabi.PublicKey{attester.PublicKey}, presentationResponse, verifierSession)
+	ok, claims, err := VerifyCombinedPresentation([]*gabi.PublicKey{attester.PublicKey},
+		[]*revocation.SignedAccumulator{
+			update.SignedAccumulator,
+		}, presentationResponse, verifierSession)
 	assert.False(t, ok)
 	require.NoError(t, err)
 	require.Nil(t, claims)

@@ -92,7 +92,7 @@ func TestBuildPresentation(t *testing.T) {
 	emptyAttributes := []string{}
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
-	_, reqPresentation = RequestPresentation(sysParams, emptyAttributes, true, 1)
+	_, reqPresentation = RequestPresentation(sysParams, emptyAttributes, true, earlier)
 	_, err = claimer.BuildPresentation(attester.PublicKey, cred, reqPresentation)
 	assert.Equal(t, err, errors.New("requested attributes should not be empty"))
 }

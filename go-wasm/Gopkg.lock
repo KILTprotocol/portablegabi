@@ -91,7 +91,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c07d68429045d76c38bde3e9f42818ec92f43318d1db6e9bf7f7068c51061374"
+  digest = "1:67e4da3b73984b9c81bf3e23b10ba0274203c7b169eb9324aaf2ca36546987bd"
   name = "github.com/privacybydesign/gabi"
   packages = [
     ".",
@@ -103,7 +103,7 @@
     "signed",
   ]
   pruneopts = "UT"
-  revision = "efe9b0740db781769c84fd4032ba5a1e6df34d5e"
+  revision = "3980bf90ec57fa74a97c1bd998e41ce4d7f4b0e2"
   source = "https://github.com/weichweich/gabi.git"
 
 [[projects]]

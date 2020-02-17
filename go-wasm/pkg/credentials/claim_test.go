@@ -3,6 +3,7 @@ package credentials
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
@@ -53,7 +54,7 @@ func TestGetAttributeIndices(t *testing.T) {
 func TestGetMissingAttribute(t *testing.T) {
 	req := &PartialPresentationRequest{
 		ReqNonRevocationProof: true,
-		ReqMinIndex:           1,
+		ReqUpdateAfter:        time.Now().Add(time.Duration(-10000)),
 		RequestedAttributes: []string{
 			"ctype",
 			"contents.age",
