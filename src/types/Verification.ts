@@ -1,15 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
-/* eslint-disable-next-line max-classes-per-file */
-import { IPublicIdentity } from './Attestation'
+/* eslint-disable max-classes-per-file */
 
 export interface IPresentationRequest {
   requestedAttributes: string[]
   reqNonRevocationProof: boolean
   reqUpdatedAfter: Date
-}
-
-export interface IPresentationRequestChain extends IPresentationRequest {
-  attesterIdentity: IPublicIdentity
 }
 
 export interface IVerifiedPresentation {

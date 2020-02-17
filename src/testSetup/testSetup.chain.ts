@@ -15,9 +15,9 @@ import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import {
   VerificationSession,
   PresentationRequest,
-  IPresentationRequestChain,
   CombinedPresentationRequest,
   CombinedVerificationSession,
+  IPresentationRequest,
 } from '../types/Verification'
 import { Presentation, Credential, CombinedPresentation } from '../types/Claim'
 import { attestationSetup } from './testSetup'
@@ -190,12 +190,11 @@ export async function combinedSetupChain({
     )
   }
   // build combined requests
-  const requests: IPresentationRequestChain[] = disclosedAttsArr.map(
+  const requests: IPresentationRequest[] = disclosedAttsArr.map(
     (requestedAttributes, idx) => ({
       requestedAttributes,
       reqNonRevocationProof: reqNonRevocationProof[idx],
       reqUpdatedAfter: reqUpdatesAfter[idx],
-      attesterIdentity: attesters[idx].getPublicIdentity(),
     })
   )
   // request combined presentation

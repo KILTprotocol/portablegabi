@@ -4,7 +4,6 @@ import GabiAttester from './attestation/GabiAttester'
 import Accumulator from './attestation/Accumulator'
 import GabiAttesterChain from './attestation/GabiAttester.chain'
 import GabiVerifier from './verification/GabiVerifier'
-import GabiVerifierChain from './verification/GabiVerifier.chain'
 import CombinedRequestBuilder from './verification/CombinedRequestBuilder'
 import Blockchain from './blockchain/Blockchain'
 import BlockchainError from './blockchain/ChainError'
@@ -26,7 +25,6 @@ export default {
   GabiVerifier,
   GabiClaimerChain,
   GabiAttesterChain,
-  GabiVerifierChain,
   Accumulator,
   Blockchain,
   BlockchainError,

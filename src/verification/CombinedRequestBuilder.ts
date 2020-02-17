@@ -3,26 +3,18 @@ import {
   CombinedVerificationSession,
   CombinedPresentationRequest,
   IPresentationRequest,
-  IPresentationRequestChain,
 } from '../types/Verification'
 
-// Typeguard to check conditional generic
-function isOnchain(
-  s: IPresentationRequest | IPresentationRequestChain
-): s is IPresentationRequestChain {
-  return 'attesterIdentity' in s
-}
-
-export default class CombinedRequestBuilder<
-  T extends IPresentationRequest | IPresentationRequestChain
-> {
-  private partialRequests: T[]
+export default class CombinedRequestBuilder {
+  private partialRequests: IPresentationRequest[]
 
   constructor() {
     this.partialRequests = []
   }
 
-  public requestPresentation(partialRequest: T): CombinedRequestBuilder<T> {
+  public requestPresentation(
+    partialRequest: IPresentationRequest
+  ): CombinedRequestBuilder {
     this.partialRequests.push(partialRequest)
     return this
   }
@@ -31,11 +23,6 @@ export default class CombinedRequestBuilder<
     message: CombinedPresentationRequest
     session: CombinedVerificationSession
   }> {
-    if (isOnchain(this.partialRequests[0])) {
-      return GabiVerifier.requestCombinedPresentation(
-        this.partialRequests as IPresentationRequestChain[]
-      )
-    }
     return GabiVerifier.requestCombinedPresentation(
       this.partialRequests as IPresentationRequest[]
     )

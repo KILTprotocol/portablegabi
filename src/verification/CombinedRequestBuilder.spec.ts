@@ -13,7 +13,6 @@ import {
 } from '../testSetup/testSetup'
 import GabiVerifier from './GabiVerifier'
 import CombinedRequestBuilder from './CombinedRequestBuilder'
-import { IPresentationRequest } from '../types/Verification'
 import Accumulator from '../attestation/Accumulator'
 
 async function expectCombinedSetupToBe(
@@ -67,9 +66,7 @@ describe('Test combined requests', () => {
     ;({ attesters, accumulators, claimers } = await actorSetup())
   })
   it('Checks valid CombinedRequestBuilder', async () => {
-    const { message, session } = await new CombinedRequestBuilder<
-      IPresentationRequest
-    >()
+    const { message, session } = await new CombinedRequestBuilder()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
@@ -99,7 +96,7 @@ describe('Test combined requests', () => {
     const {
       message: combinedPresentationReq,
       session: combinedSession,
-    } = await new CombinedRequestBuilder<IPresentationRequest>()
+    } = await new CombinedRequestBuilder()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
         reqNonRevocationProof: true,
