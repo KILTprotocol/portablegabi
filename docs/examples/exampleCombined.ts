@@ -30,7 +30,7 @@ async function completeProcessCombined(
   reqMinIndexArr: [number, number] = [0, 0],
   reqNonRevocationProofArr: [boolean, boolean] = [true, true]
 ): Promise<boolean> {
-  // create claimer and both attester entitites
+  // create claimer and both attester entities
   const {
     claimer,
     attester: attester1,
@@ -75,8 +75,9 @@ async function completeProcessCombined(
     attesters: [attester1, attester2],
     credentials: [credential1, credential2],
     requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
-    reqMinIndexArr, // require accumulator's revocation index of 0 or greater
+    reqUpdatesAfter: [new Date(), new Date()], // requires that witnesses are updates after specified date or using the latests available accumulator
     reqNonRevocationProofArr, // check revocation status
+    accumulators: [accumulator1, accumulator2],
   })
   console.log(
     `Expected outcome achieved? ${expectedVerificationOutcome === verified}`

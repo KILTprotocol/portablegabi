@@ -57,7 +57,7 @@ async function runChainExample(): Promise<void> {
   const accumulatorCount = await blockchain.getAccumulatorCount(
     attester.address
   )
-  const index = await accumulatorAfterRevo.getRevIndex(attester.publicKey)
+
   console.log('Post-revocation Count: ', accumulatorCount)
   console.groupEnd()
 
@@ -77,8 +77,9 @@ async function runChainExample(): Promise<void> {
     attester,
     credential: credentialUpdated,
     requestedAttributes: disclosedAttributes,
-    reqIndex: 'latest',
+    reqUpdatedAfter: new Date(),
     reqNonRevocationProof: true,
+    accumulator: accumulatorAfterRevo,
   })
   // build credential2
   let credRev = await claimer.buildCredential({
@@ -106,8 +107,9 @@ async function runChainExample(): Promise<void> {
     attester,
     credential: credRev,
     requestedAttributes: disclosedAttributes,
-    reqIndex: 'latest',
+    reqUpdatedAfter: new Date(),
     reqNonRevocationProof: true,
+    accumulator: accumulatorAfterRevo,
   })
 
   // verify credential #2.2
@@ -116,8 +118,9 @@ async function runChainExample(): Promise<void> {
     attester,
     credential: credRev,
     requestedAttributes: disclosedAttributes,
-    reqMinIndex: index,
+    reqUpdatedAfter: new Date(),
     reqNonRevocationProof: true,
+    accumulator: accumulatorAfterRevo,
   })
   console.table({
     isVerified: [verified, verifiedRev, verifiedRev2],

@@ -4,6 +4,7 @@ import GabiAttester from '../../../src/attestation/GabiAttester'
 import { Credential } from '../../../src/types/Claim'
 import GabiVerifier from '../../../src/verification/GabiVerifier'
 import CombinedRequestBuilder from '../../../src/verification/CombinedRequestBuilder'
+import Accumulator from '../../../src/attestation/Accumulator'
 
 // runs a complete verification process on a credential
 export async function verificationProcessCombined({
@@ -11,15 +12,17 @@ export async function verificationProcessCombined({
   attesters,
   credentials,
   requestedAttributesArr,
-  reqMinIndexArr,
+  reqUpdatesAfter,
   reqNonRevocationProofArr,
+  accumulators,
 }: {
   claimer: GabiClaimer
   attesters: GabiAttester[]
   credentials: Credential[]
   requestedAttributesArr: string[][]
-  reqMinIndexArr: number[]
+  reqUpdatesAfter: Date[]
   reqNonRevocationProofArr: boolean[]
+  accumulators: Accumulator[]
 }): Promise<{
   verified: boolean
   verifiedClaims: object[]
@@ -27,8 +30,8 @@ export async function verificationProcessCombined({
   if (
     attesters.length !== credentials.length ||
     credentials.length !== requestedAttributesArr.length ||
-    requestedAttributesArr.length !== reqMinIndexArr.length ||
-    reqMinIndexArr.length !== reqNonRevocationProofArr.length ||
+    requestedAttributesArr.length !== reqUpdatesAfter.length ||
+    reqUpdatesAfter.length !== reqNonRevocationProofArr.length ||
     reqNonRevocationProofArr.length !== attesters.length
   ) {
     throw new Error(
@@ -46,7 +49,7 @@ export async function verificationProcessCombined({
         cBuilder.requestPresentation({
           requestedAttributes,
           reqNonRevocationProof: reqNonRevocationProofArr[idx],
-          reqMinIndex: reqMinIndexArr[idx],
+          reqUpdatedAfter: reqUpdatesAfter[idx],
         }),
       new CombinedRequestBuilder()
     )
@@ -67,6 +70,7 @@ export async function verificationProcessCombined({
     proof,
     attesterPubKeys,
     verifierSession: session,
+    accumulators,
   })
 
   console.log(`Claim could ${verified ? 'be verified' : 'not be verified'}`)

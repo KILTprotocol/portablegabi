@@ -17,7 +17,7 @@ export default class GabiVerifier {
   public static async requestPresentation({
     requestedAttributes,
     reqNonRevocationProof,
-    reqUpdatedAfter: reqUpdateAfter,
+    reqUpdatedAfter,
   }: IPresentationRequest): Promise<{
     message: PresentationRequest
     session: VerificationSession
@@ -26,7 +26,7 @@ export default class GabiVerifier {
       WasmHooks.requestPresentation,
       [
         reqNonRevocationProof,
-        reqUpdateAfter.toISOString(),
+        reqUpdatedAfter.toISOString(),
         JSON.stringify(requestedAttributes),
       ]
     )

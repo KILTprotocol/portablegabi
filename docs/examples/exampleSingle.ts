@@ -15,7 +15,7 @@ async function completeProcessSingle(
   reqNonRevocationProof = true
 ): Promise<boolean> {
   console.group()
-  // create claimer and attester entitites
+  // create claimer and attester entities
   const { claimer, attester, accumulator } = await actorProcess({
     claimerMnemonic: mnemonic,
     claimerMnemonicPw: 'password',
@@ -42,8 +42,9 @@ async function completeProcessSingle(
     attester,
     credential,
     requestedAttributes: disclosedAttributes,
-    reqMinIndex, // require accumulator's revocation index of 0 or greater
+    reqUpdatedAfter: new Date(), // require that the witness is not older than the provided date or updated to the latest accumulator
     reqNonRevocationProof, // check revocation status
+    accumulator,
   })
   console.groupEnd()
   console.log(

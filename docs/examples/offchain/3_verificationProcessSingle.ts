@@ -7,6 +7,7 @@ import {
 } from '../../../src/types/Verification'
 import { Presentation, Credential } from '../../../src/types/Claim'
 import GabiVerifier from '../../../src/verification/GabiVerifier'
+import Accumulator from '../../../src/attestation/Accumulator'
 
 // runs a complete verification process on a credential
 export async function verificationProcessSingle({
@@ -14,15 +15,17 @@ export async function verificationProcessSingle({
   attester,
   credential,
   requestedAttributes,
-  reqMinIndex,
+  reqUpdatedAfter,
   reqNonRevocationProof,
+  accumulator,
 }: {
   claimer: GabiClaimer
   attester: GabiAttester
   credential: Credential
   requestedAttributes: string[]
-  reqMinIndex: number
+  reqUpdatedAfter: Date
   reqNonRevocationProof: boolean
+  accumulator: Accumulator
 }): Promise<{
   verifierSession: VerificationSession
   presentationReq: PresentationRequest
@@ -37,7 +40,7 @@ export async function verificationProcessSingle({
   } = await GabiVerifier.requestPresentation({
     requestedAttributes,
     reqNonRevocationProof,
-    reqMinIndex,
+    reqUpdatedAfter,
   })
 
   // claimer commits to nonce and builds presentation from credential
@@ -54,6 +57,7 @@ export async function verificationProcessSingle({
     proof: presentation,
     verifierSession,
     attesterPubKey: attester.publicKey,
+    accumulator,
   })
   console.log(`Claim could ${verified ? 'be verified' : 'not be verified'}`)
   return {
