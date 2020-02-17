@@ -11,7 +11,7 @@
  */
 import { ApiPromise, WsProvider } from '@polkadot/api'
 import Blockchain from '../blockchain/Blockchain'
-import { PgabiModName, IBlockchainApi, IPortablegabiApi } from '../types/Chain'
+import { PgabiModName, IPortablegabiApi } from '../types/Chain'
 
 type Params = {
   host?: string
@@ -26,13 +26,13 @@ const DEFAULT_PARAMS: Params = {
   pgabiModName: DEFAULT_MOD_NAME,
 }
 
-let connectionCache: Promise<IBlockchainApi> | null = null
+let connectionCache: Promise<Blockchain> | null = null
 
 export async function buildConnection({
   host = DEFAULT_WS_ADDRESS,
   types = {},
   pgabiModName = DEFAULT_MOD_NAME,
-}: Params = DEFAULT_PARAMS): Promise<IBlockchainApi> {
+}: Params = DEFAULT_PARAMS): Promise<Blockchain> {
   const provider = new WsProvider(host)
   const api: ApiPromise = await ApiPromise.create({
     provider,
@@ -48,7 +48,7 @@ export async function getCached({
   host = DEFAULT_WS_ADDRESS,
   types = {},
   pgabiModName = DEFAULT_MOD_NAME,
-}: Params = DEFAULT_PARAMS): Promise<IBlockchainApi> {
+}: Params = DEFAULT_PARAMS): Promise<Blockchain> {
   if (!connectionCache) {
     connectionCache = buildConnection({ host, types, pgabiModName })
   }
@@ -59,7 +59,7 @@ export async function connect({
   host = DEFAULT_WS_ADDRESS,
   types = {},
   pgabiModName = DEFAULT_MOD_NAME,
-}: Params = DEFAULT_PARAMS): Promise<IBlockchainApi> {
+}: Params = DEFAULT_PARAMS): Promise<Blockchain> {
   return getCached({ host, types, pgabiModName })
 }
 
