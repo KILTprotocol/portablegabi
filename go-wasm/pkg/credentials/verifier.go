@@ -16,7 +16,7 @@ type (
 		Context               *big.Int  `json:"context"`
 		Nonce                 *big.Int  `json:"nonce"`
 		ReqNonRevocationProof bool      `json:"reqNonRevocationProof"`
-		ReqUpdateAfter        time.Time `json:"reqUpdateAfter"`
+		ReqUpdatedAfter       time.Time `json:"ReqUpdatedAfter"`
 	}
 
 	// CombinedVerifierSession stores the information for a combined presentation session.
@@ -39,13 +39,13 @@ func RequestPresentation(sysParams *gabi.SystemParameters, discloseAttributes []
 			Context:               context,
 			Nonce:                 nonce,
 			ReqNonRevocationProof: requestNonRevProof,
-			ReqUpdateAfter:        updateAfter,
+			ReqUpdatedAfter:       updateAfter,
 		}, &PresentationRequest{
 			Context: context,
 			PartialPresentationRequest: &PartialPresentationRequest{
 				RequestedAttributes:   discloseAttributes,
 				ReqNonRevocationProof: requestNonRevProof,
-				ReqUpdateAfter:        updateAfter,
+				ReqUpdatedAfter:       updateAfter,
 			},
 			Nonce: nonce,
 		}
@@ -68,7 +68,7 @@ func RequestCombinedPresentation(sysParams *gabi.SystemParameters,
 }
 
 func verifyAccumulatorInProof(issuerPubK *gabi.PublicKey, latestSignAcc *revocation.SignedAccumulator,
-	reqUpdateAfter time.Time,
+	reqUpdatedAfter time.Time,
 	proof *gabi.ProofD) (bool, error) {
 	if proof.HasNonRevocationProof() {
 		revPubKey, err := issuerPubK.RevocationKey()
@@ -79,7 +79,7 @@ func verifyAccumulatorInProof(issuerPubK *gabi.PublicKey, latestSignAcc *revocat
 		if err != nil {
 			return false, nil
 		}
-		if acc.Time.Before(reqUpdateAfter) {
+		if acc.Time.Before(reqUpdatedAfter) {
 			latestAcc, err := latestSignAcc.UnmarshalVerify(revPubKey)
 			if err != nil {
 				return false, err
@@ -108,7 +108,7 @@ func VerifyPresentation(issuerPubK *gabi.PublicKey, latestAcc *revocation.Signed
 		return false, nil, nil
 	}
 	if session.ReqNonRevocationProof {
-		verified, err := verifyAccumulatorInProof(issuerPubK, latestAcc, session.ReqUpdateAfter, &signedAttributes.Proof)
+		verified, err := verifyAccumulatorInProof(issuerPubK, latestAcc, session.ReqUpdatedAfter, &signedAttributes.Proof)
 		if err != nil || !verified {
 			return false, nil, err
 		}
@@ -146,7 +146,7 @@ func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey,
 			}
 			if partialReq.ReqNonRevocationProof {
 				verified, err := verifyAccumulatorInProof(attesterPubKeys[i], latestAccs[i],
-					partialReq.ReqUpdateAfter, proofD)
+					partialReq.ReqUpdatedAfter, proofD)
 				if err != nil || !verified {
 					return false, nil, err
 				}

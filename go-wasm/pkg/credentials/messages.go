@@ -34,7 +34,7 @@ type (
 	PartialPresentationRequest struct {
 		RequestedAttributes   []string  `json:"requestedAttributes"`
 		ReqNonRevocationProof bool      `json:"reqNonRevocationProof"`
-		ReqUpdateAfter        time.Time `json:"reqUpdateAfter"`
+		ReqUpdatedAfter       time.Time `json:"reqUpdatedAfter"`
 	}
 
 	// CombinedPresentationRequest request multiple credentials from a claimer

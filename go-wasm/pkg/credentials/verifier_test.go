@@ -14,7 +14,7 @@ func TestRequestPresentation(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	assert.True(t, success, "Error in sysparams")
 	disclosedAttr := []string{"contents.special", "ctype"}
-	session1, msg1 := RequestPresentation(sysParams, disclosedAttr, true, earlier)
+	session1, msg1 := RequestPresentation(sysParams, disclosedAttr, true, future)
 	require.NotNil(t, msg1)
 	require.NotNil(t, session1)
 	require.Equal(t, msg1.Nonce, session1.Nonce)
@@ -22,7 +22,7 @@ func TestRequestPresentation(t *testing.T) {
 	require.Equal(t, msg1.PartialPresentationRequest.RequestedAttributes, disclosedAttr)
 
 	// nonce should be random
-	_, msg2 := RequestPresentation(sysParams, disclosedAttr, true, earlier)
+	_, msg2 := RequestPresentation(sysParams, disclosedAttr, true, future)
 	require.NotEqual(t, msg1.Nonce, msg2.Nonce)
 }
 
@@ -33,12 +33,12 @@ func TestRequestCombinedPresentation(t *testing.T) {
 		PartialPresentationRequest{
 			RequestedAttributes:   []string{"contents.special", "ctype"},
 			ReqNonRevocationProof: true,
-			ReqUpdateAfter:        earlier,
+			ReqUpdatedAfter:       future,
 		},
 		PartialPresentationRequest{
 			RequestedAttributes:   []string{"contents.age", "ctype"},
 			ReqNonRevocationProof: false,
-			ReqUpdateAfter:        earlier,
+			ReqUpdatedAfter:       future,
 		},
 	}
 	session1, msg1 := RequestCombinedPresentation(sysParams, disclosedAttrs)

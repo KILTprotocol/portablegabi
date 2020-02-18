@@ -172,7 +172,7 @@ describe('Test combined requests', () => {
   it('Should work for any number of combinations', async () => {
     // to keep the runtime small, we test only 5 combinations, but this can be set to any number
     const n = 5
-    const range = new Array(n).fill(0)
+    const range = new Array(n).fill(0).map(d => new Date(d))
     await expectCombinedSetupToBe(true, {
       claimer: claimers[0],
       attesters: range.map((_, idx) => attesters[idx % 2]),

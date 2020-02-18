@@ -54,7 +54,7 @@ func TestGetAttributeIndices(t *testing.T) {
 func TestGetMissingAttribute(t *testing.T) {
 	req := &PartialPresentationRequest{
 		ReqNonRevocationProof: true,
-		ReqUpdateAfter:        time.Now().Add(time.Duration(-10000)),
+		ReqUpdatedAfter:       time.Now().Add(time.Duration(-OneYear)),
 		RequestedAttributes: []string{
 			"ctype",
 			"contents.age",
