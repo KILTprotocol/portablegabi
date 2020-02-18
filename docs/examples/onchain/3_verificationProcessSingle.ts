@@ -6,7 +6,8 @@ import {
   PresentationRequest,
 } from '../../../src/types/Verification'
 import { Presentation, Credential } from '../../../src/types/Claim'
-import GabiVerifierChain from '../../../src/verification/GabiVerifier.chain'
+import GabiVerifier from '../../../src/verification/GabiVerifier'
+import Accumulator from '../../../src/attestation/Accumulator'
 
 // runs a complete verification process on a credential
 export async function verificationProcessSingleChain({
@@ -14,15 +15,17 @@ export async function verificationProcessSingleChain({
   attester,
   credential,
   requestedAttributes,
-  reqIndex,
+  reqUpdatedAfter,
   reqNonRevocationProof,
+  accumulator,
 }: {
   claimer: GabiClaimerChain
   attester: GabiAttesterChain
   credential: Credential
   requestedAttributes: string[]
-  reqIndex: number | 'latest'
+  reqUpdatedAfter: Date
   reqNonRevocationProof: boolean
+  accumulator: Accumulator
 }): Promise<{
   verifierSession: VerificationSession
   presentationReq: PresentationRequest
@@ -34,11 +37,10 @@ export async function verificationProcessSingleChain({
   const {
     session: verifierSession,
     message: presentationReq,
-  } = await GabiVerifierChain.requestPresentationChain({
+  } = await GabiVerifier.requestPresentation({
     requestedAttributes,
     reqNonRevocationProof,
-    reqIndex,
-    attesterIdentity: attester.getPublicIdentity(),
+    reqUpdatedAfter,
   })
 
   // claimer commits to nonce and builds presentation from credential
@@ -52,10 +54,11 @@ export async function verificationProcessSingleChain({
   const {
     verified,
     claim: verifiedClaim,
-  } = await GabiVerifierChain.verifyPresentation({
+  } = await GabiVerifier.verifyPresentation({
     proof: presentation,
     verifierSession,
     attesterPubKey: attester.publicKey,
+    accumulator,
   })
   console.log(`Claim could ${verified ? 'be verified' : 'not be verified'}`)
   return {

@@ -27,7 +27,7 @@ const {
 async function completeProcessCombined(
   expectedVerificationOutcome: boolean,
   doRevocation = false,
-  reqMinIndexArr: [number, number] = [0, 0],
+  reqUpdatesAfter: [Date, Date] = [new Date(), new Date()],
   reqNonRevocationProofArr: [boolean, boolean] = [true, true]
 ): Promise<boolean> {
   // create claimer and both attester entities
@@ -75,7 +75,7 @@ async function completeProcessCombined(
     attesters: [attester1, attester2],
     credentials: [credential1, credential2],
     requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
-    reqUpdatesAfter: [new Date(), new Date()], // requires that witnesses are updates after specified date or using the latests available accumulator
+    reqUpdatesAfter, // requires that witnesses are updates after specified date or using the latests available accumulator
     reqNonRevocationProofArr, // check revocation status
     accumulators: [accumulator1, accumulator2],
   })
@@ -88,20 +88,25 @@ async function completeProcessCombined(
 // all calls of completeProcessCombined should return true
 async function completeProcessCombinedExamples(): Promise<void> {
   // without credential revocation
-  await completeProcessCombined(true, false, [0, 0])
+  await completeProcessCombined(true, false, [new Date(), new Date()])
 
   // without credential revocation but revocation index out of range (too big)
-  await completeProcessCombined(false, false, [0, 1])
-  await completeProcessCombined(false, false, [1, 0])
+  await completeProcessCombined(false, false, [new Date(), new Date(1)])
+  await completeProcessCombined(false, false, [new Date(1), new Date()])
 
   // with revocation of 1st credential
-  await completeProcessCombined(false, true, [1, 0])
+  await completeProcessCombined(false, true, [new Date(1), new Date()])
 
   // with revocation (1st) but revocation index out of range (too small/old)
-  await completeProcessCombined(true, true, [0, 0])
+  await completeProcessCombined(true, true, [new Date(), new Date()])
 
   // with revocation (1st) but revocation not required in verification
-  await completeProcessCombined(true, true, [1, 0], [false, true])
+  await completeProcessCombined(
+    true,
+    true,
+    [new Date(1), new Date()],
+    [false, true]
+  )
 
   // close wasm
   return goWasmClose()

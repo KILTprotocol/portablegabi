@@ -26,16 +26,16 @@ async function completeProcessCombined({
   blockchain,
   expectedVerificationOutcome,
   doRevocation = false,
-  reqIndexArr = ['latest', 'latest'],
+  reqUpdatedAfter = [new Date(), new Date()],
   reqNonRevocationProofArr = [true, true],
 }: {
   blockchain: Blockchain
   expectedVerificationOutcome: boolean
   doRevocation: boolean
-  reqIndexArr: [number | 'latest', number | 'latest']
+  reqUpdatedAfter: [Date, Date]
   reqNonRevocationProofArr: [boolean, boolean]
 }): Promise<boolean> {
-  // create claimer and both attester entitites
+  // create claimer and both attester entities
   const {
     claimer,
     attester: attester1,
@@ -75,7 +75,7 @@ async function completeProcessCombined({
   // (optionally) revoke credentials, could revoke any or both to fail verification process
   if (doRevocation) {
     console.log(
-      'Accumulatorcount before revocation:',
+      'AccumulatorCount before revocation:',
       await blockchain.getAccumulatorCount(attester1.address)
     )
     await attester1.revokeAttestation({
@@ -84,7 +84,7 @@ async function completeProcessCombined({
     })
     await blockchain.waitForNextBlock()
     console.log(
-      'Accumulatorcount after revocation:',
+      'AccumulatorCount after revocation:',
       await blockchain.getAccumulatorCount(attester1.address)
     )
   }
@@ -95,7 +95,7 @@ async function completeProcessCombined({
     attesters: [attester1, attester2],
     credentials: [credential1, credential2],
     requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
-    reqIndexArr, // require accumulator's revocation index of 0 or greater
+    reqUpdatedAfter, // require accumulator's revocation index of 0 or greater
     reqNonRevocationProofArr, // check revocation status
   })
   console.log(
@@ -117,7 +117,7 @@ async function completeProcessCombinedExamples(): Promise<void> {
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: false,
-    reqIndexArr: ['latest', 'latest'],
+    reqUpdatedAfter: [new Date(), new Date()],
     reqNonRevocationProofArr: [true, true],
   })
 
@@ -126,7 +126,7 @@ async function completeProcessCombinedExamples(): Promise<void> {
     blockchain,
     expectedVerificationOutcome: false,
     doRevocation: true,
-    reqIndexArr: ['latest', 'latest'],
+    reqUpdatedAfter: [new Date(), new Date()],
     reqNonRevocationProofArr: [true, true],
   })
 
@@ -135,7 +135,7 @@ async function completeProcessCombinedExamples(): Promise<void> {
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: true,
-    reqIndexArr: ['latest', 'latest'],
+    reqUpdatedAfter: [new Date(), new Date()],
     reqNonRevocationProofArr: [false, true],
   })
 

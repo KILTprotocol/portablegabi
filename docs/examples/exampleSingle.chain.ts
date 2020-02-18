@@ -15,17 +15,17 @@ async function completeProcessSingle({
   blockchain,
   expectedVerificationOutcome,
   doRevocation = false,
-  reqIndex = 'latest',
+  reqUpdatedAfter = new Date(),
   reqNonRevocationProof = true,
 }: {
   blockchain: Blockchain
   expectedVerificationOutcome: boolean
   doRevocation: boolean
-  reqIndex: number | 'latest'
+  reqUpdatedAfter: Date
   reqNonRevocationProof: boolean
 }): Promise<boolean> {
   console.group()
-  // create claimer and attester entitites
+  // create claimer and attester entities
   const { claimer, attester, accumulator } = await actorProcessChain({
     blockchain,
     claimerMnemonic: mnemonic,
@@ -46,13 +46,13 @@ async function completeProcessSingle({
   // (optionally) revoke credentials
   if (doRevocation) {
     console.log(
-      'Accumulatorcount before revocation:',
+      'AccumulatorCount before revocation:',
       await blockchain.getAccumulatorCount(attester.address)
     )
     await attester.revokeAttestation({ accumulator, witnesses: [witness] })
     await blockchain.waitForNextBlock()
     console.log(
-      'Accumulatorcount after revocation:',
+      'AccumulatorCount after revocation:',
       await blockchain.getAccumulatorCount(attester.address)
     )
   }
@@ -69,8 +69,9 @@ async function completeProcessSingle({
     attester,
     credential,
     requestedAttributes: disclosedAttributes,
-    reqIndex, // require accumulator's revocation index of 0 or greater
+    reqUpdatedAfter, // require accumulator's revocation index of 0 or greater
     reqNonRevocationProof, // check revocation status
+    accumulator,
   })
 
   console.groupEnd()
@@ -92,7 +93,7 @@ async function completeProcessSingleExamples(): Promise<void> {
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: false,
-    reqIndex: 'latest',
+    reqUpdatedAfter: new Date(),
     reqNonRevocationProof: true,
   })
 
@@ -101,7 +102,7 @@ async function completeProcessSingleExamples(): Promise<void> {
     blockchain,
     expectedVerificationOutcome: false,
     doRevocation: true,
-    reqIndex: 'latest',
+    reqUpdatedAfter: new Date(),
     reqNonRevocationProof: true,
   })
 
@@ -110,7 +111,7 @@ async function completeProcessSingleExamples(): Promise<void> {
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: true,
-    reqIndex: 'latest',
+    reqUpdatedAfter: new Date(),
     reqNonRevocationProof: false,
   })
 

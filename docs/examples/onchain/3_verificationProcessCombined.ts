@@ -2,8 +2,9 @@
 import GabiClaimerChain from '../../../src/claim/GabiClaimer.chain'
 import GabiAttesterChain from '../../../src/attestation/GabiAttester.chain'
 import { Credential } from '../../../src/types/Claim'
-import GabiVerifierChain from '../../../src/verification/GabiVerifier.chain'
-import { IPresentationRequestChain } from '../../../src/types/Verification'
+import { IPresentationRequest } from '../../../src/types/Verification'
+import GabiVerifier from '../../../src/verification/GabiVerifier'
+import connect from '../../../src/blockchainApiConnection/BlockchainApiConnection'
 
 // runs a complete verification process on a credential
 export async function verificationProcessCombinedChain({
@@ -11,14 +12,14 @@ export async function verificationProcessCombinedChain({
   attesters,
   credentials,
   requestedAttributesArr,
-  reqIndexArr,
+  reqUpdatedAfter,
   reqNonRevocationProofArr,
 }: {
   claimer: GabiClaimerChain
   attesters: GabiAttesterChain[]
   credentials: Credential[]
   requestedAttributesArr: string[][]
-  reqIndexArr: Array<number | 'latest'>
+  reqUpdatedAfter: Date[]
   reqNonRevocationProofArr: boolean[]
 }): Promise<{
   verified: boolean
@@ -27,8 +28,8 @@ export async function verificationProcessCombinedChain({
   if (
     attesters.length !== credentials.length ||
     credentials.length !== requestedAttributesArr.length ||
-    requestedAttributesArr.length !== reqIndexArr.length ||
-    reqIndexArr.length !== reqNonRevocationProofArr.length ||
+    requestedAttributesArr.length !== reqUpdatedAfter.length ||
+    reqUpdatedAfter.length !== reqNonRevocationProofArr.length ||
     reqNonRevocationProofArr.length !== attesters.length
   ) {
     throw new Error(
@@ -37,22 +38,29 @@ export async function verificationProcessCombinedChain({
   }
   console.group()
   const attesterPubKeys = attesters.map(attester => attester.publicKey)
+  const blockchain = await connect()
+  const accumulators = await Promise.all(
+    attesters.map(attester => {
+      return blockchain.getLatestAccumulator(
+        attester.getPublicIdentity().address
+      )
+    })
+  )
 
   // verifier requests presentation for each credential and combines request by calling `finalise`
   // build combined requests
-  const requests: IPresentationRequestChain[] = requestedAttributesArr.map(
+  const requests: IPresentationRequest[] = requestedAttributesArr.map(
     (requestedAttributes, idx) => ({
       requestedAttributes,
       reqNonRevocationProof: reqNonRevocationProofArr[idx],
-      reqIndex: reqIndexArr[idx],
-      attesterIdentity: attesters[idx].getPublicIdentity(),
+      reqUpdatedAfter: reqUpdatedAfter[idx],
     })
   )
   // request combined presentation
   const {
     message: combinedPresentationReq,
     session: combinedSession,
-  } = await GabiVerifierChain.requestCombinedPresentationChain(requests)
+  } = await GabiVerifier.requestCombinedPresentation(requests)
 
   // claimer builds combined presentation
   const proof = await claimer.buildCombinedPresentation({
@@ -65,10 +73,11 @@ export async function verificationProcessCombinedChain({
   const {
     verified,
     claims: verifiedClaims,
-  } = await GabiVerifierChain.verifyCombinedPresentation({
+  } = await GabiVerifier.verifyCombinedPresentation({
     proof,
     attesterPubKeys,
     verifierSession: combinedSession,
+    accumulators,
   })
 
   console.log(`Claim could ${verified ? 'be verified' : 'not be verified'}`)
