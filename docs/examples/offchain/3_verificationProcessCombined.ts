@@ -13,26 +13,22 @@ export async function verificationProcessCombined({
   credentials,
   requestedAttributesArr,
   reqUpdatesAfter,
-  reqNonRevocationProofArr,
   accumulators,
 }: {
   claimer: GabiClaimer
   attesters: GabiAttester[]
   credentials: Credential[]
   requestedAttributesArr: string[][]
-  reqUpdatesAfter: Date[]
-  reqNonRevocationProofArr: boolean[]
-  accumulators: Accumulator[]
+  reqUpdatesAfter: Array<Date | undefined>
+  accumulators: Array<Accumulator | undefined>
 }): Promise<{
   verified: boolean
   verifiedClaims: object[]
 }> {
   if (
     attesters.length !== credentials.length ||
-    credentials.length !== requestedAttributesArr.length ||
-    requestedAttributesArr.length !== reqUpdatesAfter.length ||
-    reqUpdatesAfter.length !== reqNonRevocationProofArr.length ||
-    reqNonRevocationProofArr.length !== attesters.length
+    attesters.length !== requestedAttributesArr.length ||
+    attesters.length !== reqUpdatesAfter.length
   ) {
     throw new Error(
       'Input array lengths do not match up in "verificationProcessCombined"'
@@ -48,7 +44,6 @@ export async function verificationProcessCombined({
       (cBuilder, requestedAttributes, idx) =>
         cBuilder.requestPresentation({
           requestedAttributes,
-          reqNonRevocationProof: reqNonRevocationProofArr[idx],
           reqUpdatedAfter: reqUpdatesAfter[idx],
         }),
       new CombinedRequestBuilder()
@@ -70,7 +65,7 @@ export async function verificationProcessCombined({
     proof,
     attesterPubKeys,
     verifierSession: session,
-    accumulators,
+    latestAccumulators: accumulators,
   })
 
   console.log(`Claim could ${verified ? 'be verified' : 'not be verified'}`)

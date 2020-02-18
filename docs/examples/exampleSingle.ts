@@ -11,12 +11,12 @@ const { pubKey, privKey, disclosedAttributes, claim } = testEnv1
 async function completeProcessSingle(
   expectedVerificationOutcome: boolean,
   doRevocation = false,
-  reqMinIndex = 0,
-  reqNonRevocationProof = true
+  reqUpdatedAfter?: Date
 ): Promise<boolean> {
   console.group()
   // create claimer and attester entities
-  const { claimer, attester, accumulator } = await actorProcess({
+  // eslint-disable-next-line prefer-const
+  let { claimer, attester, accumulator } = await actorProcess({
     claimerMnemonic: mnemonic,
     claimerMnemonicPw: 'password',
     attesterPubKey: pubKey,
@@ -33,7 +33,10 @@ async function completeProcessSingle(
 
   // (optionally) revoke credentials
   if (doRevocation) {
-    await attester.revokeAttestation({ accumulator, witnesses: [witness] })
+    accumulator = await attester.revokeAttestation({
+      accumulator,
+      witnesses: [witness],
+    })
   }
 
   // verify credential with revocation check
@@ -42,8 +45,7 @@ async function completeProcessSingle(
     attester,
     credential,
     requestedAttributes: disclosedAttributes,
-    reqUpdatedAfter: new Date(), // require that the witness is not older than the provided date or updated to the latest accumulator
-    reqNonRevocationProof, // check revocation status
+    reqUpdatedAfter, // require that the witness is not older than the provided date or updated to the latest accumulator
     accumulator,
   })
   console.groupEnd()
@@ -55,20 +57,18 @@ async function completeProcessSingle(
 
 // all calls of completeProcessSingle should return true
 async function completeProcessSingleExamples(): Promise<void> {
+  const now = new Date()
+  const future = new Date()
+  future.setDate(now.getDate() + 100)
+
   // without credential revocation
-  await completeProcessSingle(true, false, 0)
+  await completeProcessSingle(true, false)
 
-  // without credential revocation but revocation index out of range (too big)
-  await completeProcessSingle(false, false, 1)
+  // with credential revocation but accept old accumulator
+  await completeProcessSingle(true, true, now)
 
-  // with credential revocation
-  await completeProcessSingle(false, true, 1)
-
-  // with credential revocation but revocation index out of range (too small/old)
-  await completeProcessSingle(true, true, 0)
-
-  // with credential revocation but revocation not required in verification
-  await completeProcessSingle(true, true, 1, false)
+  // with credential revocation but require new accumulator
+  await completeProcessSingle(false, true, future)
 
   // close wasm
   return goWasmClose()

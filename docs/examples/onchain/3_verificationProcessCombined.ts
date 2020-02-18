@@ -77,7 +77,7 @@ export async function verificationProcessCombinedChain({
     proof,
     attesterPubKeys,
     verifierSession: combinedSession,
-    accumulators,
+    latestAccumulators: accumulators,
   })
 
   console.log(`Claim could ${verified ? 'be verified' : 'not be verified'}`)

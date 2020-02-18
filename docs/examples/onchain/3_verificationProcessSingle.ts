@@ -16,15 +16,13 @@ export async function verificationProcessSingleChain({
   credential,
   requestedAttributes,
   reqUpdatedAfter,
-  reqNonRevocationProof,
   accumulator,
 }: {
   claimer: GabiClaimerChain
   attester: GabiAttesterChain
   credential: Credential
   requestedAttributes: string[]
-  reqUpdatedAfter: Date
-  reqNonRevocationProof: boolean
+  reqUpdatedAfter?: Date
   accumulator: Accumulator
 }): Promise<{
   verifierSession: VerificationSession
@@ -39,7 +37,6 @@ export async function verificationProcessSingleChain({
     message: presentationReq,
   } = await GabiVerifier.requestPresentation({
     requestedAttributes,
-    reqNonRevocationProof,
     reqUpdatedAfter,
   })
 
@@ -58,7 +55,7 @@ export async function verificationProcessSingleChain({
     proof: presentation,
     verifierSession,
     attesterPubKey: attester.publicKey,
-    accumulator,
+    latestAccumulator: accumulator,
   })
   console.log(`Claim could ${verified ? 'be verified' : 'not be verified'}`)
   return {

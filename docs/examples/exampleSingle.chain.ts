@@ -15,18 +15,17 @@ async function completeProcessSingle({
   blockchain,
   expectedVerificationOutcome,
   doRevocation = false,
-  reqUpdatedAfter = new Date(),
-  reqNonRevocationProof = true,
+  reqUpdatedAfter,
 }: {
   blockchain: Blockchain
   expectedVerificationOutcome: boolean
   doRevocation: boolean
-  reqUpdatedAfter: Date
-  reqNonRevocationProof: boolean
+  reqUpdatedAfter?: Date
 }): Promise<boolean> {
   console.group()
   // create claimer and attester entities
-  const { claimer, attester, accumulator } = await actorProcessChain({
+  // eslint-disable-next-line prefer-const
+  let { claimer, attester, accumulator } = await actorProcessChain({
     blockchain,
     claimerMnemonic: mnemonic,
     claimerMnemonicPw: 'password',
@@ -49,19 +48,16 @@ async function completeProcessSingle({
       'AccumulatorCount before revocation:',
       await blockchain.getAccumulatorCount(attester.address)
     )
-    await attester.revokeAttestation({ accumulator, witnesses: [witness] })
+    accumulator = await attester.revokeAttestation({
+      accumulator,
+      witnesses: [witness],
+    })
     await blockchain.waitForNextBlock()
     console.log(
       'AccumulatorCount after revocation:',
       await blockchain.getAccumulatorCount(attester.address)
     )
   }
-  // check whether newest accumulator is different to old one if revocation
-  const revAccCheck = doRevocation
-    ? (await (
-        await blockchain.getLatestAccumulator(attester.address)
-      ).valueOf()) !== accumulator.valueOf()
-    : true
 
   // verify credential with revocation check
   const { verified } = await verificationProcessSingleChain({
@@ -70,14 +66,13 @@ async function completeProcessSingle({
     credential,
     requestedAttributes: disclosedAttributes,
     reqUpdatedAfter, // require accumulator's revocation index of 0 or greater
-    reqNonRevocationProof, // check revocation status
     accumulator,
   })
 
   console.groupEnd()
   console.log(
-    `Expected outcome achieved? ${expectedVerificationOutcome === verified &&
-      revAccCheck}`
+    // eslint-disable-next-line eqeqeq
+    `Expected outcome achieved? ${expectedVerificationOutcome == verified}`
   )
   return expectedVerificationOutcome === verified
 }
@@ -87,14 +82,16 @@ async function completeProcessSingleExamples(): Promise<void> {
   // connect to chain
   const blockchain = await connect({ pgabiModName: 'portablegabiPallet' })
   console.log('Connected to chain')
+  const past = new Date()
+  const future = new Date()
+  future.setDate(past.getDate() + 100)
 
   // without credential revocation
   await completeProcessSingle({
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: false,
-    reqUpdatedAfter: new Date(),
-    reqNonRevocationProof: true,
+    reqUpdatedAfter: past,
   })
 
   // with credential revocation
@@ -102,8 +99,7 @@ async function completeProcessSingleExamples(): Promise<void> {
     blockchain,
     expectedVerificationOutcome: false,
     doRevocation: true,
-    reqUpdatedAfter: new Date(),
-    reqNonRevocationProof: true,
+    reqUpdatedAfter: future,
   })
 
   // with credential revocation but revocation not required in verification
@@ -111,12 +107,10 @@ async function completeProcessSingleExamples(): Promise<void> {
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: true,
-    reqUpdatedAfter: new Date(),
-    reqNonRevocationProof: false,
   })
 
   // disconnect from chain
-  await disconnect()
+  await disconnect().finally(() => process.exit())
 }
 
 completeProcessSingleExamples()

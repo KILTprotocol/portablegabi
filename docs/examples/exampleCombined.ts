@@ -27,12 +27,13 @@ const {
 async function completeProcessCombined(
   expectedVerificationOutcome: boolean,
   doRevocation = false,
-  reqUpdatesAfter: [Date, Date] = [new Date(), new Date()],
-  reqNonRevocationProofArr: [boolean, boolean] = [true, true]
+  reqUpdatesAfter: [Date?, Date?]
 ): Promise<boolean> {
   // create claimer and both attester entities
-  const {
+  let {
+    // eslint-disable-next-line prefer-const
     claimer,
+    // eslint-disable-next-line prefer-const
     attester: attester1,
     accumulator: accumulator1,
   } = await actorProcess({
@@ -63,7 +64,8 @@ async function completeProcessCombined(
 
   // (optionally) revoke credentials, could revoke any or both to fail verification process
   if (doRevocation) {
-    await attester1.revokeAttestation({
+    console.log('revoke attestation')
+    accumulator1 = await attester1.revokeAttestation({
       accumulator: accumulator1,
       witnesses: [witness1],
     })
@@ -76,7 +78,6 @@ async function completeProcessCombined(
     credentials: [credential1, credential2],
     requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
     reqUpdatesAfter, // requires that witnesses are updates after specified date or using the latests available accumulator
-    reqNonRevocationProofArr, // check revocation status
     accumulators: [accumulator1, accumulator2],
   })
   console.log(
@@ -87,26 +88,20 @@ async function completeProcessCombined(
 
 // all calls of completeProcessCombined should return true
 async function completeProcessCombinedExamples(): Promise<void> {
-  // without credential revocation
-  await completeProcessCombined(true, false, [new Date(), new Date()])
+  // we accept every accumulator create later on
+  const now = new Date()
+  // we only accept the newest accumulator
+  const future = new Date()
+  future.setDate(now.getDate() + 100)
 
-  // without credential revocation but revocation index out of range (too big)
-  await completeProcessCombined(false, false, [new Date(), new Date(1)])
-  await completeProcessCombined(false, false, [new Date(1), new Date()])
+  // without credential revocation
+  await completeProcessCombined(true, false, [undefined, undefined])
 
   // with revocation of 1st credential
-  await completeProcessCombined(false, true, [new Date(1), new Date()])
-
-  // with revocation (1st) but revocation index out of range (too small/old)
-  await completeProcessCombined(true, true, [new Date(), new Date()])
+  await completeProcessCombined(false, true, [future, future])
 
   // with revocation (1st) but revocation not required in verification
-  await completeProcessCombined(
-    true,
-    true,
-    [new Date(1), new Date()],
-    [false, true]
-  )
+  await completeProcessCombined(true, true, [undefined, future])
 
   // close wasm
   return goWasmClose()
