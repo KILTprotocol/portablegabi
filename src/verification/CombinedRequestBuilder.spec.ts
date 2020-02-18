@@ -23,15 +23,13 @@ async function expectCombinedSetupToBe(
     accumulators,
     disclosedAttsArr,
     reqUpdatesAfter,
-    reqNonRevocationProof,
     inputCredentials,
   }: {
     claimer: GabiClaimer
     attesters: GabiAttester[]
     accumulators: Accumulator[]
     disclosedAttsArr: string[][]
-    reqUpdatesAfter: Date[]
-    reqNonRevocationProof: boolean[]
+    reqUpdatesAfter: Array<Date | undefined>
     inputCredentials?: any
   }
 ): Promise<void> {
@@ -47,7 +45,6 @@ async function expectCombinedSetupToBe(
     accumulators,
     disclosedAttsArr,
     reqUpdatesAfter,
-    reqNonRevocationProof,
     inputCredentials,
   })
   expect(combinedPresentationReq).toEqual(expect.anything())
@@ -69,12 +66,10 @@ describe('Test combined requests', () => {
     const { message, session } = await new CombinedRequestBuilder()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
         reqUpdatedAfter: new Date(),
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributesCombined,
-        reqNonRevocationProof: true,
         reqUpdatedAfter: new Date(),
       })
       .finalise()
@@ -99,12 +94,10 @@ describe('Test combined requests', () => {
     } = await new CombinedRequestBuilder()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
         reqUpdatedAfter: new Date(),
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
         reqUpdatedAfter: new Date(),
       })
       .finalise()
@@ -127,7 +120,7 @@ describe('Test combined requests', () => {
       proof: combPresentation,
       attesterPubKeys: [attesters[1].publicKey, attesters[0].publicKey],
       verifierSession: combinedSession,
-      accumulators,
+      latestAccumulators: accumulators,
     })
     expect(verified).toBe(false)
     expect(claims).not.toEqual(expect.anything())
@@ -139,7 +132,6 @@ describe('Test combined requests', () => {
       accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
       reqUpdatesAfter: [new Date(), new Date()],
-      reqNonRevocationProof: [true, true],
     })
   })
   it('Should throw for an empty disclosed attributes array', async () => {
@@ -150,7 +142,6 @@ describe('Test combined requests', () => {
         accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
         reqUpdatesAfter: [new Date(), new Date()],
-        reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow(
       'requested attributes should not be empty for the 2. credential'
@@ -162,7 +153,6 @@ describe('Test combined requests', () => {
         accumulators,
         disclosedAttsArr: [[], disclosedAttributes],
         reqUpdatesAfter: [new Date(), new Date()],
-        reqNonRevocationProof: [true, true],
       })
     ).rejects.toThrow(
       'requested attributes should not be empty for the 1. credential'
@@ -176,9 +166,8 @@ describe('Test combined requests', () => {
         accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
         reqUpdatesAfter: [new Date()],
-        reqNonRevocationProof: [true, true],
       })
-    ).rejects.toThrow('Array lengths dont match up in combined setup')
+    ).rejects.toThrow("Array lengths don't match up in combined setup")
   })
   it('Should work for any number of combinations', async () => {
     // to keep the runtime small, we test only 5 combinations, but this can be set to any number
@@ -190,7 +179,6 @@ describe('Test combined requests', () => {
       accumulators: range.map((_, idx) => accumulators[idx % 2]),
       disclosedAttsArr: new Array(n).fill(disclosedAttributes),
       reqUpdatesAfter: range,
-      reqNonRevocationProof: new Array(n).fill(true),
     })
   })
   describe('If one credential is revoked, it...', () => {
@@ -219,7 +207,7 @@ describe('Test combined requests', () => {
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         reqUpdatesAfter: [new Date(), new Date()],
-        reqNonRevocationProof: [true, true],
+
         inputCredentials: credentials,
       })
     })
@@ -229,8 +217,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        reqUpdatesAfter: [new Date(), new Date()],
-        reqNonRevocationProof: [true, false],
+        reqUpdatesAfter: [new Date(), undefined],
         inputCredentials: credentials,
       })
     })

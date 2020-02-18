@@ -219,7 +219,6 @@ describe('Test verifier functionality', () => {
         session: vSessionFakedReq,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
         reqUpdatedAfter: new Date(),
       })
       const presFakedReq = await gabiClaimer.buildPresentation({
@@ -241,7 +240,7 @@ describe('Test verifier functionality', () => {
         proof: presFakedReq,
         verifierSession: vSessionFakedReq,
         attesterPubKey: gabiAttester.publicKey,
-        accumulator,
+        latestAccumulator: accumulator,
       })
       expectFailure(verifiedFakedReq, claimFakedReq)
     })
@@ -252,7 +251,6 @@ describe('Test verifier functionality', () => {
         session: verifierSession2,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
         reqUpdatedAfter: new Date(),
       })
       const proof2 = await gabiClaimer.buildPresentation({
@@ -267,7 +265,6 @@ describe('Test verifier functionality', () => {
         session: verifierSession3,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
         reqUpdatedAfter: new Date(),
       })
       const proof3 = await gabiClaimer.buildPresentation({
@@ -283,7 +280,7 @@ describe('Test verifier functionality', () => {
         proof: proof2,
         verifierSession: verifierSession2,
         attesterPubKey: gabiAttester.publicKey,
-        accumulator,
+        latestAccumulator: accumulator,
       })
       expectSuccess(verified2, verifiedClaim2)
       const {
@@ -293,7 +290,7 @@ describe('Test verifier functionality', () => {
         proof: proof3,
         verifierSession: verifierSession3,
         attesterPubKey: gabiAttester.publicKey,
-        accumulator,
+        latestAccumulator: accumulator,
       })
       expectSuccess(verified3, verifiedClaim3)
 
@@ -499,7 +496,6 @@ describe('Test verifier functionality', () => {
         session: verifierSession2,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
         reqUpdatedAfter: new Date(),
       })
       const proof2 = await gabiClaimer.buildPresentation({
@@ -515,7 +511,7 @@ describe('Test verifier functionality', () => {
         proof: proof2, // from 2nd session
         verifierSession, // from 1st session
         attesterPubKey: gabiAttester.publicKey,
-        accumulator,
+        latestAccumulator: accumulator,
       })
       expectFailure(verified2, verifiedClaim2)
       const {
@@ -525,7 +521,7 @@ describe('Test verifier functionality', () => {
         proof: presentation, // from 1st session
         verifierSession: verifierSession2, // from 2nd session
         attesterPubKey: gabiAttester.publicKey,
-        accumulator,
+        latestAccumulator: accumulator,
       })
       expectFailure(verified3, verifiedClaim3)
     })
@@ -548,7 +544,7 @@ describe('Test verifier functionality', () => {
         proof: presentation,
         verifierSession,
         attesterPubKey: gabiAttester2.publicKey,
-        accumulator,
+        latestAccumulator: accumulator,
       })
       expectFailure(verified2, verifiedClaim2)
     })

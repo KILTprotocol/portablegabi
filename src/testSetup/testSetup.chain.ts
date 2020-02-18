@@ -88,7 +88,6 @@ export async function presentationSetupChain({
   accumulator,
   requestedAttributes = disclosedAttributes,
   reqUpdatedAfter = new Date(),
-  reqNonRevocationProof = true,
 }: {
   claimer: GabiClaimerChain
   attester: GabiAttesterChain
@@ -96,7 +95,6 @@ export async function presentationSetupChain({
   accumulator: Accumulator
   requestedAttributes?: string[]
   reqUpdatedAfter?: Date
-  reqNonRevocationProof?: boolean
 }): Promise<{
   verifierSession: VerificationSession
   presentationReq: PresentationRequest
@@ -110,7 +108,6 @@ export async function presentationSetupChain({
     message: presentationReq,
   } = await GabiVerifier.requestPresentation({
     requestedAttributes,
-    reqNonRevocationProof,
     reqUpdatedAfter,
   })
   // response
@@ -124,7 +121,7 @@ export async function presentationSetupChain({
     proof: presentation,
     verifierSession,
     attesterPubKey: attester.publicKey,
-    accumulator,
+    latestAccumulator: accumulator,
   })
   return {
     verifierSession,
@@ -141,15 +138,13 @@ export async function combinedSetupChain({
   accumulators,
   disclosedAttsArr,
   reqUpdatesAfter,
-  reqNonRevocationProof,
   inputCredentials,
 }: {
   claimer: GabiClaimerChain
   attesters: GabiAttesterChain[]
   accumulators: Accumulator[]
   disclosedAttsArr: string[][]
-  reqUpdatesAfter: Date[]
-  reqNonRevocationProof: boolean[]
+  reqUpdatesAfter: Array<Date | undefined>
   inputCredentials?: Credential[]
 }): Promise<{
   combinedPresentation: CombinedPresentation
@@ -162,10 +157,9 @@ export async function combinedSetupChain({
   if (
     attesters.length !== accumulators.length ||
     accumulators.length !== disclosedAttsArr.length ||
-    disclosedAttsArr.length !== reqUpdatesAfter.length ||
-    reqUpdatesAfter.length !== reqNonRevocationProof.length
+    disclosedAttsArr.length !== reqUpdatesAfter.length
   ) {
-    throw new Error('Array lengths dont match up in combined setup')
+    throw new Error("Array lengths don't match up in combined setup")
   }
   const attesterPubKeys = attesters.map(attester => attester.publicKey)
   // build credentials if inputCredentials is missing
@@ -193,7 +187,6 @@ export async function combinedSetupChain({
   const requests: IPresentationRequest[] = disclosedAttsArr.map(
     (requestedAttributes, idx) => ({
       requestedAttributes,
-      reqNonRevocationProof: reqNonRevocationProof[idx],
       reqUpdatedAfter: reqUpdatesAfter[idx],
     })
   )
@@ -214,7 +207,7 @@ export async function combinedSetupChain({
     proof: combinedPresentation,
     attesterPubKeys,
     verifierSession: combinedSession,
-    accumulators,
+    latestAccumulators: accumulators,
   })
   return {
     combinedPresentationReq,

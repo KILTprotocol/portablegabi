@@ -3,8 +3,7 @@
 
 export interface IPresentationRequest {
   requestedAttributes: string[]
-  reqNonRevocationProof: boolean
-  reqUpdatedAfter: Date
+  reqUpdatedAfter?: Date
 }
 
 export interface IVerifiedPresentation {

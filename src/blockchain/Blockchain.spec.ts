@@ -13,7 +13,7 @@ describe('chain mocks', () => {
   const dummyAddress = 'dummyAddress'
   const emptyValue = 0x00
   describe('Positive tests', () => {
-    it('Should connrect', async () => {
+    it('Should connect', async () => {
       await expect(connect()).resolves.toStrictEqual(BlockchainMock)
     })
     it('Should waitForNextBlock', async () => {

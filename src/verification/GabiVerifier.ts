@@ -16,19 +16,29 @@ import { Presentation, CombinedPresentation } from '../types/Claim'
 export default class GabiVerifier {
   public static async requestPresentation({
     requestedAttributes,
-    reqNonRevocationProof,
     reqUpdatedAfter,
   }: IPresentationRequest): Promise<{
     message: PresentationRequest
     session: VerificationSession
   }> {
-    const { message, session } = await goWasmExec<IGabiMsgSession>(
-      WasmHooks.requestPresentation,
-      [
-        reqNonRevocationProof,
+    let args: [boolean, string, string]
+    if (typeof reqUpdatedAfter === 'undefined') {
+      args = [
+        false,
+        // date will be ignored, we won't check for a revocation proof
+        new Date().toISOString(),
+        JSON.stringify(requestedAttributes),
+      ]
+    } else {
+      args = [
+        true,
         reqUpdatedAfter.toISOString(),
         JSON.stringify(requestedAttributes),
       ]
+    }
+    const { message, session } = await goWasmExec<IGabiMsgSession>(
+      WasmHooks.requestPresentation,
+      args
     )
     return {
       message: new PresentationRequest(message),
@@ -44,7 +54,15 @@ export default class GabiVerifier {
   }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.requestCombinedPresentation,
-      [JSON.stringify(presentationReqs)]
+      [
+        JSON.stringify(
+          presentationReqs.map(req => ({
+            // check if we want to request a revocation proof
+            reqNonRevocationProof: typeof req.reqUpdatedAfter !== 'undefined',
+            ...req,
+          }))
+        ),
+      ]
     )
     return {
       message: new CombinedPresentationRequest(message),
@@ -56,12 +74,12 @@ export default class GabiVerifier {
     proof,
     verifierSession,
     attesterPubKey,
-    accumulator,
+    latestAccumulator,
   }: {
     proof: Presentation
     verifierSession: VerificationSession
     attesterPubKey: AttesterPublicKey
-    accumulator: Accumulator
+    latestAccumulator?: Accumulator
   }): Promise<IVerifiedPresentation> {
     const response = await goWasmExec<{
       verified: string
@@ -70,7 +88,7 @@ export default class GabiVerifier {
       proof.valueOf(),
       verifierSession.valueOf(),
       attesterPubKey.valueOf(),
-      accumulator.valueOf(),
+      (latestAccumulator || new Accumulator('null')).valueOf(),
     ])
     return {
       verified: response.verified === 'true',
@@ -82,12 +100,12 @@ export default class GabiVerifier {
     proof,
     verifierSession,
     attesterPubKeys,
-    accumulators,
+    latestAccumulators,
   }: {
     proof: CombinedPresentation
     verifierSession: CombinedVerificationSession
     attesterPubKeys: AttesterPublicKey[]
-    accumulators: Accumulator[]
+    latestAccumulators: Array<Accumulator | undefined>
   }): Promise<IVerifiedCombinedPresentation> {
     const response = await goWasmExec<{
       verified: string
@@ -96,7 +114,9 @@ export default class GabiVerifier {
       proof.valueOf(),
       verifierSession.valueOf(),
       `[${attesterPubKeys.join(',')}]`,
-      `[${accumulators.join(',')}]`,
+      `[${latestAccumulators
+        .map(accumulator => accumulator || new Accumulator('null'))
+        .join(',')}]`,
     ])
     return {
       verified: response.verified === 'true',

@@ -67,7 +67,8 @@ func RequestCombinedPresentation(sysParams *gabi.SystemParameters,
 		}
 }
 
-func checkAccumulatorInProof(issuerPubK *gabi.PublicKey, latestSignAcc *revocation.SignedAccumulator, reqUpdateAfter time.Time,
+func verifyAccumulatorInProof(issuerPubK *gabi.PublicKey, latestSignAcc *revocation.SignedAccumulator,
+	reqUpdateAfter time.Time,
 	proof *gabi.ProofD) (bool, error) {
 	if proof.HasNonRevocationProof() {
 		revPubKey, err := issuerPubK.RevocationKey()
@@ -101,32 +102,33 @@ func getValues(m map[int]*big.Int) []*big.Int {
 }
 
 // VerifyPresentation verifies the response of a claimer and returns the disclosed attributes.
-func VerifyPresentation(issuerPubK *gabi.PublicKey, latestAcc *revocation.SignedAccumulator, signedAttributes *PresentationResponse, session *VerifierSession) (bool, Claim, error) {
-	verified, err := checkAccumulatorInProof(issuerPubK, latestAcc, session.ReqUpdateAfter, &signedAttributes.Proof)
+func VerifyPresentation(issuerPubK *gabi.PublicKey, latestAcc *revocation.SignedAccumulator,
+	signedAttributes *PresentationResponse, session *VerifierSession) (bool, Claim, error) {
+	if !signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false) {
+		return false, nil, nil
+	}
+	if session.ReqNonRevocationProof {
+		verified, err := verifyAccumulatorInProof(issuerPubK, latestAcc, session.ReqUpdateAfter, &signedAttributes.Proof)
+		if err != nil || !verified {
+			return false, nil, err
+		}
+	}
+	attributes, err := BigIntsToAttributes(getValues(signedAttributes.Proof.ADisclosed))
 	if err != nil {
 		return false, nil, err
 	}
-	success := !session.ReqNonRevocationProof || verified
-	success = success && signedAttributes.Proof.Verify(issuerPubK, session.Context, session.Nonce, false)
-
-	if success {
-		attributes, err := BigIntsToAttributes(getValues(signedAttributes.Proof.ADisclosed))
-		if err != nil {
-			return false, nil, err
-		}
-		claim, err := newClaimFromAttribute(attributes)
-		if err != nil {
-			return false, nil, err
-		}
-		return true, claim, nil
+	claim, err := newClaimFromAttribute(attributes)
+	if err != nil {
+		return false, nil, err
 	}
-	return false, nil, nil
+	return true, claim, nil
 }
 
 // VerifyCombinedPresentation verifies the response of a claimer and returns the presentations provided by the user.
-func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, latestAccs []*revocation.SignedAccumulator, combinedPresentation *CombinedPresentationResponse, session *CombinedVerifierSession) (bool, []Claim, error) {
-	success := combinedPresentation.Proof.Verify(attesterPubKeys, session.Context, session.Nonce, false, nil)
-	if !success {
+func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey,
+	latestAccs []*revocation.SignedAccumulator, combinedPresentation *CombinedPresentationResponse,
+	session *CombinedVerifierSession) (bool, []Claim, error) {
+	if !combinedPresentation.Proof.Verify(attesterPubKeys, session.Context, session.Nonce, false, nil) {
 		return false, nil, nil
 	}
 	claims := make([]Claim, len(combinedPresentation.Proof))
@@ -138,24 +140,20 @@ func VerifyCombinedPresentation(attesterPubKeys []*gabi.PublicKey, latestAccs []
 			if err != nil {
 				return false, nil, err
 			}
-			claim, err := newClaimFromAttribute(attributes)
+			claims[i], err = newClaimFromAttribute(attributes)
 			if err != nil {
 				return false, nil, err
 			}
-			claims[i] = claim
-			if err != nil {
-				return false, nil, err
+			if partialReq.ReqNonRevocationProof {
+				verified, err := verifyAccumulatorInProof(attesterPubKeys[i], latestAccs[i],
+					partialReq.ReqUpdateAfter, proofD)
+				if err != nil || !verified {
+					return false, nil, err
+				}
 			}
-			validRevocationProof, err := checkAccumulatorInProof(attesterPubKeys[i], latestAccs[i], partialReq.ReqUpdateAfter, proofD)
-			if err != nil {
-				return false, nil, err
-			}
-			revocationOK := !partialReq.ReqNonRevocationProof || validRevocationProof
-
-			success = success && revocationOK
 		} else {
 			return false, nil, errors.New("unsupported proof in prooflist")
 		}
 	}
-	return success, claims, nil
+	return true, claims, nil
 }
