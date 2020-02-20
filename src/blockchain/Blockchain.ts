@@ -86,4 +86,6 @@ export default class Blockchain implements IBlockchainApi {
     }
     return maxIndex
   }
+
+  // TODO: Add function to getLatestAccumulator before/after timestamp
 }

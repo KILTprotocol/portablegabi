@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
 import { mnemonicGenerate } from '@polkadot/util-crypto'
 import {
   attestationSetup,
@@ -25,12 +23,11 @@ import {
 import {
   ClaimerAttestationSession,
   AttestationRequest,
-  Credential,
   Presentation,
   ClaimError,
 } from '../types/Claim'
-import { PresentationRequest } from '../types/Verification'
 import Accumulator from '../attestation/Accumulator'
+import Credential from './Credential'
 
 async function buildCredentialError(
   claimer: GabiClaimer,
@@ -110,11 +107,8 @@ describe('Test claimer functionality', () => {
   let attesterSession: AttesterAttestationSession
   let claimerSession: ClaimerAttestationSession
   let attestationRequest: AttestationRequest
-  let witness: Witness
   let attestation: Attestation
   let credential: Credential
-  let gabiAttester2: GabiAttester
-  let accumulator2: Accumulator
   let attestation2: Attestation
   let claimerSession2: ClaimerAttestationSession
   let claimerSessionE12: ClaimerAttestationSession
@@ -126,7 +120,6 @@ describe('Test claimer functionality', () => {
     }
     claimerSession: ClaimerAttestationSession
   }
-  let presentationReq: PresentationRequest
   let presentation: Presentation
 
   // get data from testSetup
@@ -142,7 +135,6 @@ describe('Test claimer functionality', () => {
       claimerSession,
       attestationRequest,
       attestation,
-      witness,
       credential,
     } = await attestationSetup({
       claimer: gabiClaimer,
@@ -153,15 +145,13 @@ describe('Test claimer functionality', () => {
       claimerSession,
       attestation,
     })
-    ;({ presentationReq, presentation } = await presentationSetup({
+    ;({ presentation } = await presentationSetup({
       claimer: gabiClaimer,
       attester: gabiAttester,
       credential,
       accumulator,
     }))
     ;({
-      gabiAttester2,
-      accumulator2,
       attestation2,
       claimerSession2,
       mixedAttestationsValid,
@@ -284,30 +274,6 @@ describe('Test claimer functionality', () => {
       expect(proofObj.proof.e_response).not.toEqual(sigObj.proof.e_response)
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)
     })
-    it('Updates credential and compares both versions (without revoking)', async () => {
-      const updatedCred = await gabiClaimer.updateCredential({
-        credential,
-        attesterPubKey: gabiAttester.publicKey,
-        accumulator,
-      })
-      expect(updatedCred).toBeDefined()
-      expect(credential).toBeDefined()
-      expect(updatedCred).toStrictEqual(credential)
-    })
-    it('Should throw when updating a revoked credential', async () => {
-      const revUpdate = await gabiAttester.revokeAttestation({
-        accumulator,
-        witnesses: [witness],
-      })
-      expect(revUpdate).toBeDefined()
-      await expect(
-        gabiClaimer.updateCredential({
-          credential,
-          attesterPubKey: gabiAttester.publicKey,
-          accumulator: revUpdate,
-        })
-      ).rejects.toThrowError('revoked')
-    })
     it('Should not throw when two claimers interchange credential', async () => {
       // reason: credential is a secret one should not share
       const gabiClaimer2 = await GabiClaimer.create()
@@ -323,97 +289,49 @@ describe('Test claimer functionality', () => {
       })
       expect(diffCredFromOtherClaimer).toEqual(expect.anything())
       await expect(
-        gabiClaimer.updateCredential({
-          credential: diffCredFromOtherClaimer,
+        diffCredFromOtherClaimer.update({
           attesterPubKey: gabiAttester.publicKey,
-          accumulator,
+          accumulators: [accumulator],
         })
       ).resolves.toEqual(expect.anything())
     })
-  })
-
-  // run tests on invalid data
-  describe('Negative tests', () => {
-    it('Should throw in buildCredential for incorrect combination of session and signature', async () => {
-      await buildCredentialError(
-        gabiClaimer,
-        attestation, // attester 1
-        claimerSession2 // attester 2
-      )
-      return buildCredentialError(
-        gabiClaimer,
-        attestation2, // attester 2
-        claimerSession // attester 1
-      )
-    })
-    it('Should throw for 3 of all 4 possibilties to build a credential from valid mixed attestation', async () => {
-      expect(mixedAttestationsValid).toEqual(expect.anything())
-      await expect(
-        gabiClaimer.buildCredential({
-          attestation: mixedAttestationsValid.issuance.attestation,
-          claimerSession: claimerSessionE21,
-        })
-      ).resolves.toEqual(expect.anything())
-      const throwingSessions = [
-        claimerSession,
-        claimerSession2,
-        claimerSessionE12,
-      ]
-      return Promise.all(
-        throwingSessions.map(session =>
-          buildCredentialError(
-            gabiClaimer,
-            mixedAttestationsValid.issuance.attestation,
-            session
+    // run tests on invalid data
+    describe('Negative tests', () => {
+      it('Should throw in buildCredential for incorrect combination of session and signature', async () => {
+        await buildCredentialError(
+          gabiClaimer,
+          attestation, // attester 1
+          claimerSession2 // attester 2
+        )
+        return buildCredentialError(
+          gabiClaimer,
+          attestation2, // attester 2
+          claimerSession // attester 1
+        )
+      })
+      it('Should throw for 3 of all 4 possibilties to build a credential from valid mixed attestation', async () => {
+        expect(mixedAttestationsValid).toEqual(expect.anything())
+        await expect(
+          gabiClaimer.buildCredential({
+            attestation: mixedAttestationsValid.issuance.attestation,
+            claimerSession: claimerSessionE21,
+          })
+        ).resolves.toEqual(expect.anything())
+        const throwingSessions = [
+          claimerSession,
+          claimerSession2,
+          claimerSessionE12,
+        ]
+        return Promise.all(
+          throwingSessions.map(session =>
+            buildCredentialError(
+              gabiClaimer,
+              mixedAttestationsValid.issuance.attestation,
+              session
+            )
           )
         )
-      )
-    })
-    it('Should throw in buildPresentation with pubkey from different attester', async () => {
-      await expect(
-        gabiClaimer.buildPresentation({
-          credential,
-          presentationReq,
-          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
-        })
-      ).rejects.toThrow('ecdsa signature was invalid')
-    })
-    it('Should throw in updateCredential with pubkey from different attester', async () => {
-      await expect(
-        gabiClaimer.updateCredential({
-          credential,
-          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
-          accumulator,
-        })
-      ).rejects.toThrow('ecdsa signature was invalid')
-    })
-    it('Should throw in updateCredential with different accumulator of same attester', async () => {
-      const acc = await gabiAttester.createAccumulator()
-      await expect(
-        gabiClaimer.updateCredential({
-          credential,
-          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
-          accumulator: acc,
-        })
-      ).rejects.toThrow('ecdsa signature was invalid')
-    })
-    it('Should throw in updateCredential with accumulator from different attester', async () => {
-      await expect(
-        gabiClaimer.updateCredential({
-          credential,
-          attesterPubKey: gabiAttester.publicKey,
-          accumulator: accumulator2, // should be gabiAttester to be valid
-        })
-      ).rejects.toThrow('ecdsa signature was invalid')
-    })
-    it('Should throw in updateCredential with accumulator + pubkey from different attester', async () => {
-      await expect(
-        gabiClaimer.updateCredential({
-          credential,
-          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
-          accumulator: accumulator2, // should be gabiAttester to be valid
-        })
-      ).rejects.toThrow('ecdsa signature was invalid')
+      })
     })
   })
 })

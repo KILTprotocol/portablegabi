@@ -4,14 +4,19 @@ import {
   actorSetup,
 } from '../testSetup/testSetup'
 import { disclosedAttributes, claim } from '../testSetup/testConfig'
-import { VerificationSession, PresentationRequest } from '../types/Verification'
+import {
+  VerificationSession,
+  PresentationRequest,
+  IPresentationRequest,
+} from '../types/Verification'
 import { ICredential, IProof } from '../testSetup/testTypes'
 import GabiVerifier from './GabiVerifier'
 import GabiClaimer from '../claim/GabiClaimer'
 import { Witness } from '../types/Attestation'
-import { Credential, Presentation } from '../types/Claim'
+import { Presentation } from '../types/Claim'
 import GabiAttester from '../attestation/GabiAttester'
 import Accumulator from '../attestation/Accumulator'
+import Credential from '../claim/Credential'
 
 function expectFailure(verified: boolean, presentationClaim: any): void {
   expect(presentationClaim).toBeNull()
@@ -28,9 +33,8 @@ async function expectVerificationFailed(
   attester: GabiAttester,
   credential: Credential,
   requestedAttributes: string[],
-  reqUpdatedAfter: Date,
-  accumulator: Accumulator,
-  reqNonRevocationProof = true
+  reqUpdatedAfter?: IPresentationRequest['reqUpdatedAfter'],
+  accumulator?: Accumulator
 ): Promise<{ verified: boolean; presentationClaim: any }> {
   const { verified, claim: presentationClaim } = await presentationSetup({
     claimer,
@@ -38,7 +42,6 @@ async function expectVerificationFailed(
     credential,
     requestedAttributes,
     reqUpdatedAfter,
-    reqNonRevocationProof,
     accumulator,
   })
   expectFailure(verified, presentationClaim)
@@ -47,21 +50,24 @@ async function expectVerificationFailed(
 
 // run presentationSetup and expect the outcome to be verified: true, claim is defined
 async function expectVerificationSucceeded(
-  claimer: GabiClaimer,
-  attester: GabiAttester,
-  credential: Credential,
-  requestedAttributes: string[],
-  reqUpdatedAfter: Date,
-  accumulator: Accumulator,
-  reqNonRevocationProof = true
-): Promise<{ verified: boolean; presentationClaim: any }> {
+  ...[
+    claimer,
+    attester,
+    credential,
+    requestedAttributes,
+    reqUpdatedAfter,
+    accumulator,
+  ]: Parameters<typeof expectVerificationFailed>
+): Promise<{
+  verified: boolean
+  presentationClaim: any
+}> {
   const { verified, claim: presentationClaim } = await presentationSetup({
     claimer,
     attester,
     credential,
     requestedAttributes,
     reqUpdatedAfter,
-    reqNonRevocationProof,
     accumulator,
   })
   expectSuccess(verified, presentationClaim)
@@ -121,6 +127,8 @@ describe('Test verifier functionality', () => {
   let presentedClaim: any
   let verified: boolean
   let revocationIndex: number
+  const dateBeforeRev = new Date()
+
   beforeAll(async () => {
     ;({
       claimers: [gabiClaimer],
@@ -143,6 +151,7 @@ describe('Test verifier functionality', () => {
       attester: gabiAttester,
       credential,
       accumulator,
+      reqUpdatedAfter: new Date(),
     }))
     revocationIndex = await accumulator.getRevIndex(gabiAttester.publicKey)
   }, 10000)
@@ -175,11 +184,98 @@ describe('Test verifier functionality', () => {
         eyeColor: claim.contents.eyeColor,
       })
     })
-    it('Verifies presentationSetup works as intended', async () => {
+    it('Verifies presentationSetup works as intended for non-revoked credentials', async () => {
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         credential,
+        disclosedAttributes,
+        dateBeforeRev,
+        accumulator
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        new Date(),
+        accumulator
+      )
+    })
+    it('Verifies presentationSetup works as intended for revoked credentials', async () => {
+      const {
+        credential: credToBeRevoked,
+        attestation: attestationRev,
+        claimerSession: claimerSessionRev,
+        witness: witnessRev,
+      } = await attestationSetup({
+        claimer: gabiClaimer,
+        attester: gabiAttester,
+        accumulator,
+      })
+      const accAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witnesses: [witnessRev],
+      })
+
+      // expect failure when verifier uses latest accumulator
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevoked,
+        disclosedAttributes,
+        new Date(),
+        accAfterRev
+      )
+      // expect success when verifier uses old accumulator in which credential has not been revoked
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevoked,
+        disclosedAttributes,
+        new Date(),
+        accumulator
+      )
+
+      // test for build
+      const credToBeRevokedBuilt = await gabiClaimer.buildCredential({
+        claimerSession: claimerSessionRev,
+        attestation: attestationRev,
+      })
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedBuilt,
+        disclosedAttributes,
+        new Date(),
+        accAfterRev
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedBuilt,
+        disclosedAttributes,
+        new Date(),
+        accumulator
+      )
+
+      // test for update
+      const credToBeRevokedUpdated = await credToBeRevokedBuilt.update({
+        attesterPubKey: gabiAttester.publicKey,
+        accumulators: [accumulator],
+      })
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedUpdated,
+        disclosedAttributes,
+        new Date(),
+        accAfterRev
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedUpdated,
         disclosedAttributes,
         new Date(),
         accumulator
@@ -199,10 +295,11 @@ describe('Test verifier functionality', () => {
         URL: 'undefined',
         DATA: 'undefined',
       }
-      const uCred = await gabiClaimer.updateCredential({
-        credential: new Credential(JSON.stringify(tamperedCredential)),
+      const uCred = await new Credential(
+        JSON.stringify(tamperedCredential)
+      ).update({
         attesterPubKey: gabiAttester.publicKey,
-        accumulator,
+        accumulators: [accumulator],
       })
       await expectVerificationSucceeded(
         gabiClaimer,
@@ -213,7 +310,7 @@ describe('Test verifier functionality', () => {
         accumulator
       )
     })
-    it('Should reveal claimers information when multiple verifiers send same challenge', async () => {
+    it('Should not reveal claimers information when multiple verifiers send same challenge', async () => {
       // verifier #2 sends same challenge (i.e. presentationRequest) as verifier #1
       const {
         session: vSessionFakedReq,
@@ -304,12 +401,13 @@ describe('Test verifier functionality', () => {
         return currProof
       }, proofArr[proofArr.length - 1])
     })
-    it('Should verify even after revocation when reqMinIndex is too old (i.e. small)', async () => {
-      // revoke variable credential
-      await gabiAttester.revokeAttestation({
+    it('Should verify even after revocation when old accumulator is used', async () => {
+      // revoke credential
+      const accAfterRev = await gabiAttester.revokeAttestation({
         accumulator,
         witnesses: [witness],
       })
+      // verifier requests newer timestamp but uses accumulator in which credential is still valid
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
@@ -318,16 +416,43 @@ describe('Test verifier functionality', () => {
         new Date(),
         accumulator
       )
-      // expect failure for current index
-      // TODO: new test?
+      // verifier uses newest accumulator in which credential is revoked
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        new Date(),
+        accAfterRev
+      )
     })
-    it('Should not verify when sending credential created with too old index', async () => {
-      const {
-        credential: credToBeRevoked,
-        attestation: attestationRev,
-        claimerSession: claimerSessionRev,
-        witness: witnessRev,
-      } = await attestationSetup({
+    it('Should verify even after revocation when timestamp before revocation is used', async () => {
+      // revoke credential
+      const accAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witnesses: [witness],
+      })
+      // this should always verify
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        dateBeforeRev,
+        accumulator
+      )
+      // this should not verify when requested timestamp > accumulator.timestamp
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        dateBeforeRev,
+        accAfterRev
+      )
+    })
+    it('Should not verify when sending credential created with too old accumulator', async () => {
+      const { witness: witnessRev } = await attestationSetup({
         claimer: gabiClaimer,
         attester: gabiAttester,
         accumulator,
@@ -336,97 +461,75 @@ describe('Test verifier functionality', () => {
         accumulator,
         witnesses: [witnessRev],
       })
-      const newIndex = await accAfterRev.getRevIndex(gabiAttester.publicKey)
-      expect(newIndex).toBe(revocationIndex + 1)
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        credToBeRevoked,
-        disclosedAttributes,
-        new Date(),
-        accAfterRev
-      )
-      await expectVerificationSucceeded(
-        gabiClaimer,
-        gabiAttester,
-        credToBeRevoked,
-        disclosedAttributes,
-        new Date(),
-        accumulator
-      )
-      // test for build
-      const credToBeRevokedBuilt = await gabiClaimer.buildCredential({
-        claimerSession: claimerSessionRev,
-        attestation: attestationRev,
-      })
 
+      // credential is still verifiable but it wasn't updated after revocation
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
-        credToBeRevokedBuilt,
+        credential,
         disclosedAttributes,
         new Date(),
         accAfterRev
       )
+      // updated credential should be verified
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
-        credToBeRevokedBuilt,
-        disclosedAttributes,
-        new Date(),
-        accumulator
-      )
-      // test for update
-      const credToBeRevokedUpdated = await gabiClaimer.updateCredential({
-        credential: credToBeRevokedBuilt,
-        attesterPubKey: gabiAttester.publicKey,
-        accumulator,
-      })
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        credToBeRevokedUpdated,
+        await credential.update({
+          attesterPubKey: gabiAttester.publicKey,
+          accumulators: [accAfterRev],
+        }),
         disclosedAttributes,
         new Date(),
         accAfterRev
-      )
-      await expectVerificationSucceeded(
-        gabiClaimer,
-        gabiAttester,
-        credToBeRevokedUpdated,
-        disclosedAttributes,
-        new Date(),
-        accumulator
       )
     })
-    it('Should verify even after revocation when reqNonRevocationProof === false', async () => {
-      const newAcc = await gabiAttester.revokeAttestation({
+    it('Should verify even after revocation when requesting non-revocation proof (missing timestamp)', async () => {
+      const accAfterRev = await gabiAttester.revokeAttestation({
         accumulator,
         witnesses: [witness],
       })
-      // expect success with reqNonRevocationProof === true
+      // expect success when not sending requesting a revocation-proof by not sending reqUpdatedAfte
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         credential,
         disclosedAttributes,
-        new Date(),
-        accumulator,
-        false
+        undefined
       )
-      // expect failure with reqNonRevocationProof === true
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        undefined,
+        accumulator
+      )
+      // expect failure when sending reqUpdatedAfter
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
         credential,
         disclosedAttributes,
         new Date(),
-        newAcc,
-        true
+        accAfterRev
       )
     })
   })
   describe('Negative tests', () => {
+    it('Should throw error and not "panic" when verifier requires revocation proof but does not use accumulator', async () => {
+      await expect(
+        presentationSetup({
+          claimer: gabiClaimer,
+          attester: gabiAttester,
+          credential,
+          requestedAttributes: disclosedAttributes,
+          reqUpdatedAfter: new Date(),
+        })
+      ).rejects.toThrowError(
+        'Missing accumulator for requested revocation proof'
+      )
+    })
     it('Should throw on empty requested/disclosed attributes array', async () => {
       await expect(
         presentationSetup({
@@ -446,10 +549,11 @@ describe('Test verifier functionality', () => {
       tamperedCredential.credential.attributes[0] =
         'SSBoYXZlIGJlZW4gY2hhbmdlZA=='
 
-      const uCred = await gabiClaimer.updateCredential({
-        credential: new Credential(JSON.stringify(tamperedCredential)),
+      const uCred = await new Credential(
+        JSON.stringify(tamperedCredential)
+      ).update({
         attesterPubKey: gabiAttester.publicKey,
-        accumulator,
+        accumulators: [accumulator],
       })
       await expectVerificationFailed(
         gabiClaimer,
@@ -473,10 +577,11 @@ describe('Test verifier functionality', () => {
         tamperedCredential.credential.attributes[0],
       ]
 
-      const uCred = await gabiClaimer.updateCredential({
-        credential: new Credential(JSON.stringify(tamperedCredential)),
+      const uCred = await new Credential(
+        JSON.stringify(tamperedCredential)
+      ).update({
         attesterPubKey: gabiAttester.publicKey,
-        accumulator,
+        accumulators: [accumulator],
       })
       await expect(
         expectVerificationFailed(
@@ -534,6 +639,7 @@ describe('Test verifier functionality', () => {
           credential,
           requestedAttributes: disclosedAttributes,
           accumulator,
+          reqUpdatedAfter: new Date(),
         })
       ).rejects.toThrow('ecdsa signature was invalid')
       // use use gabiAttester2's pk instead of gabiAttester's one

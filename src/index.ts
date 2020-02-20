@@ -1,7 +1,7 @@
 import GabiClaimer from './claim/GabiClaimer'
-import GabiClaimerChain from './claim/GabiClaimer.chain'
 import GabiAttester from './attestation/GabiAttester'
 import Accumulator from './attestation/Accumulator'
+import Credential from './claim/Credential'
 import GabiAttesterChain from './attestation/GabiAttester.chain'
 import GabiVerifier from './verification/GabiVerifier'
 import CombinedRequestBuilder from './verification/CombinedRequestBuilder'
@@ -23,9 +23,9 @@ export default {
   GabiClaimer,
   GabiAttester,
   GabiVerifier,
-  GabiClaimerChain,
   GabiAttesterChain,
   Accumulator,
+  Credential,
   Blockchain,
   BlockchainError,
   CombinedRequestBuilder,

@@ -5,7 +5,7 @@ import {
 } from '../testSetup/testConfig'
 import GabiClaimer from '../claim/GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
-import { Credential } from '../types/Claim'
+import Credential from '../claim/Credential'
 import {
   actorSetup,
   combinedSetup,
@@ -15,23 +15,27 @@ import GabiVerifier from './GabiVerifier'
 import CombinedRequestBuilder from './CombinedRequestBuilder'
 import Accumulator from '../attestation/Accumulator'
 
+// }: {
+//   claimer: GabiClaimer
+//   attesters: GabiAttester[]
+//   accumulators: Array<Accumulator | undefined>
+//   disclosedAttsArr: string[][]
+//   reqUpdatesAfter: Array<Date | undefined>
+//   inputCredentials?: any
+// }
+
 async function expectCombinedSetupToBe(
   outcome: boolean,
-  {
-    claimer,
-    attesters,
-    accumulators,
-    disclosedAttsArr,
-    reqUpdatesAfter,
-    inputCredentials,
-  }: {
-    claimer: GabiClaimer
-    attesters: GabiAttester[]
-    accumulators: Accumulator[]
-    disclosedAttsArr: string[][]
-    reqUpdatesAfter: Array<Date | undefined>
-    inputCredentials?: any
-  }
+  ...[
+    {
+      claimer,
+      attesters,
+      accumulators,
+      disclosedAttsArr,
+      reqUpdatesAfter,
+      inputCredentials,
+    },
+  ]: Parameters<typeof combinedSetup>
 ): Promise<void> {
   const {
     combinedPresentationReq,
@@ -51,16 +55,24 @@ async function expectCombinedSetupToBe(
   expect(combinedSession).toEqual(expect.anything())
   expect(combinedPresentation).toEqual(expect.anything())
   expect(verifiedCombined).toBe(outcome)
-  expect(claims).toEqual(expect.anything())
-  expect(claims).toHaveLength(attesters.length)
+  if (outcome) {
+    expect(claims).toEqual(expect.anything())
+    expect(claims).toHaveLength(attesters.length)
+  } else {
+    expect(claims).toBeNull()
+  }
 }
 
 describe('Test combined requests', () => {
-  let claimers: GabiClaimer[]
+  let claimer: GabiClaimer
   let attesters: GabiAttester[]
   let accumulators: Accumulator[]
   beforeAll(async () => {
-    ;({ attesters, accumulators, claimers } = await actorSetup())
+    ;({
+      attesters,
+      accumulators,
+      claimers: [claimer],
+    } = await actorSetup())
   })
   it('Checks valid CombinedRequestBuilder', async () => {
     const { message, session } = await new CombinedRequestBuilder()
@@ -81,7 +93,7 @@ describe('Test combined requests', () => {
       attesters.map((attester, idx) =>
         attestationSetup({
           attester,
-          claimer: claimers[0],
+          claimer,
           accumulator: accumulators[idx],
         })
       )
@@ -103,7 +115,7 @@ describe('Test combined requests', () => {
       .finalise()
     // (1) test swapped attesters pubkey positions in buildCombinedPresentation
     await expect(
-      claimers[0].buildCombinedPresentation({
+      claimer.buildCombinedPresentation({
         credentials,
         combinedPresentationReq,
         attesterPubKeys: [attesters[1].publicKey, attesters[0].publicKey],
@@ -111,7 +123,7 @@ describe('Test combined requests', () => {
     ).rejects.toThrow('ecdsa signature was invalid')
 
     // (2) test swapped attesters pubkey positions in verifyCombinedPresentation
-    const combPresentation = await claimers[0].buildCombinedPresentation({
+    const combPresentation = await claimer.buildCombinedPresentation({
       credentials,
       combinedPresentationReq,
       attesterPubKeys: attesters.map(attester => attester.publicKey),
@@ -125,19 +137,39 @@ describe('Test combined requests', () => {
     expect(verified).toBe(false)
     expect(claims).not.toEqual(expect.anything())
   })
-  it('Check valid combinedSetups', async () => {
+  it('Verifies valid combinedSetup', async () => {
     await expectCombinedSetupToBe(true, {
-      claimer: claimers[0],
+      claimer,
       attesters,
       accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
       reqUpdatesAfter: [new Date(), new Date()],
     })
   })
+  it('Should throw when using incorrect attester key', async () => {
+    await expect(
+      combinedSetup({
+        claimer,
+        attesters: [attesters[0], attesters[0]],
+        accumulators,
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
+        reqUpdatesAfter: [new Date(), new Date()],
+      })
+    ).rejects.toThrowError('ecdsa signature was invalid')
+    await expect(
+      combinedSetup({
+        claimer,
+        attesters: [attesters[1], attesters[1]],
+        accumulators,
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
+        reqUpdatesAfter: [new Date(), new Date()],
+      })
+    ).rejects.toThrowError('ecdsa signature was invalid')
+  })
   it('Should throw for an empty disclosed attributes array', async () => {
     await expect(
       combinedSetup({
-        claimer: claimers[0],
+        claimer,
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
@@ -148,7 +180,7 @@ describe('Test combined requests', () => {
     )
     await expect(
       combinedSetup({
-        claimer: claimers[0],
+        claimer,
         attesters,
         accumulators,
         disclosedAttsArr: [[], disclosedAttributes],
@@ -161,10 +193,10 @@ describe('Test combined requests', () => {
   it('Should throw for different input array lengths', async () => {
     await expect(
       combinedSetup({
-        claimer: claimers[0],
-        attesters,
+        claimer,
+        attesters: [attesters[0]],
         accumulators,
-        disclosedAttsArr: [disclosedAttributes, []],
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         reqUpdatesAfter: [new Date()],
       })
     ).rejects.toThrow("Array lengths don't match up in combined setup")
@@ -172,52 +204,94 @@ describe('Test combined requests', () => {
   it('Should work for any number of combinations', async () => {
     // to keep the runtime small, we test only 5 combinations, but this can be set to any number
     const n = 5
-    const range = new Array(n).fill(0).map(d => new Date(d))
+    const dates = new Array(n).fill(0).map(d => new Date(d))
     await expectCombinedSetupToBe(true, {
-      claimer: claimers[0],
-      attesters: range.map((_, idx) => attesters[idx % 2]),
-      accumulators: range.map((_, idx) => accumulators[idx % 2]),
+      claimer,
+      attesters: dates.map((_, idx) => attesters[idx % 2]),
+      accumulators: dates.map((_, idx) => accumulators[idx % 2]),
       disclosedAttsArr: new Array(n).fill(disclosedAttributes),
-      reqUpdatesAfter: range,
+      reqUpdatesAfter: dates,
     })
   })
   describe('If one credential is revoked, it...', () => {
     let credentials: Credential[]
+    let accAfterRev: Accumulator
+    const revCredIdx = 1
+    const dateBeforeRev = new Date()
     beforeAll(async () => {
       const attestations = await Promise.all(
         attesters.map((attester, idx) =>
           attestationSetup({
             attester,
-            claimer: claimers[0],
+            claimer,
             accumulator: accumulators[idx],
           })
         )
       )
+      credentials = attestations.map(a => a.credential)
       // revoke 2nd credential
-      attesters[1].revokeAttestation({
-        accumulator: accumulators[1],
-        witnesses: [attestations[1].witness],
+      accAfterRev = await attesters[revCredIdx].revokeAttestation({
+        accumulator: accumulators[revCredIdx],
+        witnesses: [attestations[revCredIdx].witness],
       })
-      credentials = attestations.map(attestation => attestation.credential)
     })
-    it('Should verify if outdated index is requested', async () => {
+    it('Should verify when outdated accumulators are used by verifier', async () => {
       await expectCombinedSetupToBe(true, {
-        claimer: claimers[0],
+        claimer,
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         reqUpdatesAfter: [new Date(), new Date()],
-
         inputCredentials: credentials,
       })
     })
-    it('Should verify if its a nonRevocationProof', async () => {
-      await expectCombinedSetupToBe(true, {
-        claimer: claimers[0],
+    it('Should not verify when latest accumulators are used by verifier', async () => {
+      await expectCombinedSetupToBe(false, {
+        claimer,
         attesters,
-        accumulators,
+        accumulators: [accumulators[0], accAfterRev],
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
+        reqUpdatesAfter: [new Date(), new Date()],
+        inputCredentials: credentials,
+      })
+    })
+    it('Should verify when timestamp of revoked credential is older than revocation', async () => {
+      await expectCombinedSetupToBe(true, {
+        claimer,
+        attesters,
+        accumulators: [accumulators[0], accAfterRev],
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
+        reqUpdatesAfter: [new Date(), dateBeforeRev],
+        inputCredentials: credentials,
+      })
+    })
+    it('Should not verify when timestamp of revoked credential is newer than revocation', async () => {
+      await expectCombinedSetupToBe(false, {
+        claimer,
+        attesters,
+        accumulators: [accumulators[0], accAfterRev],
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
+        reqUpdatesAfter: [new Date(), new Date()],
+        inputCredentials: credentials,
+      })
+    })
+    it('Should verify when no timestamp is required, i.e. is a non-revocation proof', async () => {
+      await expectCombinedSetupToBe(true, {
+        claimer,
+        attesters,
+        accumulators: [accumulators[0], accAfterRev],
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
         reqUpdatesAfter: [new Date(), undefined],
+        inputCredentials: credentials,
+      })
+    })
+    it('Should verify when no accumulator is required, i.e. is a non-revocation proof', async () => {
+      await expectCombinedSetupToBe(true, {
+        claimer,
+        attesters,
+        accumulators: [accumulators[0]],
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
+        reqUpdatesAfter: [new Date()],
         inputCredentials: credentials,
       })
     })

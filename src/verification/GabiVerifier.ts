@@ -81,6 +81,9 @@ export default class GabiVerifier {
     attesterPubKey: AttesterPublicKey
     latestAccumulator?: Accumulator
   }): Promise<IVerifiedPresentation> {
+    if (!latestAccumulator && proof.valueOf().includes('nonrev_proof')) {
+      throw new Error('Missing accumulator for requested revocation proof')
+    }
     const response = await goWasmExec<{
       verified: string
       claim: string
@@ -115,7 +118,7 @@ export default class GabiVerifier {
       verifierSession.valueOf(),
       `[${attesterPubKeys.join(',')}]`,
       `[${latestAccumulators
-        .map(accumulator => accumulator || new Accumulator('null'))
+        .map(accumulator => (accumulator || new Accumulator('null')).valueOf())
         .join(',')}]`,
     ])
     return {

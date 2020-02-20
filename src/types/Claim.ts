@@ -1,14 +1,10 @@
-/* eslint-disable-next-line max-classes-per-file */
-import Accumulator from '../attestation/Accumulator'
-import { AttesterPublicKey } from './Attestation'
-
+/* eslint-disable max-classes-per-file */
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
 export default interface IGabiClaimer {
   requestAttestation: Function
   buildCredential: Function
   buildPresentation: Function
   buildCombinedPresentation: Function
-  updateCredential: Function
 }
 
 export interface IGabiClaimerChain {
@@ -52,12 +48,6 @@ export class AttestationRequest extends String {
   }
 }
 
-export interface IUpdateCredential {
-  credential: Credential
-  attesterPubKey: AttesterPublicKey
-  accumulator: Accumulator
-}
-
 export class ClaimerAttestationSession extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
@@ -67,10 +57,6 @@ export class Presentation extends String {
   private thisIsOnlyHereToPreventClassMixes: int
 }
 export class CombinedPresentation extends String {
-  // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
-}
-export class Credential extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }

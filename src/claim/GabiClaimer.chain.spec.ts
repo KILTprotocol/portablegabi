@@ -1,16 +1,16 @@
 import GabiAttesterChain from '../attestation/GabiAttester.chain'
 import { actorSetupChain } from '../testSetup/testSetup.chain'
 import Accumulator from '../attestation/Accumulator'
-import GabiClaimerChain from './GabiClaimer.chain'
 import { attestationSetup } from '../testSetup/testSetup'
 import api from '../blockchain/__mocks__/BlockchainApi'
-import { Credential } from '../types/Claim'
 import { AttesterPublicKey } from '../types/Attestation'
+import Credential from './Credential'
+import GabiClaimer from './GabiClaimer'
 
 jest.mock('../blockchainApiConnection/BlockchainApiConnection')
 
 describe('Test GabiAttester on chain', () => {
-  let claimer: GabiClaimerChain
+  let claimer: GabiClaimer
   let attester: GabiAttesterChain
   let accumulator: Accumulator
   let credential: Credential
@@ -37,8 +37,7 @@ describe('Test GabiAttester on chain', () => {
     })
   })
   it('Should update credential with address input', async () => {
-    const credUpdated = await claimer.updateCredentialChain({
-      credential,
+    const credUpdated = await credential.updateFromChain({
       attesterPubKey,
       attesterChainAddress,
     })
@@ -55,8 +54,7 @@ describe('Test GabiAttester on chain', () => {
     expect(credUpdated.valueOf()).toStrictEqual(credential.valueOf())
   })
   it('Should update credential with index input', async () => {
-    const credUpdated = await claimer.updateCredentialChain({
-      credential,
+    const credUpdated = await credential.updateFromChain({
       attesterPubKey,
       attesterChainAddress,
       index: 0,

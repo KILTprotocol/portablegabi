@@ -1,11 +1,9 @@
 import IGabiClaimer, {
   AttestationRequest,
   ClaimerAttestationSession,
-  Credential,
   Presentation,
   CombinedPresentation,
   ClaimError,
-  IUpdateCredential,
 } from '../types/Claim'
 import WasmHooks from '../wasm/WasmHooks'
 import {
@@ -19,6 +17,7 @@ import {
   PresentationRequest,
 } from '../types/Verification'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
+import Credential from './Credential'
 
 function checkValidClaimStructure(claim: object): void | Error {
   if (!Object.keys(claim).length) {
@@ -139,7 +138,7 @@ export default class GabiClaimer implements IGabiClaimer {
     combinedPresentationReq: CombinedPresentationRequest
     attesterPubKeys: AttesterPublicKey[]
   }): Promise<CombinedPresentation> {
-    // make an json array out of already json serialised values
+    // make a json array out of already json serialised values
     // we don't want a json array of strings
     return new CombinedPresentation(
       await goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
@@ -147,22 +146,6 @@ export default class GabiClaimer implements IGabiClaimer {
         `[${credentials.join(',')}]`,
         combinedPresentationReq.valueOf(),
         `[${attesterPubKeys.join(',')}]`,
-      ])
-    )
-  }
-
-  // TODO figure why static does not implement interface.
-  // eslint-disable-next-line class-methods-use-this
-  public async updateCredential({
-    credential,
-    attesterPubKey,
-    accumulator,
-  }: IUpdateCredential): Promise<Credential> {
-    return new Credential(
-      await goWasmExec<string>(WasmHooks.updateCredential, [
-        credential.valueOf(),
-        accumulator.valueOf(),
-        attesterPubKey.valueOf(),
       ])
     )
   }

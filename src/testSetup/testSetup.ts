@@ -27,10 +27,10 @@ import {
   AttestationRequest,
   Presentation,
   ClaimerAttestationSession,
-  Credential,
   CombinedPresentation,
 } from '../types/Claim'
 import Accumulator from '../attestation/Accumulator'
+import Credential from '../claim/Credential'
 
 // creates instances for two claimers, attesters and corresponding accumulators each
 export async function actorSetup(): Promise<{
@@ -112,15 +112,14 @@ export async function presentationSetup({
   credential,
   requestedAttributes = disclosedAttributes,
   accumulator,
-  reqUpdatedAfter = new Date(),
+  reqUpdatedAfter,
 }: {
   claimer: GabiClaimer
   attester: GabiAttester
   credential: Credential
-  accumulator: Accumulator
+  accumulator?: Accumulator
   requestedAttributes?: string[]
   reqUpdatedAfter?: Date
-  reqNonRevocationProof?: boolean
 }): Promise<{
   verifierSession: VerificationSession
   presentationReq: PresentationRequest
@@ -318,7 +317,7 @@ export async function combinedSetup({
 }: {
   claimer: GabiClaimer
   attesters: GabiAttester[]
-  accumulators: Accumulator[]
+  accumulators: Array<Accumulator | undefined>
   disclosedAttsArr: string[][]
   reqUpdatesAfter: Array<Date | undefined>
   inputCredentials?: Credential[]
@@ -330,11 +329,7 @@ export async function combinedSetup({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   claims: any[]
 }> {
-  if (
-    attesters.length !== accumulators.length ||
-    accumulators.length !== disclosedAttsArr.length ||
-    disclosedAttsArr.length !== reqUpdatesAfter.length
-  ) {
+  if (attesters.length !== disclosedAttsArr.length) {
     throw new Error("Array lengths don't match up in combined setup")
   }
   const attesterPubKeys = attesters.map(attester => attester.publicKey)
@@ -348,11 +343,12 @@ export async function combinedSetup({
     credentials = inputCredentials
   } else {
     credentials = await Promise.all(
-      attesters.map((attester, idx) =>
+      attesters.map(async (attester, idx) =>
         attestationSetup({
           attester,
           claimer,
-          accumulator: accumulators[idx],
+          accumulator:
+            accumulators[idx] || (await attester.createAccumulator()),
         })
       )
     ).then(attestations =>

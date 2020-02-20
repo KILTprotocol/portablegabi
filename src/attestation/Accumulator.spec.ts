@@ -3,6 +3,7 @@ import { attestationSetup, actorSetup } from '../testSetup/testSetup'
 import { Witness } from '../types/Attestation'
 import GabiClaimer from '../claim/GabiClaimer'
 import Accumulator from './Accumulator'
+import BlockchainError from '../blockchain/ChainError'
 
 describe('Test accumulator', () => {
   let gabiAttester: GabiAttester
@@ -90,6 +91,14 @@ describe('Test accumulator', () => {
       ).rejects.toThrowError(
         `Missing revocation index in accumulator "missing revocation index"`
       )
+    })
+    it('Should throw BlockchainError when calling getRevIndex on a string with address', async () => {
+      await expect(
+        new Accumulator('missing revocation index').getRevIndex(
+          gabiAttester.publicKey,
+          'dummyAddress'
+        )
+      ).rejects.toThrowError(BlockchainError.missingRevIndex('dummyAddress'))
     })
   })
 })

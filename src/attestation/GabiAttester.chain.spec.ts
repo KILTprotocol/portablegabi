@@ -5,15 +5,15 @@ import { actorSetupChain } from '../testSetup/testSetup.chain'
 import Accumulator from './Accumulator'
 import Blockchain from '../blockchain/Blockchain'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
-import GabiClaimerChain from '../claim/GabiClaimer.chain'
 import { attestationSetup } from '../testSetup/testSetup'
 import api from '../blockchain/__mocks__/BlockchainApi'
 import { AttesterPublicKey, AttesterPrivateKey } from '../types/Attestation'
+import GabiClaimer from '../claim/GabiClaimer'
 
 jest.mock('../blockchainApiConnection/BlockchainApiConnection')
 
 describe('Test GabiAttester on chain', () => {
-  let claimer: GabiClaimerChain
+  let claimer: GabiClaimer
   let attester: GabiAttesterChain
   let chain: Blockchain
   let accumulator: Accumulator
@@ -37,16 +37,14 @@ describe('Test GabiAttester on chain', () => {
     } = await GabiAttesterChain.buildFromMnemonic(
       new AttesterPublicKey('pb'),
       new AttesterPrivateKey('pk'),
-      mnemonic,
-      'sr25519'
+      mnemonic
     )
     const {
       address: attesterAddressFromURI,
     } = await GabiAttesterChain.buildFromURI(
       new AttesterPublicKey('pb'),
       new AttesterPrivateKey('pk'),
-      mnemonic,
-      'sr25519'
+      mnemonic
     )
     expect(attesterAddress).toEqual(expect.anything())
     const { address: fromMiniSecret } = new Keyring({
@@ -62,7 +60,7 @@ describe('Test GabiAttester on chain', () => {
     expect(attesterAddress).toBe(fromMnemonic)
     expect(attesterAddress).not.toBe(fromSeed)
     expect(attesterAddress).toBe(attesterAddressFromURI)
-  })
+  }, 10000)
   // NOTE: if this test fails after updating @polkadot packages, we should adjust GabiAttester.chain.ts
   // see issue https://github.com/polkadot-js/common/blob/d889c71056158df72b34b994506d062c2e731cc0/packages/keyring/src/keyring.ts#L174
   it('Should generate correct keypair for signature type ed25519', async () => {
@@ -95,7 +93,7 @@ describe('Test GabiAttester on chain', () => {
     expect(attesterAddress).not.toBe(fromMnemonic)
     expect(attesterAddress).not.toBe(attesterAddressFromURI)
     expect(attesterAddressFromURI).toBe(fromMnemonic)
-  })
+  }, 10000)
   it('Should generate new mnemonic with every call', () => {
     const mnemonics = new Array(5)
       .fill(0)
@@ -156,5 +154,5 @@ describe('Test GabiAttester on chain', () => {
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
       latestAccumulator.valueOf()
     )
-  })
+  }, 10000)
 })
