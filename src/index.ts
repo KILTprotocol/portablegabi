@@ -18,6 +18,19 @@ export * from './types/Wasm'
 export * from './types/Chain'
 export * from './blockchainApiConnection/BlockchainApiConnection'
 
+export {
+  goWasmClose,
+  GabiClaimer,
+  GabiAttester,
+  GabiVerifier,
+  GabiAttesterChain,
+  Accumulator,
+  Blockchain,
+  BlockchainError,
+  CombinedRequestBuilder,
+  connect,
+}
+
 export default {
   goWasmClose,
   GabiClaimer,

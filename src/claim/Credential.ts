@@ -5,6 +5,8 @@ import { AttesterPublicKey } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 
 export default class Credential extends String {
+  private parseCache: object | undefined
+
   private async updateSingle({
     attesterPubKey,
     accumulator,
@@ -99,5 +101,15 @@ export default class Credential extends String {
       attesterPubKey,
       accumulator,
     })
+  }
+
+  public getUpdateCounter(): number {
+    const parsed = this.parseCache || JSON.parse(this.valueOf())
+    const counter = parsed.updateCounter
+    if (typeof counter !== 'number') {
+      throw new Error('Invalid credential')
+    }
+    this.parseCache = parsed
+    return counter
   }
 }

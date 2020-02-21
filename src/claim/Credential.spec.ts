@@ -158,12 +158,14 @@ describe('Test claimer functionality', () => {
       ).rejects.toThrowError('update too new')
     })
     it('Should not throw when updating credential from sorted accumulator array', async () => {
-      await expect(
-        credential.update({
-          attesterPubKey: gabiAttester.publicKey,
-          accumulators,
-        })
-      ).resolves.toEqual(expect.anything())
+      const oldCount = credential.getUpdateCounter()
+      const newCred = await credential.update({
+        attesterPubKey: gabiAttester.publicKey,
+        accumulators,
+      })
+      expect(newCred).toEqual(expect.anything())
+      const newCount = newCred.getUpdateCounter()
+      expect(newCount).toEqual(oldCount + accumulators.length)
     })
     it('Should not throw when updating credential from unsorted accumulator array', async () => {
       await expect(

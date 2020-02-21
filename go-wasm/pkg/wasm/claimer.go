@@ -189,3 +189,28 @@ func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	}
 	return credential, nil
 }
+
+// UpdateAllCredential updates the non revocation witness using all the provided updates.
+func UpdateAllCredential(this js.Value, inputs []js.Value) (interface{}, error) {
+	if len(inputs) < 3 {
+		return nil, errors.New("Missing inputs to update credential")
+	}
+	credential := &credentials.AttestedClaim{}
+	updates := []*revocation.Update{}
+	issuerPubKey := &gabi.PublicKey{}
+
+	if err := json.Unmarshal([]byte(inputs[0].String()), credential); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[1].String()), updates); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(inputs[2].String()), issuerPubKey); err != nil {
+		return nil, err
+	}
+
+	if err := credential.UpdateAll(issuerPubKey, updates); err != nil {
+		return nil, err
+	}
+	return credential, nil
+}

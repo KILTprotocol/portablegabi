@@ -13,6 +13,7 @@ enum WasmHooks {
   requestAttestation = 'requestAttestation',
   buildCredential = 'buildCredential',
   updateCredential = 'updateCredential',
+  updateAllCredential = 'updateAllCredential',
   buildPresentation = 'buildPresentation',
   buildCombinedPresentation = 'buildCombinedPresentation',
 

@@ -28,8 +28,9 @@ type (
 	// AttestedClaim contains the Claim and the gabi.Credential. It can be used to
 	// disclose specific attributes to the verifier.
 	AttestedClaim struct {
-		Credential *gabi.Credential `json:"credential"`
-		Claim      Claim            `json:"claim"`
+		Credential    *gabi.Credential `json:"credential"`
+		UpdateCounter uint64           `json:"updateCounter"`
+		Claim         Claim            `json:"claim"`
 	}
 
 	// Claim contains the attributes the claimer claims to possess. Contents should
@@ -77,6 +78,7 @@ func NewAttestedClaim(cb *gabi.CredentialBuilder, attributes []*Attribute, signa
 	if err != nil {
 		return nil, err
 	}
+
 	return &AttestedClaim{
 		Credential: cred,
 		Claim:      claim,
@@ -138,6 +140,10 @@ func (attestedClaim *AttestedClaim) Update(attesterPubK *gabi.PublicKey, update 
 		return err
 	}
 	witness := attestedClaim.Credential.NonRevocationWitness
+	oldAcc, err := witness.SignedAccumulator.UnmarshalVerify(pubRevKey)
+	if err != nil {
+		return fmt.Errorf("Could not verify old accumulator (%f)", err)
+	}
 
 	err = witness.Verify(pubRevKey)
 	if err != nil {
@@ -147,6 +153,20 @@ func (attestedClaim *AttestedClaim) Update(attesterPubK *gabi.PublicKey, update 
 	err = witness.Update(pubRevKey, update)
 	if err != nil {
 		return err
+	}
+	if oldAcc.Index < update.SignedAccumulator.Accumulator.Index {
+		attestedClaim.UpdateCounter++
+	}
+	return nil
+}
+
+// UpdateAll updates the non revocation witness using all the provided updates.
+func (attestedClaim *AttestedClaim) UpdateAll(attesterPubK *gabi.PublicKey,
+	updates []*revocation.Update) error {
+	for _, u := range updates {
+		if err := attestedClaim.Update(attesterPubK, u); err != nil {
+			return err
+		}
 	}
 	return nil
 }
