@@ -202,7 +202,7 @@ func UpdateAllCredential(this js.Value, inputs []js.Value) (interface{}, error) 
 	if err := json.Unmarshal([]byte(inputs[0].String()), credential); err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(inputs[1].String()), updates); err != nil {
+	if err := json.Unmarshal([]byte(inputs[1].String()), &updates); err != nil {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), issuerPubKey); err != nil {

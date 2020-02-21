@@ -30,20 +30,13 @@ export default class Credential extends String {
     attesterPubKey: AttesterPublicKey
     accumulators: Accumulator[]
   }): Promise<Credential> {
-    // sort accumulators by index
-    let credUpdate: Credential = new Credential(this.valueOf())
-    for (let i = 0; i < accumulators.length; i += 1) {
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        credUpdate = await credUpdate.updateSingle({
-          attesterPubKey,
-          accumulator: accumulators[i],
-        })
-      } catch (e) {
-        throw new Error(`${e.message} at index ${i}`)
-      }
-    }
-    return credUpdate
+    return new Credential(
+      await goWasmExec<string>(WasmHooks.updateAllCredential, [
+        this.valueOf(),
+        `[${accumulators.join(',')}]`,
+        attesterPubKey.valueOf(),
+      ])
+    )
   }
 
   public async update({
