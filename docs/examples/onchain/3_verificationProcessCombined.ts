@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
-import GabiClaimerChain from '../../../src/claim/GabiClaimer.chain'
+import GabiClaimer from '../../../src/claim/GabiClaimer'
 import GabiAttesterChain from '../../../src/attestation/GabiAttester.chain'
-import { Credential } from '../../../src/types/Claim'
 import { IPresentationRequest } from '../../../src/types/Verification'
 import GabiVerifier from '../../../src/verification/GabiVerifier'
+import Credential from '../../../src/claim/Credential'
 import connect from '../../../src/blockchainApiConnection/BlockchainApiConnection'
 
 // runs a complete verification process on a credential
@@ -15,7 +15,7 @@ export async function verificationProcessCombinedChain({
   reqUpdatedAfter,
   reqNonRevocationProofArr,
 }: {
-  claimer: GabiClaimerChain
+  claimer: GabiClaimer
   attesters: GabiAttesterChain[]
   credentials: Credential[]
   requestedAttributesArr: string[][]

@@ -1,8 +1,8 @@
 import { hexToString } from '@polkadot/util'
 import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
-import BlockchainError, { checkAccIndex, checkRevIndex } from './ChainError'
-import { IPublicIdentity } from '../types/Attestation'
+import { Codec } from '@polkadot/types/types'
+import BlockchainError from './BlockchainError'
 import { IBlockchainApi, IPortablegabiApi, PgabiModName } from '../types/Chain'
 import Accumulator from '../attestation/Accumulator'
 
@@ -23,11 +23,9 @@ export default class Blockchain implements IBlockchainApi {
 
   public async waitForNextBlock(): Promise<void> {
     const currBlock = (await this.api.rpc.chain.getHeader()).number.toNumber()
-    let nextBlock = currBlock
     return new Promise(resolve =>
       this.api.rpc.chain.subscribeNewHeads(header => {
-        nextBlock = header.number.toNumber()
-        if (nextBlock > currBlock) resolve()
+        if (header.number.toNumber() > currBlock) resolve()
       })
     )
   }
@@ -37,32 +35,88 @@ export default class Blockchain implements IBlockchainApi {
     return parseInt(count.toString(), 10)
   }
 
-  public async getAccumulator(
-    address: string,
-    index: number
-  ): Promise<Accumulator> {
-    const codec = await this.api.query[this.chainmod].accumulatorList([
-      address,
-      index,
-    ])
-    if (codec.isEmpty || (!codec.isEmpty && codec.toString().length < 2)) {
-      const maxIndex = (await this.getAccumulatorCount(address)) - 1
-      checkAccIndex(address, index, maxIndex)
-    }
-    return new Accumulator(hexToString(codec.toString()))
-  }
-
-  public async getLatestAccumulator(address: string): Promise<Accumulator> {
+  // check for existing accumulator count and return max index for query
+  private async getMaxIndex(address: string): Promise<number> {
     const maxIndex = (await this.getAccumulatorCount(address)) - 1
     if (maxIndex < 0) {
       throw BlockchainError.maxIndexZero(address)
     }
-    return this.getAccumulator(address, maxIndex)
+    return maxIndex
   }
 
-  public async getRevIndex(identity: IPublicIdentity): Promise<number> {
-    const accumulator = await this.getLatestAccumulator(identity.address)
-    return accumulator.getRevIndex(identity.publicKey, identity.address)
+  // check for existing accumulator count and whether given index exceeds maxIndex
+  private async checkIndex(address: string, index: number): Promise<void> {
+    const maxIndex = await this.getMaxIndex(address)
+    if (index > maxIndex || index < 0) {
+      throw BlockchainError.indexOutOfRange(
+        'accumulator',
+        address,
+        index,
+        maxIndex
+      )
+    }
+  }
+
+  // check whether codec is empty and convert codec->string->hex->accumulator
+  private static async codecToAccumulator(
+    address: string,
+    codec: Codec,
+    index: number
+  ): Promise<Accumulator> {
+    if (codec.isEmpty || (!codec.isEmpty && codec.toString().length < 2)) {
+      throw BlockchainError.missingAccAtIndex(address, index)
+    }
+    return new Accumulator(hexToString(codec.toString()))
+  }
+
+  public async getAccumulator(
+    address: string,
+    index: number
+  ): Promise<Accumulator> {
+    // check whether endIndex > accumulatorCount
+    await this.checkIndex(address, index)
+
+    // query accumulator at index
+    const codec: Codec = await this.api.query[this.chainmod].accumulatorList([
+      address,
+      index,
+    ])
+
+    // convert codec to accumulator
+    return Blockchain.codecToAccumulator(address, codec, index)
+  }
+
+  public async getAccumulatorArray(
+    address: string,
+    startIndex: number,
+    _endIndex?: number
+  ): Promise<Accumulator[]> {
+    if (_endIndex) {
+      // check whether endIndex > accumulatorCount
+      await this.checkIndex(address, _endIndex)
+    }
+    const endIndex = _endIndex || (await this.getMaxIndex(address))
+    // create [[address, startIndex], ..., [address, endIndex]] for multi query
+    const multiQuery = new Array(endIndex - startIndex)
+      .fill(startIndex)
+      .map((x, i) => [address, x + i])
+
+    // do multi query
+    const codecArr: Codec[] = await this.api.query[
+      this.chainmod
+    ].accumulatorList.multi(multiQuery)
+
+    // convert codecs to accumulators
+    return Promise.all(
+      codecArr.map((codec, i) =>
+        Blockchain.codecToAccumulator(address, codec, i + startIndex)
+      )
+    )
+  }
+
+  public async getLatestAccumulator(address: string): Promise<Accumulator> {
+    const maxIndex = await this.getMaxIndex(address)
+    return this.getAccumulator(address, maxIndex)
   }
 
   public async updateAccumulator(
@@ -74,18 +128,4 @@ export default class Blockchain implements IBlockchainApi {
     )
     await update.signAndSend(address)
   }
-
-  public async checkReqRevIndex(
-    reqIndex: number | 'latest',
-    identity: IPublicIdentity
-  ): Promise<number> {
-    const maxIndex = await this.getRevIndex(identity)
-    if (typeof reqIndex === 'number') {
-      checkRevIndex(identity.address, reqIndex, maxIndex)
-      return reqIndex
-    }
-    return maxIndex
-  }
-
-  // TODO: Add function to getLatestAccumulator before/after timestamp
 }

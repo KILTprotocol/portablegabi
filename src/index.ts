@@ -6,7 +6,7 @@ import GabiAttesterChain from './attestation/GabiAttester.chain'
 import GabiVerifier from './verification/GabiVerifier'
 import CombinedRequestBuilder from './verification/CombinedRequestBuilder'
 import Blockchain from './blockchain/Blockchain'
-import BlockchainError from './blockchain/ChainError'
+import BlockchainError from './blockchain/BlockchainError'
 import connect from './blockchainApiConnection/BlockchainApiConnection'
 
 import goWasmClose from './wasm/wasm_exec_wrapper'

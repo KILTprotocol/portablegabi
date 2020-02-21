@@ -140,7 +140,7 @@ describe('Test GabiAttester on chain', () => {
     await expect(
       attester.revokeAttestation({ witnesses: [witnessRev] })
     ).rejects.toThrowError("Cannot read property 'signAndSend' of undefined")
-    expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(1)
+    expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(2)
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledWith(
       attester.address
     )

@@ -137,7 +137,7 @@ describe('Test claimer functionality', () => {
       })
       accumulators = [accRev1, accRev2, accRev3]
     })
-    it('Should return expected revocation indices', async () => {
+    it('Should return expected revocation indices for setup accumulators', async () => {
       await expect(
         accumulators[0].getRevIndex(gabiAttester.publicKey)
       ).resolves.toBe(1)
@@ -157,7 +157,7 @@ describe('Test claimer functionality', () => {
         })
       ).rejects.toThrowError('update too new')
     })
-    it('Should not throw when updating credential from sorted accumulator array', async () => {
+    it.only('Should not throw when updating credential from sorted accumulator array', async () => {
       const oldCount = credential.getUpdateCounter()
       const newCred = await credential.update({
         attesterPubKey: gabiAttester.publicKey,
@@ -179,10 +179,47 @@ describe('Test claimer functionality', () => {
           ],
         })
       ).resolves.toEqual(expect.anything())
+      await expect(
+        credential.update({
+          attesterPubKey: gabiAttester.publicKey,
+          accumulators: [
+            accumulators[1],
+            accumulators[2],
+            accumulators[0],
+            accumulator,
+          ],
+        })
+      ).resolves.toEqual(expect.anything())
     })
   })
   // run tests on invalid data
   describe('Negative tests', () => {
+    it.only('Should throw for invalid credential', async () => {
+      let success = false
+      try {
+        new Credential('dummyCredential').getUpdateCounter()
+        success = true
+      } catch (e) {
+        expect(e.message).toEqual('Invalid credential')
+      }
+      try {
+        new Credential(
+          JSON.stringify({ updateCounter: 'NaN' })
+        ).getUpdateCounter()
+        success = true
+      } catch (e) {
+        expect(e.message).toEqual('Invalid credential')
+      }
+      try {
+        new Credential(
+          JSON.stringify({ notUpdateCounter: 'NaN' })
+        ).getUpdateCounter()
+        success = true
+      } catch (e) {
+        expect(e.message).toEqual('Invalid credential')
+      }
+      expect(success).toBe(false)
+    })
     it('Should throw in updateCredential with pubkey from different attester', async () => {
       await expect(
         credential.update({

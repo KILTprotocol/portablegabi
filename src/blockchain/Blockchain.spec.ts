@@ -1,8 +1,7 @@
 import { stringToHex } from '@polkadot/util'
 import { Codec } from '@polkadot/types/types'
 import Accumulator from '../attestation/Accumulator'
-import BlockchainError from './ChainError'
-import { actorSetupChain } from '../testSetup/testSetup.chain'
+import BlockchainError from './BlockchainError'
 import api from './__mocks__/BlockchainApi'
 import BlockchainMock from './__mocks__/Blockchain'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
@@ -32,7 +31,7 @@ describe('chain mocks', () => {
       expect(accu.valueOf()).toBe(dummyAddress)
     })
     it('Should getLatestAccumulator', async () => {
-      api.query.portablegabi.accumulatorCount.mockResolvedValueOnce(
+      api.query.portablegabi.accumulatorCount.mockResolvedValue(
         Promise.resolve(100)
       )
       api.query.portablegabi.accumulatorList.mockResolvedValueOnce(
@@ -46,7 +45,7 @@ describe('chain mocks', () => {
     it('Should updateAccumulator', async () => {
       const newAccumulator = new Accumulator('newAccumulator')
       // set current accumulator
-      api.query.portablegabi.accumulatorList.mockResolvedValueOnce(
+      api.query.portablegabi.accumulatorList.mockResolvedValue(
         (stringToHex('currAccumulator') as unknown) as Promise<Codec>
       )
       const currAccumulator = await BlockchainMock.getLatestAccumulator(
@@ -62,18 +61,6 @@ describe('chain mocks', () => {
       )
       expect(latestAccumulator.valueOf()).toBe(newAccumulator.valueOf())
     })
-    it('Should return revocation index of 0 for fresh accumulator', async () => {
-      const {
-        attesters: [attester],
-      } = await actorSetupChain({})
-      const accumulator = await attester.createAccumulator()
-      api.query.portablegabi.accumulatorList.mockReturnValueOnce(
-        (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
-      )
-      await expect(
-        BlockchainMock.getRevIndex(attester.getPublicIdentity())
-      ).resolves.toBe(0)
-    }, 10000)
   })
   describe('Negative tests', () => {
     it('Should throw for empty accumulatorList (maxIndex === -1)', async () => {

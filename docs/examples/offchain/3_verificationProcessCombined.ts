@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import GabiClaimer from '../../../src/claim/GabiClaimer'
 import GabiAttester from '../../../src/attestation/GabiAttester'
-import { Credential } from '../../../src/types/Claim'
+import Credential from '../../../src/claim/Credential'
 import GabiVerifier from '../../../src/verification/GabiVerifier'
 import CombinedRequestBuilder from '../../../src/verification/CombinedRequestBuilder'
 import Accumulator from '../../../src/attestation/Accumulator'

@@ -7,21 +7,31 @@ import {
   actorSetupChain,
   presentationSetupChain,
 } from '../src/testSetup/testSetup.chain'
-import { disclosedAttributes } from '../src/testSetup/testConfig'
+import { disclosedAttributes, chainCfg } from '../src/testSetup/testConfig'
 import { PgabiModName } from '../src/types/Chain'
 
 async function runChainExample(): Promise<void> {
-  const pgabiModName: PgabiModName = 'portablegabiPallet'
+  const pgabiModName: PgabiModName = 'portablegabi'
   const blockchain = await connect({
     pgabiModName,
+    types: {
+      DelegationNodeId: 'Hash',
+      PublicSigningKey: 'Hash',
+      PublicBoxKey: 'Hash',
+      Permissions: 'u32',
+      ErrorCode: 'u16',
+    },
   })
   // get actors
   const {
     attesters: [attester],
     claimers: [claimer],
     accumulators: [accumulator],
-  } = await actorSetupChain({ pgabiModName })
-  console.log(accumulator.valueOf())
+  } = await actorSetupChain({
+    pgabiModName,
+    mnemonics: [chainCfg.mnemonic, chainCfg.mnemonic],
+    keypairTypes: ['ed25519', 'ed25519'],
+  })
 
   // do 2 attestations
   const { claimerSession, attestation } = await attestationSetup({
@@ -57,7 +67,7 @@ async function runChainExample(): Promise<void> {
   const accumulatorCount = await blockchain.getAccumulatorCount(
     attester.address
   )
-
+  const index = await accumulatorAfterRevo.getRevIndex(attester.publicKey)
   console.log('Post-revocation Count: ', accumulatorCount)
   console.groupEnd()
 
@@ -77,9 +87,8 @@ async function runChainExample(): Promise<void> {
     attester,
     credential: credentialUpdated,
     requestedAttributes: disclosedAttributes,
-    reqUpdatedAfter: new Date(),
+    reqIndex: 'latest',
     reqNonRevocationProof: true,
-    accumulator: accumulatorAfterRevo,
   })
   // build credential2
   let credRev = await claimer.buildCredential({
@@ -107,9 +116,8 @@ async function runChainExample(): Promise<void> {
     attester,
     credential: credRev,
     requestedAttributes: disclosedAttributes,
-    reqUpdatedAfter: new Date(),
+    reqIndex: 'latest',
     reqNonRevocationProof: true,
-    accumulator: accumulatorAfterRevo,
   })
 
   // verify credential #2.2
@@ -118,9 +126,8 @@ async function runChainExample(): Promise<void> {
     attester,
     credential: credRev,
     requestedAttributes: disclosedAttributes,
-    reqUpdatedAfter: new Date(),
+    reqMinIndex: index,
     reqNonRevocationProof: true,
-    accumulator: accumulatorAfterRevo,
   })
   console.table({
     isVerified: [verified, verifiedRev, verifiedRev2],

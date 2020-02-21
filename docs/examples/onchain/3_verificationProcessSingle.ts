@@ -1,13 +1,14 @@
 /* eslint-disable no-console */
-import GabiClaimerChain from '../../../src/claim/GabiClaimer.chain'
+import GabiClaimer from '../../../src/claim/GabiClaimer'
 import GabiAttesterChain from '../../../src/attestation/GabiAttester.chain'
 import {
   VerificationSession,
   PresentationRequest,
 } from '../../../src/types/Verification'
-import { Presentation, Credential } from '../../../src/types/Claim'
+import { Presentation } from '../../../src/types/Claim'
 import GabiVerifier from '../../../src/verification/GabiVerifier'
 import Accumulator from '../../../src/attestation/Accumulator'
+import Credential from '../../../src/claim/Credential'
 
 // runs a complete verification process on a credential
 export async function verificationProcessSingleChain({
@@ -18,7 +19,7 @@ export async function verificationProcessSingleChain({
   reqUpdatedAfter,
   accumulator,
 }: {
-  claimer: GabiClaimerChain
+  claimer: GabiClaimer
   attester: GabiAttesterChain
   credential: Credential
   requestedAttributes: string[]

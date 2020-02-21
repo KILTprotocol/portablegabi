@@ -3,7 +3,7 @@ import GabiAttester from '../../../src/attestation/GabiAttester'
 import GabiClaimer from '../../../src/claim/GabiClaimer'
 import Accumulator from '../../../src/attestation/Accumulator'
 import { Witness } from '../../../src/types/Attestation'
-import { Credential } from '../../../src/types/Claim'
+import Credential from '../../../src/claim/Credential'
 
 function compareClaims(claim: any, claimFromAtt: any): void {
   const [keys1, values1] = Object.entries(claim)

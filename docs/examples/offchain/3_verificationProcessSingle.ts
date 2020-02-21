@@ -5,9 +5,10 @@ import {
   VerificationSession,
   PresentationRequest,
 } from '../../../src/types/Verification'
-import { Presentation, Credential } from '../../../src/types/Claim'
+import { Presentation } from '../../../src/types/Claim'
 import GabiVerifier from '../../../src/verification/GabiVerifier'
 import Accumulator from '../../../src/attestation/Accumulator'
+import Credential from '../../../src/claim/Credential'
 
 // runs a complete verification process on a credential
 export async function verificationProcessSingle({

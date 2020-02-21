@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import Blockchain from '../../../src/blockchain/Blockchain'
-import GabiClaimerChain from '../../../src/claim/GabiClaimer.chain'
 import GabiAttesterChain from '../../../src/attestation/GabiAttester.chain'
 import {
   AttesterPrivateKey,
@@ -8,6 +7,7 @@ import {
 } from '../../../src/types/Attestation'
 import { testEnv1, mnemonic } from '../exampleConfig'
 import Accumulator from '../../../src/attestation/Accumulator'
+import GabiClaimer from '../../../src/claim/GabiClaimer'
 
 export async function actorProcessChain({
   blockchain,
@@ -24,17 +24,14 @@ export async function actorProcessChain({
   attesterPrivKey?: string | AttesterPrivateKey
   attesterURI?: string
 }): Promise<{
-  claimer: GabiClaimerChain
+  claimer: GabiClaimer
   attester: GabiAttesterChain
   accumulator: Accumulator
 }> {
   // create claimer either from scratch or from mnemonic input
   const claimer = claimerMnemonic
-    ? await GabiClaimerChain.create<GabiClaimerChain>()
-    : await GabiClaimerChain.buildFromMnemonic<GabiClaimerChain>(
-        mnemonic,
-        claimerMnemonicPw
-      )
+    ? await GabiClaimer.create()
+    : await GabiClaimer.buildFromMnemonic(mnemonic, claimerMnemonicPw)
 
   // create attester
   const attester = await GabiAttesterChain.buildFromURI(

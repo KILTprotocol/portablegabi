@@ -40,5 +40,9 @@ const api = {
     },
   },
 }
+;(api.query.portablegabi
+  .accumulatorList as any).multi = jest.fn(async (arr: string[]) =>
+  arr.map(x => (stringToHex(x) as unknown) as Promise<Codec[]>)
+) as any
 
 export default api

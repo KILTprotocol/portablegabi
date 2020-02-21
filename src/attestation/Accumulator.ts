@@ -1,4 +1,4 @@
-import BlockchainError from '../blockchain/ChainError'
+import BlockchainError from '../blockchain/BlockchainError'
 import { AttesterPublicKey } from '../types/Attestation'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'

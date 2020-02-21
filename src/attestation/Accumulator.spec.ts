@@ -3,7 +3,7 @@ import { attestationSetup, actorSetup } from '../testSetup/testSetup'
 import { Witness } from '../types/Attestation'
 import GabiClaimer from '../claim/GabiClaimer'
 import Accumulator from './Accumulator'
-import BlockchainError from '../blockchain/ChainError'
+import BlockchainError from '../blockchain/BlockchainError'
 
 describe('Test accumulator', () => {
   let gabiAttester: GabiAttester

@@ -10,6 +10,14 @@ export default class BlockchainError extends Error {
   public static missingRevIndex = (address: string): BlockchainError =>
     new BlockchainError(`Missing revocation index for address "${address}"`)
 
+  public static missingAccAtIndex = (
+    address: string,
+    index: number
+  ): BlockchainError =>
+    new BlockchainError(
+      `Missing accumulator for address "${address}" at index ${index}`
+    )
+
   public static indexOutOfRange = (
     type: 'accumulator' | 'revocation',
     address: string,
@@ -19,40 +27,4 @@ export default class BlockchainError extends Error {
     new BlockchainError(
       `Requested ${type} index "${index}" for address "${address}" out of range [0, ${maxIndex}]`
     )
-}
-
-export function checkAccIndex(
-  address: string,
-  index: number,
-  maxIndex: number
-): void {
-  if (maxIndex < 0) {
-    throw BlockchainError.maxIndexZero(address)
-  }
-  if (index > maxIndex || index < 0) {
-    throw BlockchainError.indexOutOfRange(
-      'accumulator',
-      address,
-      index,
-      maxIndex
-    )
-  }
-}
-
-export function checkRevIndex(
-  address: string,
-  index: number,
-  maxIndex: number
-): void {
-  if (maxIndex < 0) {
-    throw BlockchainError.missingRevIndex(address)
-  }
-  if (index > maxIndex || index < 0) {
-    throw BlockchainError.indexOutOfRange(
-      'revocation',
-      address,
-      index,
-      maxIndex
-    )
-  }
 }

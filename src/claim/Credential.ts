@@ -5,7 +5,7 @@ import { AttesterPublicKey } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 
 export default class Credential extends String {
-  private parseCache: object | undefined
+  private parseCache: { updateCounter: number } | undefined
 
   private async updateSingle({
     attesterPubKey,
@@ -46,63 +46,54 @@ export default class Credential extends String {
     attesterPubKey: AttesterPublicKey
     accumulators: Accumulator[]
   }): Promise<Credential> {
-    let credUpdate = new Credential(this.valueOf())
+    const credUpdate = new Credential(this.valueOf())
     if (accumulators.length === 1) {
       return credUpdate.updateSingle({
         attesterPubKey,
         accumulator: accumulators[0],
       })
     }
-    try {
-      credUpdate = await credUpdate.updateRange({
-        attesterPubKey,
-        accumulators,
-      })
-      return credUpdate
-    } catch (e) {
-      // get revocation indices
-      const indices = await Promise.all(
-        accumulators.map(a => a.getRevIndex(attesterPubKey))
-      )
-      // sort indices
-      const sorted = [...indices].sort((a, b) => a - b)
-      // sort accumulators
-      const sortedAccs = sorted.map(
-        sortedIndex => accumulators[indices.indexOf(sortedIndex)]
-      )
-      return credUpdate.updateRange({
-        attesterPubKey,
-        accumulators: sortedAccs,
-      })
-    }
+    return credUpdate.updateRange({
+      attesterPubKey,
+      accumulators,
+    })
   }
 
   public async updateFromChain({
     attesterPubKey,
     attesterChainAddress,
-    index,
+    endIndex,
   }: {
     attesterPubKey: AttesterPublicKey
     attesterChainAddress: string
-    index?: number
+    endIndex?: number
   }): Promise<Credential> {
+    const currIdx = this.getUpdateCounter()
     const chain = await connect()
-    const accumulator = index
-      ? await chain.getAccumulator(attesterChainAddress, index)
-      : await chain.getLatestAccumulator(attesterChainAddress)
-    return this.updateSingle({
+    const accumulators = await chain.getAccumulatorArray(
+      attesterChainAddress,
+      currIdx,
+      endIndex
+    )
+    return this.update({
       attesterPubKey,
-      accumulator,
+      accumulators,
     })
   }
 
   public getUpdateCounter(): number {
-    const parsed = this.parseCache || JSON.parse(this.valueOf())
-    const counter = parsed.updateCounter
-    if (typeof counter !== 'number') {
+    let parsed = this.parseCache
+    try {
+      parsed = JSON.parse(this.valueOf())
+      const counter =
+        parsed && 'updateCounter' in parsed ? parsed.updateCounter : undefined
+      if (typeof counter !== 'number') {
+        throw new Error()
+      }
+      this.parseCache = parsed
+      return counter
+    } catch (e) {
       throw new Error('Invalid credential')
     }
-    this.parseCache = parsed
-    return counter
   }
 }
