@@ -14,4 +14,5 @@ module.exports = {
   rootDir: 'src',
   coverageDirectory: '../coverage',
   globalTeardown: './testSetup/jest.teardown.js',
+  testTimeout: 10000,
 }
