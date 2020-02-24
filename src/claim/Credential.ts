@@ -7,7 +7,7 @@ import connect from '../blockchainApiConnection/BlockchainApiConnection'
 export default class Credential extends String {
   private parseCache: { updateCounter: number } | undefined
 
-  private async updateSingle({
+  public async updateSingle({
     attesterPubKey,
     accumulator,
   }: {
@@ -23,7 +23,7 @@ export default class Credential extends String {
     )
   }
 
-  private async updateRange({
+  public async update({
     attesterPubKey,
     accumulators,
   }: {
@@ -37,43 +37,6 @@ export default class Credential extends String {
         attesterPubKey.valueOf(),
       ])
     )
-  }
-
-  public async update({
-    attesterPubKey,
-    accumulators,
-  }: {
-    attesterPubKey: AttesterPublicKey
-    accumulators: Accumulator[]
-  }): Promise<Credential> {
-    if (accumulators.length === 1) {
-      return this.updateSingle({
-        attesterPubKey,
-        accumulator: accumulators[0],
-      })
-    }
-    try {
-      const credUpdate = await this.updateRange({
-        attesterPubKey,
-        accumulators,
-      })
-      return credUpdate
-    } catch (e) {
-      // get revocation indices
-      const indices = await Promise.all(
-        accumulators.map(a => a.getRevIndex(attesterPubKey))
-      )
-      // sort indices
-      const sorted = [...indices].sort((a, b) => a - b)
-      // sort accumulators
-      const sortedAccs = sorted.map(
-        sortedIndex => accumulators[indices.indexOf(sortedIndex)]
-      )
-      return this.updateRange({
-        attesterPubKey,
-        accumulators: sortedAccs,
-      })
-    }
   }
 
   public async updateFromChain({

@@ -5,7 +5,6 @@ import {
 } from '../testSetup/testSetup'
 import GabiClaimer from './GabiClaimer'
 import GabiAttester from '../attestation/GabiAttester'
-import { Spy } from '../testSetup/testTypes'
 import {
   Attestation,
   InitiateAttestationRequest,
@@ -17,7 +16,6 @@ import Accumulator from '../attestation/Accumulator'
 import Credential from './Credential'
 
 describe('Test claimer functionality', () => {
-  let spy: Spy<'log'>
   let gabiClaimer: GabiClaimer
   let gabiAttester: GabiAttester
   let accumulator: Accumulator
@@ -65,26 +63,12 @@ describe('Test claimer functionality', () => {
     }))
   }, 20000)
 
-  // clear mocks after each test
-  beforeEach(() => {
-    spy = {
-      exit: jest.spyOn(process, 'exit').mockImplementation(),
-      error: jest.spyOn(console, 'error').mockImplementation(),
-    }
-  })
-  afterEach(() => {
-    expect(spy.exit).not.toHaveBeenCalled()
-    expect(spy.error).not.toHaveBeenCalled()
-    spy.error.mockRestore()
-    spy.exit.mockRestore()
-  })
-
   // run tests on valid data
   describe('Positive tests', () => {
-    it('Updates credential and compares both versions (without revoking)', async () => {
-      const updatedCred = await credential.update({
+    it('Updates single credential and compares both versions (without revoking)', async () => {
+      const updatedCred = await credential.updateSingle({
         attesterPubKey: gabiAttester.publicKey,
-        accumulators: [accumulator],
+        accumulator,
       })
       expect(updatedCred).toBeDefined()
       expect(credential).toBeDefined()
