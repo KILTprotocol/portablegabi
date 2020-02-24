@@ -121,17 +121,6 @@ describe('Test claimer functionality', () => {
       })
       accumulators = [accRev1, accRev2, accRev3]
     })
-    it('Should return expected revocation indices for setup accumulators', async () => {
-      await expect(
-        accumulators[0].getRevIndex(gabiAttester.publicKey)
-      ).resolves.toBe(1)
-      await expect(
-        accumulators[1].getRevIndex(gabiAttester.publicKey)
-      ).resolves.toBe(2)
-      await expect(
-        accumulators[2].getRevIndex(gabiAttester.publicKey)
-      ).resolves.toBe(limit)
-    })
     it('Should throw when updating credential while skipping accumulator versions (revIndex 1 to 5)', async () => {
       // expect failure when updating from revIndex === 0 to revIndex === limit
       await expect(

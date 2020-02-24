@@ -126,7 +126,6 @@ describe('Test verifier functionality', () => {
   let presentation: Presentation
   let presentedClaim: any
   let verified: boolean
-  let revocationIndex: number
   const dateBeforeRev = new Date()
 
   beforeAll(async () => {
@@ -153,7 +152,6 @@ describe('Test verifier functionality', () => {
       accumulator,
       reqUpdatedAfter: new Date(),
     }))
-    revocationIndex = await accumulator.getRevIndex(gabiAttester.publicKey)
   }, 10000)
 
   describe('Positive tests', () => {
@@ -280,9 +278,6 @@ describe('Test verifier functionality', () => {
         new Date(),
         accumulator
       )
-    })
-    it('Verifies current accumulator index is 0 for imported gabiAttester', async () => {
-      expect(revocationIndex).toBe(0)
     })
     // this is intended to work since the original claim data is already hidden inside the credential
     it('Should still verify after tampering with claim data (post-attestation)', async () => {
