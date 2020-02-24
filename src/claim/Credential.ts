@@ -46,17 +46,34 @@ export default class Credential extends String {
     attesterPubKey: AttesterPublicKey
     accumulators: Accumulator[]
   }): Promise<Credential> {
-    const credUpdate = new Credential(this.valueOf())
     if (accumulators.length === 1) {
-      return credUpdate.updateSingle({
+      return this.updateSingle({
         attesterPubKey,
         accumulator: accumulators[0],
       })
     }
-    return credUpdate.updateRange({
-      attesterPubKey,
-      accumulators,
-    })
+    try {
+      const credUpdate = await this.updateRange({
+        attesterPubKey,
+        accumulators,
+      })
+      return credUpdate
+    } catch (e) {
+      // get revocation indices
+      const indices = await Promise.all(
+        accumulators.map(a => a.getRevIndex(attesterPubKey))
+      )
+      // sort indices
+      const sorted = [...indices].sort((a, b) => a - b)
+      // sort accumulators
+      const sortedAccs = sorted.map(
+        sortedIndex => accumulators[indices.indexOf(sortedIndex)]
+      )
+      return this.updateRange({
+        attesterPubKey,
+        accumulators: sortedAccs,
+      })
+    }
   }
 
   public async updateFromChain({

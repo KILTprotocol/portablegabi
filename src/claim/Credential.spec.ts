@@ -157,7 +157,7 @@ describe('Test claimer functionality', () => {
         })
       ).rejects.toThrowError('update too new')
     })
-    it.only('Should not throw when updating credential from sorted accumulator array', async () => {
+    it('Should not throw when updating credential from sorted accumulator array', async () => {
       const oldCount = credential.getUpdateCounter()
       const newCred = await credential.update({
         attesterPubKey: gabiAttester.publicKey,
@@ -194,7 +194,7 @@ describe('Test claimer functionality', () => {
   })
   // run tests on invalid data
   describe('Negative tests', () => {
-    it.only('Should throw for invalid credential', async () => {
+    it('Should throw for invalid credential', async () => {
       let success = false
       try {
         new Credential('dummyCredential').getUpdateCounter()
