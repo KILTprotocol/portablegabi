@@ -12,7 +12,7 @@ export default class Credential extends String {
   private parseCache: { updateCounter: number } | undefined
 
   /**
-   * This methods updates a credential using a new [[Accumulator]].
+   * This methods updates a [[Credential]] using a new [[Accumulator]].
    * After an attester revoked an attestation all credentials need to be updated.
    *
    * @param p The parameter object.
@@ -37,11 +37,11 @@ export default class Credential extends String {
   }
 
   /**
-   * This methods updates a credential using a list of new [[Accumulator]]s.
-   * After an attester revoked an attestation all credentials need to be updated.
+   * This methods updates a [[Credential]] using a list of new [[Accumulator]]s.
+   * After an [[Attester]] revoked an [[Attestation]] all [[Credential]]s need to be updated.
    *
    * @param p The parameter object.
-   * @param p.attesterPubKey The [[PublicKey]] of the attester who attest the claim.
+   * @param p.attesterPubKey The [[PublicKey]] of the [[Attester]] who attested the claim.
    * @param p.accumulators The list of new [[Accumulator]]s.
    * @returns An updated [[Credential]].
    */
@@ -66,9 +66,9 @@ export default class Credential extends String {
    * For that it pulls all [[Accumulator]]s up to [[endIndex]] from the chain.
    *
    * @param p The parameter object.
-   * @param p.attesterPubKey The [[PublicKey]] of the attester who attest the claim.
-   * @param p.attesterChainAddress The chain address of the attester.
-   * @param p.endIndex The index of the last accumulator. If not present all new [[Accumulators]] are pulled.
+   * @param p.attesterPubKey The [[PublicKey]] of the [[Attester]] who attested the claim.
+   * @param p.attesterChainAddress The on-chain address of the [[Attester]].
+   * @param p.endIndex The index of the accumulator up to which the credential should get updated.
    * @returns An updated [[Credential]].
    */
   public async updateFromChain({
@@ -94,7 +94,8 @@ export default class Credential extends String {
   }
 
   /**
-   * Returns the number of updates done.
+   * Returns the number of updates done. Combining this method with [[getLatestAccumulator]] in [[updateFromChain]],
+   * it shows how many updates of this [[Credential]] would be required to be up to date.
    *
    * @returns The number of accumulator updates done with this credential.
    */

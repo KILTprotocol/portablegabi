@@ -48,12 +48,7 @@ export default class Blockchain implements IBlockchainApi {
   private async checkIndex(address: string, index: number): Promise<void> {
     const maxIndex = await this.getMaxIndex(address)
     if (index > maxIndex || index < 0) {
-      throw BlockchainError.indexOutOfRange(
-        'accumulator',
-        address,
-        index,
-        maxIndex
-      )
+      throw BlockchainError.indexOutOfRange(address, index, maxIndex)
     }
   }
 

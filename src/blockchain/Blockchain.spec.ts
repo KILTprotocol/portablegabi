@@ -89,7 +89,6 @@ describe('chain mocks', () => {
         BlockchainMock.getAccumulator(dummyAddress, requestedIndex)
       ).rejects.toThrowError(
         BlockchainError.indexOutOfRange(
-          'accumulator',
           dummyAddress,
           requestedIndex,
           accCount - 1
@@ -109,7 +108,6 @@ describe('chain mocks', () => {
         BlockchainMock.getAccumulator(dummyAddress, requestedIndex)
       ).rejects.toThrowError(
         BlockchainError.indexOutOfRange(
-          'accumulator',
           dummyAddress,
           requestedIndex,
           accCount - 1

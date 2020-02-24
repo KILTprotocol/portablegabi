@@ -1,5 +1,5 @@
 /**
- * This module contains the GabiAttester Class which is used to create and revoke attestations.
+ * This module contains the GabiAttester class which is used to create and revoke [[Attestation]]s.
  */
 import { AttestationRequest } from '../types/Claim'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
@@ -16,7 +16,7 @@ import IGabiAttester, {
 } from '../types/Attestation'
 
 /**
- * The GabiAttester can be used to create and revoke attestations.
+ * The GabiAttester can be used to create and revoke [[Attestation]]s of [[Credential]]s.
  */
 export default class GabiAttester implements IGabiAttester {
   private readonly privateKey: AttesterPrivateKey
@@ -26,7 +26,7 @@ export default class GabiAttester implements IGabiAttester {
    * Generates a new key pair.
    *
    * @param validityDuration The duration for which the public key will be valid.
-   * @param maxAttributes The maximal number of attributes that can be signed with the generated private key.
+   * @param maxAttributes The maximum number of attributes that can be signed with the generated private key.
    * @returns A newly generated key pair.
    */
   public static async genKeyPair(
@@ -47,11 +47,11 @@ export default class GabiAttester implements IGabiAttester {
   }
 
   /**
-   * Generates a new key pair and returns a new attester.
+   * Generates a new key pair and returns a new [[Attester]].
    *
    * @param validityDuration The duration for which the public key will be valid.
    * @param maxAttributes The maximal number of attributes that can be signed with the generated private key.
-   * @returns A new Attester.
+   * @returns A new [[Attester]].
    */
   public static async create(
     validityDuration: number,
@@ -65,10 +65,10 @@ export default class GabiAttester implements IGabiAttester {
   }
 
   /**
-   * Constructs a new attester using the private and public key.
+   * Constructs a new [[Attester]] using an existing private and public key pair.
    *
-   * @param publicKey The public key for the attester.
-   * @param privateKey The private key for the attester.
+   * @param publicKey The public key for the [[Attester]].
+   * @param privateKey The private key for the [[Attester]].
    */
   public constructor(
     publicKey: AttesterPublicKey,
@@ -81,8 +81,7 @@ export default class GabiAttester implements IGabiAttester {
   /**
    * Initiates the attestation session.
    *
-   * @returns A session and a message object.
-   *    The message should be send over to the claimer.
+   * @returns A session and a message object. The message should be send over to the [[Claimer]].
    */
   public async startAttestation(): Promise<{
     message: InitiateAttestationRequest
@@ -113,13 +112,13 @@ export default class GabiAttester implements IGabiAttester {
   }
 
   /**
-   * Creates an attestation for the claim inside the [[AttestationRequest]].
+   * Creates an [[Attestation]] for the claim inside the [[AttestationRequest]].
    *
    * @param p The parameter object.
    * @param p.attestationSession The attestation session which was generated during [[startAttestation]].
-   * @param p.attestationRequest The AttestationRequest received from the claimer.
+   * @param p.attestationRequest The [[AttestationRequest]] received from the [[Claimer]].
    * @param p.update The most recent [[Accumulator]].
-   * @returns The [[Attestation]] object which should be send to the claimer and a witness which can be used to revoke the attestation.
+   * @returns The [[Attestation]] object which should be send to the [[Claimer]] and a [[Witness]] which can be used to revoke the attestation.
    */
   public async issueAttestation({
     attestationSession,

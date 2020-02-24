@@ -33,7 +33,7 @@ describe('Test Credential on chain functionality', () => {
     ;({
       address: attesterChainAddress,
       publicKey: attesterPubKey,
-    } = attesterChain.getPublicIdentity())
+    } = attesterChain)
     await attesterChain.updateAccumulator(accumulator).catch(e => {
       expect(e.message).toBe("Cannot read property 'signAndSend' of undefined")
     })

@@ -46,32 +46,32 @@ export default class GabiClaimer implements IGabiClaimer {
    * @param password The password which is used to generate the key.
    * @returns A new claimer.
    */
-  public static async buildFromMnemonic<T extends GabiClaimer>(
+  public static async buildFromMnemonic(
     mnemonic: string,
     password = ''
-  ): Promise<T> {
+  ): Promise<GabiClaimer> {
     // secret's structure unmarshalled is { MasterSecret: string }
     const secret = await goWasmExec<string>(WasmHooks.keyFromMnemonic, [
       mnemonic,
       password,
     ])
-    return new this(secret) as T
+    return new this(secret)
   }
 
   /**
-   * Generates a new master secret and returns a new claimer object.
+   * Generates a new master secret and returns a new [[Claimer]] object.
    *
-   * @returns A new claimer.
+   * @returns A new [[Claimer]].
    */
-  public static async create<T extends GabiClaimer>(): Promise<T> {
+  public static async create(): Promise<GabiClaimer> {
     const secret = await goWasmExec<string>(WasmHooks.genKey)
-    return new this(secret) as T
+    return new this(secret)
   }
 
   /**
-   * Constructs a new claimer using the given master secret.
+   * Constructs a new [[Claimer]] using the given master secret.
    *
-   * @param secret The master secret of the claimer.
+   * @param secret The master secret of the [[Claimer]].
    */
   constructor(secret: string) {
     this.secret = secret
@@ -119,8 +119,8 @@ export default class GabiClaimer implements IGabiClaimer {
    * Builds a [[Credential]] using the [[ClaimerAttestationSession]] and the [[Attestation]].
    *
    * @param p The parameter object.
-   * @param p.claimerSession The session object corresponding to the AttestationRequest.
-   * @param p.attestation The [[Attestation]] provided by the attester.
+   * @param p.claimerSession The session object corresponding to the [[AttestationRequest]].
+   * @param p.attestation The [[Attestation]] provided by the [[Attester]].
    * @returns A signed and valid [[Credential]].
    */
   public async buildCredential({
@@ -144,9 +144,9 @@ export default class GabiClaimer implements IGabiClaimer {
    *
    * @param p The parameter object.
    * @param p.credential The [[Credential]] which contains all the requested attributes.
-   * @param p.presentationReq The [[PresentationRequest]] received from the verifier.
-   * @param p.attesterPubKey The public key of the attester who signed the [[Credential]].
-   * @returns A [[Presentation]] that can be used to disclose attributes with a verifier.
+   * @param p.presentationReq The [[PresentationRequest]] received from the [[Verifier]].
+   * @param p.attesterPubKey The public key of the [[Attester]] who signed the [[Credential]].
+   * @returns A [[Presentation]] that can be used to disclose attributes with a [[Verifier]].
    *    Must only be used once!
    */
   public async buildPresentation({
@@ -173,9 +173,9 @@ export default class GabiClaimer implements IGabiClaimer {
    *
    * @param p The parameter object.
    * @param p.credentials An array of [[Credential]]s which is used to provide the requested attributes.
-   * @param p.combinedPresentationReq The array of [[PresentationRequest]]s received from the verifier.
-   * @param p.attesterPubKeys An array of [[PublicKey]]s which corresponds to the array of credentials.
-   * @returns A [[CombinedPresentation]] that can be used to disclose attributes with a verifier.
+   * @param p.combinedPresentationReq The array of [[PresentationRequest]]s received from the [[Verifier]].
+   * @param p.attesterPubKeys An array of [[PublicKey]]s which corresponds to the array of [[Credential]]s.
+   * @returns A [[CombinedPresentation]] that can be used to disclose attributes with a [[Verifier]].
    *    Must only be used once!
    */
   public async buildCombinedPresentation({

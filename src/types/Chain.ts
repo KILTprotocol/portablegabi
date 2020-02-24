@@ -4,7 +4,11 @@ import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
 import Accumulator from '../attestation/Accumulator'
 
+/**
+ * The module name which exposes the portablegabi API.
+ */
 export type PgabiModName = 'portablegabi' | 'portablegabiPallet' | string
+
 export interface IPortablegabiApi<T extends PgabiModName> {
   query: {
     [K in T]: {
