@@ -41,6 +41,7 @@ package-lock.json
 # testing
 /coverage/
 /src/coverage
+docs/example.mashnet.ts
 
 # tooling setup
 .DS_Store
