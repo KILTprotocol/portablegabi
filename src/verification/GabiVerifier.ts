@@ -95,7 +95,7 @@ export default class GabiVerifier {
    *
    * @param p The parameter object.
    * @param p.proof The result of combining the [[Credential]], the [[PresentationRequest]] and the [[Attester]]s public key in [[buildPresentation]].
-   * @param p.verifierSession The [[Verifier]]s session generated in [[requestPresentation]]
+   * @param p.verifierSession The [[Verifier]]s session generated in [[requestPresentation]].
    * @param p.attesterPubKey The public key of the [[Attester]] of the [[Credential]].
    * @param p.latestAccumulator The [[Accumulator]] used to create or update the [[Credential]].
    *
@@ -135,7 +135,7 @@ export default class GabiVerifier {
    *
    * @param p The parameter object.
    * @param p.proof The result of combining the [[Credential]]s, the [[PresentationRequest]]s and the [[Attester]]s public keys in [[buildCombinedPresentation]].
-   * @param p.verifierSession The [[Verifier]]s session generated in [[requestCombinedPresentation]]
+   * @param p.verifierSession The [[Verifier]]s session generated in [[requestCombinedPresentation]].
    * @param p.attesterPubKey The public keys of all [[Attester]]s of the [[Credential]]s.
    * @param p.latestAccumulator The [[Accumulator]]s used to create or update the [[Credential]]s.
    *

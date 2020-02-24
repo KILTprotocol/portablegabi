@@ -32,7 +32,7 @@ export class ClaimError extends Error {
   /**
    * An error which is thrown when the [[Attestation]] object includes a non-object type claim.
    *
-   * @param type The type of the claim found in the [[Attestation]] object
+   * @param type The type of the claim found in the [[Attestation]] object.
    * @returns A new claim error.
    */
   public static notAnObject = (

@@ -1,4 +1,5 @@
-// eslint-disable-next-line jsdoc/require-returns
+/* eslint-disable jsdoc/require-returns */
+// eslint-disable-next-line jsdoc/require-param
 /**
  * A BlockchainError is thrown when we encounter an error on portablegabi chain actions.
  */
