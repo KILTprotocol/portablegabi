@@ -24,7 +24,6 @@ const Separator = "."
 const MagicByte = byte(0xFF)
 
 type (
-
 	// AttestedClaim contains the Claim and the gabi.Credential. It can be used to
 	// disclose specific attributes to the verifier.
 	AttestedClaim struct {
@@ -160,9 +159,32 @@ func (attestedClaim *AttestedClaim) Update(attesterPubK *gabi.PublicKey, update 
 	return nil
 }
 
+func verifyUpdateSequence(attesterPubK *gabi.PublicKey, updates []*revocation.Update) error {
+	revKey, err := attesterPubK.RevocationKey()
+	if err != nil {
+		return err
+	}
+	// We load all accumulators here. The unmarshalled accumulator is cached inside the SignedAccumulator.
+	// Unmarshalling during sorting would lead to possible errors while sorting.
+	for _, up := range updates {
+		if _, err := up.SignedAccumulator.UnmarshalVerify(revKey); err != nil {
+			return err
+		}
+	}
+	// sort using the unmarshalled accumulators
+	sort.Slice(updates, func(i, j int) bool {
+		return updates[i].SignedAccumulator.Accumulator.Index < updates[j].SignedAccumulator.Accumulator.Index
+	})
+	return nil
+}
+
 // UpdateAll updates the non revocation witness using all the provided updates.
 func (attestedClaim *AttestedClaim) UpdateAll(attesterPubK *gabi.PublicKey,
 	updates []*revocation.Update) error {
+
+	if err := verifyUpdateSequence(attesterPubK, updates); err != nil {
+		return err
+	}
 	for _, u := range updates {
 		if err := attestedClaim.Update(attesterPubK, u); err != nil {
 			return err
