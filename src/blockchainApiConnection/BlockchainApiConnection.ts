@@ -7,17 +7,18 @@
  * @module BlockchainApiConnection
  */
 import { ApiPromise, WsProvider } from '@polkadot/api'
+import { ApiOptions } from '@polkadot/api/types'
 import Blockchain from '../blockchain/Blockchain'
 import { PgabiModName, IPortablegabiApi } from '../types/Chain'
 
-type Params = {
+export interface IPortableGabiApiOptions extends ApiOptions {
   host?: string
-  types?: Record<string, any>
   pgabiModName?: PgabiModName
 }
+
 const DEFAULT_WS_ADDRESS = 'ws://127.0.0.1:9944'
 const DEFAULT_MOD_NAME: PgabiModName = 'portablegabi'
-const DEFAULT_PARAMS: Params = {
+const DEFAULT_PARAMS: IPortableGabiApiOptions = {
   host: DEFAULT_WS_ADDRESS,
   types: {},
   pgabiModName: DEFAULT_MOD_NAME,
@@ -37,7 +38,7 @@ export async function buildConnection({
   host = DEFAULT_WS_ADDRESS,
   types = {},
   pgabiModName = DEFAULT_MOD_NAME,
-}: Params = DEFAULT_PARAMS): Promise<Blockchain> {
+}: IPortableGabiApiOptions = DEFAULT_PARAMS): Promise<Blockchain> {
   const provider = new WsProvider(host)
   const api: ApiPromise = await ApiPromise.create({
     provider,
@@ -61,7 +62,7 @@ export async function getCached({
   host = DEFAULT_WS_ADDRESS,
   types = {},
   pgabiModName = DEFAULT_MOD_NAME,
-}: Params = DEFAULT_PARAMS): Promise<Blockchain> {
+}: IPortableGabiApiOptions = DEFAULT_PARAMS): Promise<Blockchain> {
   if (!connectionCache) {
     connectionCache = buildConnection({ host, types, pgabiModName })
   }
@@ -80,7 +81,7 @@ export async function connect({
   host = DEFAULT_WS_ADDRESS,
   types = {},
   pgabiModName = DEFAULT_MOD_NAME,
-}: Params = DEFAULT_PARAMS): Promise<Blockchain> {
+}: IPortableGabiApiOptions = DEFAULT_PARAMS): Promise<Blockchain> {
   return getCached({ host, types, pgabiModName })
 }
 
