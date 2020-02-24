@@ -71,7 +71,7 @@ async function completeProcessSingleExamples(): Promise<void> {
   await completeProcessSingle(false, true, future)
 
   // close wasm
-  return goWasmClose()
+  return goWasmClose().finally(() => process.exit())
 }
 
 completeProcessSingleExamples()

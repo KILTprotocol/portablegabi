@@ -140,7 +140,7 @@ async function completeProcessCombinedExamples(): Promise<void> {
   })
 
   // disconnect from chain
-  await disconnect()
+  await disconnect().finally(() => process.exit())
 }
 
 completeProcessCombinedExamples()

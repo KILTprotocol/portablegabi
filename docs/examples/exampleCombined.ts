@@ -104,7 +104,7 @@ async function completeProcessCombinedExamples(): Promise<void> {
   await completeProcessCombined(true, true, [undefined, future])
 
   // close wasm
-  return goWasmClose()
+  return goWasmClose().finally(() => process.exit())
 }
 
 completeProcessCombinedExamples()
