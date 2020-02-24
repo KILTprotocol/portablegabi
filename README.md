@@ -43,14 +43,11 @@ const claim = {
 
 // (1.2) Create claimer identity: Either from scratch or mnemonic seed
 const claimer = await GabiClaimer.create()
-const claimer = await GabiClaimer.buildFromMnemonic(
-  'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
-)
 
 /* (2) Attester Setup */
 
 // (2.1) Create key pair and attester
-const attester = await GabiAttester.buildFromScratch() // Takes very long due to finding safe prime numbers, ~10 minutes
+const attester = GabiAttester.create()
 
 // (2.1) Create accumulator (for revocation)
 const accumulator = await attester.createAccumulator()
@@ -69,11 +66,14 @@ const {
   session: claimerSession,
 } = await claimer.requestAttestation({
   startAttestationMsg,
-  claim: JSON.stringify(claim),
+  claim,
   attesterPubKey: attester.publicKey,
 })
 
 // (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
+// the attester might want to inspect the attributes he is about to sign
+const checkClaim = attestationRequest.getClaim()
+
 const { attestation, witness } = await attester.issueAttestation({
   attestationSession,
   attestationRequest,
@@ -94,8 +94,7 @@ const {
   message: presentationReq,
 } = await GabiVerifier.requestPresentation({
   requestedAttributes: ['contents.age', 'contents.city'],
-  reqNonRevocationProof: true,
-  reqMinIndex: 0,
+  reqUpdatedAfter: new Date(), // request that the nonrevocation proof contains an accumulator which was created after this date or that the accumulator is the newest available
 })
 
 // (4.2) Claimer reveals attributes
@@ -113,14 +112,15 @@ const {
   proof,
   verifierSession,
   attesterPubKey: attester.publicKey,
+  latestAccumulator: accumulator, // the newest available accumulator
 })
 
 /* (5) Revocation */
 
 // revoke witness of a credential
 const accumulatorAfterRevocation = await attester.revokeAttestation({
-  update,
-  witness: other_witness,
+  accumulator,
+  witnesses: [other_witness, ...],
 })
 
 // all claimers have to update their own credential with the new update.
