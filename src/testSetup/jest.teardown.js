@@ -2,5 +2,5 @@
 const { goWasmClose } = require('../wasm/wasm_exec_wrapper')
 
 module.exports = async function teardown() {
-  return goWasmClose()
+  return goWasmClose().finally(() => process.exit())
 }
