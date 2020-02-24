@@ -1,13 +1,10 @@
 /**
- * * Blockchain Api Connection enables the building and accessing of the KILT [[Blockchain]] connection. In which it keeps one connection open and allows to reuse the connection for all [[Blockchain]] related tasks.
- * ***
+ * Blockchain Api Connection enables the building and accessing of the KILT [[Blockchain]] connection.
+ * In which it keeps one connection open and allows to reuse the connection for all [[Blockchain]] related tasks.
+ *
  * Other modules can access the [[Blockchain]] as such: `const blockchain = await connect()`.
+ *
  * @module BlockchainApiConnection
- * @preferred
- */
-
-/**
- * Dummy comment needed for correct doc display, do not remove.
  */
 import { ApiPromise, WsProvider } from '@polkadot/api'
 import Blockchain from '../blockchain/Blockchain'
@@ -28,6 +25,14 @@ const DEFAULT_PARAMS: Params = {
 
 let connectionCache: Promise<Blockchain> | null = null
 
+/**
+ * Connects to the specified node.
+ *
+ * @param p The parameter object.
+ * @param p.host The host to connect with.
+ * @param p.types Type mappings.
+ * @param p.pgabiModName The module name which exposes the portablegabi API.
+ */
 export async function buildConnection({
   host = DEFAULT_WS_ADDRESS,
   types = {},
@@ -44,6 +49,14 @@ export async function buildConnection({
   )
 }
 
+/**
+ * Connect to a node or return an already established connection.
+ *
+ * @param p The parameter object.
+ * @param p.host The host to connect with.
+ * @param p.types Type mappings.
+ * @param p.pgabiModName The module name which exposes the portablegabi API.
+ */
 export async function getCached({
   host = DEFAULT_WS_ADDRESS,
   types = {},
@@ -55,6 +68,14 @@ export async function getCached({
   return connectionCache
 }
 
+/**
+ * Connect to a node or return an already established connection.
+ *
+ * @param p The parameter object.
+ * @param p.host The host to connect with.
+ * @param p.types Type mappings.
+ * @param p.pgabiModName The module name which exposes the portablegabi API.
+ */
 export async function connect({
   host = DEFAULT_WS_ADDRESS,
   types = {},
@@ -63,10 +84,18 @@ export async function connect({
   return getCached({ host, types, pgabiModName })
 }
 
+/**
+ * Remove the cached connection.
+ */
 export function clearCache(): void {
   connectionCache = null
 }
 
+/**
+ * Disconnect from the specified host.
+ *
+ * @param host The host to disconnect from.
+ */
 export async function disconnect(
   host: string = DEFAULT_WS_ADDRESS
 ): Promise<void> {
