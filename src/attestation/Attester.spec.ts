@@ -93,7 +93,6 @@ describe('Test attester', () => {
       await expect(
         AttesterChain.create(1, 10, 'ed25519')
       ).resolves.toHaveProperty('privateKey', keypair.privateKey)
-      expect(daysToNanoSecs).toHaveBeenCalledWith(1)
       await expect(AttesterChain.create()).resolves.toHaveProperty(
         'publicKey',
         keypair.publicKey
