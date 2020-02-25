@@ -1,3 +1,5 @@
+[![Test](https://github.com/KILTprotocol/portablegabi/workflows/Test/badge.svg)](https://github.com/KILTprotocol/portablegabi/actions)
+
 # Portablegabi
 
 This TypeScript module of Portable Gabi enables the use of [Idemix](http://www.research.ibm.com/labs/zurich/idemix/) attribute based anonymous credentials via NPM. It is based on the [Gabi Go](https://github.com/privacybydesign/gabi) implementation by the [Privacy By Design Foundation](https://privacybydesign.foundation/) but does not use the same API.
