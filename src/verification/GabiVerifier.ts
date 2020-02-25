@@ -26,7 +26,7 @@ export default class GabiVerifier {
    * @param p The parameter object.
    * @param p.requestedAttributes The attributes that need to be disclosed for the [[Verifier]] in order to verify the [[Credential]].
    * @param p.reqUpdatedAfter The minimum [[Accumulator]] timestamp on which the [[Credential]] needs to be updated.
-   * @returns A session and a message object. The message should be send to the [[Claimer]] and used in [[buildPresentation]]. The session should be kept private and used in [[verifyPresentation]].
+   * @returns A session and a message object. The message should be sent to the [[Claimer]] and used in [[buildPresentation]]. The session should be kept private and used in [[verifyPresentation]].
    */
   public static async requestPresentation({
     requestedAttributes,
@@ -64,7 +64,7 @@ export default class GabiVerifier {
    * Initiates a verification session for a combined proof.
    *
    * @param presentationReqs An array of [[PresentationRequest]]s created by the [[Verifier]].
-   * @returns A session and a message object. The message should be send to the [[Claimer]] and used in [[buildPresentation]]. The session should be kept private and used in [[verifyPresentation]].
+   * @returns A session and a message object. The message should be sent to the [[Claimer]] and used in [[buildPresentation]]. The session should be kept private and used in [[verifyPresentation]].
    */
   public static async requestCombinedPresentation(
     presentationReqs: IPresentationRequest[]

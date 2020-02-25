@@ -40,7 +40,7 @@ export class AttesterAttestationSession extends String {
 }
 
 /**
- * A message returned by [[startAttestation]] which should be send to the [[Claimer]] and used in [[requestAttestation]].
+ * A message returned by [[startAttestation]] which should be sent to the [[Claimer]] and used in [[requestAttestation]].
  */
 export class InitiateAttestationRequest extends String {
   // @ts-ignore

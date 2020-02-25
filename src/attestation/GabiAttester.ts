@@ -81,7 +81,7 @@ export default class GabiAttester implements IGabiAttester {
   /**
    * Initiates the attestation session.
    *
-   * @returns A session and a message object. The message should be send over to the [[Claimer]].
+   * @returns A session and a message object. The message should be sent over to the [[Claimer]].
    */
   public async startAttestation(): Promise<{
     message: InitiateAttestationRequest
@@ -118,7 +118,7 @@ export default class GabiAttester implements IGabiAttester {
    * @param p.attestationSession The attestation session which was generated during [[startAttestation]].
    * @param p.attestationRequest The [[AttestationRequest]] received from the [[Claimer]].
    * @param p.update The most recent [[Accumulator]].
-   * @returns The [[Attestation]] object which should be send to the [[Claimer]] and a [[Witness]] which can be used to revoke the attestation.
+   * @returns The [[Attestation]] object which should be sent to the [[Claimer]] and a [[Witness]] which can be used to revoke the attestation.
    */
   public async issueAttestation({
     attestationSession,

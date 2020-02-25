@@ -29,7 +29,7 @@ type (
 
 // RequestPresentation builds a message which request the specified attributes from a claimer.
 // It returns a VerifierSession which is used to check the claimers response and RequestDiscloseAttributes
-// which represents the message which should be send to the claimer
+// which represents the message which should be sent to the claimer
 func RequestPresentation(sysParams *gabi.SystemParameters, discloseAttributes []string,
 	requestNonRevProof bool, updateAfter time.Time) (*VerifierSession, *PresentationRequest) {
 	context, _ := common.RandomBigInt(sysParams.Lh)

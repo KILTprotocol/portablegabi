@@ -63,7 +63,7 @@ func (attester *Attester) InitiateAttestation() (*AttesterSession, *StartSession
 
 // AttestClaim issues an attestation for the given claim. It takes the
 // RequestAttestedClaim which was send by the claimer and an AttesterSession.
-// It returns an gabi.IssueSignatureMessage which should be send to the claimer.
+// It returns an gabi.IssueSignatureMessage which should be sent to the claimer.
 func (attester *Attester) AttestClaim(reqCred *AttestedClaimRequest, session *AttesterSession, update *revocation.Update) (*gabi.IssueSignatureMessage, *revocation.Witness, error) {
 	ok := reqCred.CommitMsg.Proofs.Verify([]*gabi.PublicKey{attester.PublicKey}, session.Context, session.Nonce, false, nil)
 	if !ok {

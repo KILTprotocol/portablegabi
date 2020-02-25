@@ -14,7 +14,7 @@ const GoInstance: Promise<IGoWasm> = goWasm.GoWasm.init()
 export const goWasmInit = (): Promise<IGoWasm> => Promise.resolve(GoInstance)
 
 /**
- * Calls a function function from the Go wasm.
+ * Calls a function from the Go wasm.
  *
  * @param goHook The name of the function which should be called.
  * @param args The arguments for the function call put into an array.
