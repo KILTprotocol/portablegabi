@@ -16,7 +16,7 @@ type (
 		Context               *big.Int  `json:"context"`
 		Nonce                 *big.Int  `json:"nonce"`
 		ReqNonRevocationProof bool      `json:"reqNonRevocationProof"`
-		ReqUpdatedAfter       time.Time `json:"ReqUpdatedAfter"`
+		ReqUpdatedAfter       time.Time `json:"reqUpdatedAfter"`
 	}
 
 	// CombinedVerifierSession stores the information for a combined presentation session.
