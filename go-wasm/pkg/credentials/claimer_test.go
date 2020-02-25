@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/privacybydesign/gabi"
-	"github.com/privacybydesign/gabi/revocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,70 +67,6 @@ func TestBuildCredential(t *testing.T) {
 	assert.NotNil(t, cred)
 }
 
-func TestUpdateCredential(t *testing.T) {
-	attester := &Attester{}
-	err := json.Unmarshal(byteAttester, attester)
-	require.NoError(t, err)
-
-	sigMsg := &gabi.IssueSignatureMessage{}
-	err = json.Unmarshal(byteAttestationResponse, sigMsg)
-	require.NoError(t, err)
-
-	claimer := &Claimer{}
-	err = json.Unmarshal(byteClaimer, claimer)
-	require.NoError(t, err)
-
-	cred := &AttestedClaim{}
-	err = json.Unmarshal(byteCredential, cred)
-	require.NoError(t, err)
-
-	update := &revocation.Update{}
-	err = json.Unmarshal(byteUpdate, update)
-	require.NoError(t, err)
-
-	credR, err := claimer.UpdateCredential(attester.PublicKey, cred, update)
-	assert.NoError(t, err, "Could not request attributes")
-	assert.NotNil(t, credR)
-}
-
-func TestEnsureAccumulator(t *testing.T) {
-	attester := &Attester{}
-	err := json.Unmarshal(byteAttester, attester)
-	require.NoError(t, err)
-
-	cred := &AttestedClaim{}
-	err = json.Unmarshal(byteCredential, cred)
-	require.NoError(t, err)
-
-	witness := cred.Credential.NonRevocationWitness
-	witness.Accumulator = nil
-	require.NotNil(t, witness.SignedAccumulator)
-
-	err = ensureAccumulator(attester.PublicKey, witness)
-	assert.NoError(t, err)
-	assert.NotNil(t, witness.Accumulator)
-}
-
-func TestEnsureAccumulatorInvalid(t *testing.T) {
-	attester := &Attester{}
-	err := json.Unmarshal(byteAttester, attester)
-	require.NoError(t, err)
-
-	cred := &AttestedClaim{}
-	err = json.Unmarshal(byteCredential, cred)
-	require.NoError(t, err)
-
-	witness := cred.Credential.NonRevocationWitness
-	// if byte 5 is 0 this test fails.
-	witness.SignedAccumulator.Data[5] += byte(3)
-	witness.Accumulator = nil
-	require.NotNil(t, witness.SignedAccumulator)
-
-	err = ensureAccumulator(attester.PublicKey, witness)
-	assert.Error(t, err)
-	assert.Nil(t, witness.Accumulator)
-}
-
 func TestBuildPresentation(t *testing.T) {
 	attester := &Attester{}
 	err := json.Unmarshal(byteAttester, attester)
@@ -157,7 +92,7 @@ func TestBuildPresentation(t *testing.T) {
 	emptyAttributes := []string{}
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
-	_, reqPresentation = RequestPresentation(sysParams, emptyAttributes, true, 1)
+	_, reqPresentation = RequestPresentation(sysParams, emptyAttributes, true, future)
 	_, err = claimer.BuildPresentation(attester.PublicKey, cred, reqPresentation)
 	assert.Equal(t, err, errors.New("requested attributes should not be empty"))
 }

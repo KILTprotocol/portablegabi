@@ -4,17 +4,19 @@ import {
   actorSetup,
 } from '../testSetup/testSetup'
 import { disclosedAttributes, claim } from '../testSetup/testConfig'
-import { goWasmClose } from '../wasm/wasm_exec_wrapper'
-import { VerificationSession, PresentationRequest } from '../types/Verification'
+import {
+  VerificationSession,
+  PresentationRequest,
+  IPresentationRequest,
+} from '../types/Verification'
 import { ICredential, IProof } from '../testSetup/testTypes'
 import GabiVerifier from './GabiVerifier'
 import GabiClaimer from '../claim/GabiClaimer'
-import { Accumulator, Witness } from '../types/Attestation'
-import { Credential, Presentation } from '../types/Claim'
+import { Witness } from '../types/Attestation'
+import { Presentation } from '../types/Claim'
 import GabiAttester from '../attestation/GabiAttester'
-
-// close WASM instance after tests ran
-afterAll(() => goWasmClose())
+import Accumulator from '../attestation/Accumulator'
+import Credential from '../claim/Credential'
 
 function expectFailure(verified: boolean, presentationClaim: any): void {
   expect(presentationClaim).toBeNull()
@@ -31,16 +33,16 @@ async function expectVerificationFailed(
   attester: GabiAttester,
   credential: Credential,
   requestedAttributes: string[],
-  index: number,
-  reqNonRevocationProof = true
+  reqUpdatedAfter?: IPresentationRequest['reqUpdatedAfter'],
+  accumulator?: Accumulator
 ): Promise<{ verified: boolean; presentationClaim: any }> {
   const { verified, claim: presentationClaim } = await presentationSetup({
     claimer,
     attester,
     credential,
     requestedAttributes,
-    reqMinIndex: index,
-    reqNonRevocationProof,
+    reqUpdatedAfter,
+    accumulator,
   })
   expectFailure(verified, presentationClaim)
   return { verified, presentationClaim }
@@ -48,30 +50,75 @@ async function expectVerificationFailed(
 
 // run presentationSetup and expect the outcome to be verified: true, claim is defined
 async function expectVerificationSucceeded(
-  claimer: GabiClaimer,
-  attester: GabiAttester,
-  credential: Credential,
-  requestedAttributes: string[],
-  index: number,
-  reqNonRevocationProof = true
-): Promise<{ verified: boolean; presentationClaim: any }> {
+  ...[
+    claimer,
+    attester,
+    credential,
+    requestedAttributes,
+    reqUpdatedAfter,
+    accumulator,
+  ]: Parameters<typeof expectVerificationFailed>
+): Promise<{
+  verified: boolean
+  presentationClaim: any
+}> {
   const { verified, claim: presentationClaim } = await presentationSetup({
     claimer,
     attester,
     credential,
     requestedAttributes,
-    reqMinIndex: index,
-    reqNonRevocationProof,
+    reqUpdatedAfter,
+    accumulator,
   })
   expectSuccess(verified, presentationClaim)
   return { verified, presentationClaim }
+}
+
+function expectProofsNotToRevealData(proofA: IProof, proofB: IProof): boolean {
+  let checkValues: any[]
+  // proof.A
+  expect(proofA.proof.A).not.toStrictEqual(proofB.proof.A)
+  // proof.a_discloses
+  expect(proofA.proof.a_disclosed).toStrictEqual(proofB.proof.a_disclosed)
+  // proof.a_responses
+  checkValues = Object.values(proofB.proof.a_responses)
+  Object.values(proofA.proof.a_responses).map(val =>
+    expect(checkValues).not.toContain(val)
+  )
+  // proof.c
+  expect(proofA.proof.c).not.toStrictEqual(proofB.proof.c)
+  // proof.e_response
+  expect(proofA.proof.e_response).not.toStrictEqual(proofB.proof.e_response)
+  // proof.nonrev_proof
+  expect(proofA.proof.nonrev_proof.C_r).not.toStrictEqual(
+    proofB.proof.nonrev_proof.C_r
+  )
+  expect(proofA.proof.nonrev_proof.C_u).not.toStrictEqual(
+    proofB.proof.nonrev_proof.C_u
+  )
+  // proof.nonrev_proof.responses
+  checkValues = Object.values(proofB.proof.nonrev_proof.responses)
+  Object.values(proofA.proof.nonrev_proof.responses).map(val =>
+    expect(checkValues).not.toContain(val)
+  )
+  // sacc = signed accumulator, i.e. this should equal
+  expect(proofA.proof.nonrev_proof.sacc).toStrictEqual(
+    proofB.proof.nonrev_proof.sacc
+  )
+  // proof.nonrev_response
+  expect(proofA.proof.nonrev_response).not.toStrictEqual(
+    proofB.proof.nonrev_response
+  )
+  // proof.v_response
+  expect(proofA.proof.v_response).not.toStrictEqual(proofB.proof.v_response)
+  return true
 }
 
 describe('Test verifier functionality', () => {
   let gabiClaimer: GabiClaimer
   let gabiAttester: GabiAttester
   let gabiAttester2: GabiAttester
-  let update: Accumulator
+  let accumulator: Accumulator
   let witness: Witness
   let credential: Credential
   let verifierSession: VerificationSession
@@ -79,16 +126,18 @@ describe('Test verifier functionality', () => {
   let presentation: Presentation
   let presentedClaim: any
   let verified: boolean
+  const dateBeforeRev = new Date()
+
   beforeAll(async () => {
     ;({
       claimers: [gabiClaimer],
       attesters: [gabiAttester, gabiAttester2],
-      accumulators: [update],
+      accumulators: [accumulator],
     } = await actorSetup())
     ;({ credential, witness } = await attestationSetup({
       claimer: gabiClaimer,
       attester: gabiAttester,
-      update,
+      accumulator,
     }))
     ;({
       verifierSession,
@@ -100,8 +149,11 @@ describe('Test verifier functionality', () => {
       claimer: gabiClaimer,
       attester: gabiAttester,
       credential,
+      accumulator,
+      reqUpdatedAfter: new Date(),
     }))
   }, 10000)
+
   describe('Positive tests', () => {
     it('Checks valid startVerficiationSession', async () => {
       expect(verifierSession).toBeDefined()
@@ -117,8 +169,8 @@ describe('Test verifier functionality', () => {
       expect(verObj.reqNonRevocationProof).toEqual(
         presObj.partialPresentationRequest.reqNonRevocationProof
       )
-      expect(verObj.reqreqMinIndex).toEqual(
-        presObj.partialPresentationRequest.reqreqMinIndex
+      expect(verObj.ReqUpdatedAfter).toEqual(
+        presObj.partialPresentationRequest.ReqUpdatedAfter
       )
     })
     it('Checks valid verifyPresentation', () => {
@@ -130,31 +182,101 @@ describe('Test verifier functionality', () => {
         eyeColor: claim.contents.eyeColor,
       })
     })
-    it('Verifies presentationSetup works as intended', async () => {
+    it('Verifies presentationSetup works as intended for non-revoked credentials', async () => {
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         credential,
         disclosedAttributes,
-        1
+        dateBeforeRev,
+        accumulator
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        new Date(),
+        accumulator
       )
     })
-    it('Verifies current accumulator index is 1 for imported gabiAttester', async () => {
-      // show current index is 1 by expecting success for index === 1
-      await expectVerificationSucceeded(
-        gabiClaimer,
-        gabiAttester,
-        credential,
-        disclosedAttributes,
-        1
-      )
-      // but failure for index === 2
+    it('Verifies presentationSetup works as intended for revoked credentials', async () => {
+      const {
+        credential: credToBeRevoked,
+        attestation: attestationRev,
+        claimerSession: claimerSessionRev,
+        witness: witnessRev,
+      } = await attestationSetup({
+        claimer: gabiClaimer,
+        attester: gabiAttester,
+        accumulator,
+      })
+      const accAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witnesses: [witnessRev],
+      })
+
+      // expect failure when verifier uses latest accumulator
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
-        credential,
+        credToBeRevoked,
         disclosedAttributes,
-        2
+        new Date(),
+        accAfterRev
+      )
+      // expect success when verifier uses old accumulator in which credential has not been revoked
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevoked,
+        disclosedAttributes,
+        new Date(),
+        accumulator
+      )
+
+      // test for build
+      const credToBeRevokedBuilt = await gabiClaimer.buildCredential({
+        claimerSession: claimerSessionRev,
+        attestation: attestationRev,
+      })
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedBuilt,
+        disclosedAttributes,
+        new Date(),
+        accAfterRev
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedBuilt,
+        disclosedAttributes,
+        new Date(),
+        accumulator
+      )
+
+      // test for update
+      const credToBeRevokedUpdated = await credToBeRevokedBuilt.update({
+        attesterPubKey: gabiAttester.publicKey,
+        accumulators: [accumulator],
+      })
+      await expectVerificationFailed(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedUpdated,
+        disclosedAttributes,
+        new Date(),
+        accAfterRev
+      )
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credToBeRevokedUpdated,
+        disclosedAttributes,
+        new Date(),
+        accumulator
       )
     })
     // this is intended to work since the original claim data is already hidden inside the credential
@@ -168,18 +290,51 @@ describe('Test verifier functionality', () => {
         URL: 'undefined',
         DATA: 'undefined',
       }
-      const uCred = await gabiClaimer.updateCredential({
-        credential: new Credential(JSON.stringify(tamperedCredential)),
-        attesterPubKey: gabiAttester.getPubKey(),
-        update,
+      const uCred = await new Credential(
+        JSON.stringify(tamperedCredential)
+      ).update({
+        attesterPubKey: gabiAttester.publicKey,
+        accumulators: [accumulator],
       })
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         uCred,
         disclosedAttributes,
-        1
+        new Date(),
+        accumulator
       )
+    })
+    it('Should not reveal claimers information when multiple verifiers send same challenge', async () => {
+      // verifier #2 sends same challenge (i.e. presentationRequest) as verifier #1
+      const {
+        session: vSessionFakedReq,
+      } = await GabiVerifier.requestPresentation({
+        requestedAttributes: disclosedAttributes,
+        reqUpdatedAfter: new Date(),
+      })
+      const presFakedReq = await gabiClaimer.buildPresentation({
+        credential,
+        attesterPubKey: gabiAttester.publicKey,
+        presentationReq,
+      })
+      expect(presentation).not.toStrictEqual(presFakedReq)
+      expect(
+        expectProofsNotToRevealData(
+          JSON.parse(presentation.valueOf()),
+          JSON.parse(presFakedReq.valueOf())
+        )
+      ).toBe(true)
+      const {
+        verified: verifiedFakedReq,
+        claim: claimFakedReq,
+      } = await GabiVerifier.verifyPresentation({
+        proof: presFakedReq,
+        verifierSession: vSessionFakedReq,
+        attesterPubKey: gabiAttester.publicKey,
+        latestAccumulator: accumulator,
+      })
+      expectFailure(verifiedFakedReq, claimFakedReq)
     })
     it('Should not reveal any personal information when contacting multiple verifiers', async () => {
       // create 2nd session
@@ -188,13 +343,12 @@ describe('Test verifier functionality', () => {
         session: verifierSession2,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
-        reqMinIndex: 1,
+        reqUpdatedAfter: new Date(),
       })
       const proof2 = await gabiClaimer.buildPresentation({
         credential,
         presentationReq: presentationReq2,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expect(proof2).toBeDefined()
       // create 3rd session
@@ -203,13 +357,12 @@ describe('Test verifier functionality', () => {
         session: verifierSession3,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
-        reqMinIndex: 1,
+        reqUpdatedAfter: new Date(),
       })
       const proof3 = await gabiClaimer.buildPresentation({
         credential,
         presentationReq: presentationReq3,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expect(proof3).toBeDefined()
       const {
@@ -218,7 +371,8 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: proof2,
         verifierSession: verifierSession2,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
+        latestAccumulator: accumulator,
       })
       expectSuccess(verified2, verifiedClaim2)
       const {
@@ -227,223 +381,150 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: proof3,
         verifierSession: verifierSession3,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
+        latestAccumulator: accumulator,
       })
       expectSuccess(verified3, verifiedClaim3)
 
       // pairwise comparison
-      let checkValues: any[]
       const proofArr: IProof[] = [presentation, proof2, proof3].map(proof =>
         JSON.parse(proof.valueOf())
       )
       // start to compare prev = proofArr[2] with curr = proofArr[0], then set prev[i+1] to curr[i] and curr[i+1] to proofArr[i+1]
       proofArr.reduce((prevProof, currProof) => {
-        // proof.A
-        expect(currProof.proof.A).not.toStrictEqual(prevProof.proof.A)
-        // proof.a_discloses
-        expect(currProof.proof.a_disclosed).toStrictEqual(
-          prevProof.proof.a_disclosed
-        )
-        // proof.a_responses
-        checkValues = Object.values(prevProof.proof.a_responses)
-        Object.values(currProof.proof.a_responses).map(val =>
-          expect(checkValues).not.toContain(val)
-        )
-        // proof.c
-        expect(currProof.proof.c).not.toStrictEqual(prevProof.proof.c)
-        // proof.e_response
-        expect(currProof.proof.e_response).not.toStrictEqual(
-          prevProof.proof.e_response
-        )
-        // proof.nonrev_proof
-        expect(currProof.proof.nonrev_proof.C_r).not.toStrictEqual(
-          prevProof.proof.nonrev_proof.C_r
-        )
-        expect(currProof.proof.nonrev_proof.C_u).not.toStrictEqual(
-          prevProof.proof.nonrev_proof.C_u
-        )
-        // proof.nonrev_proof.responses
-        checkValues = Object.values(prevProof.proof.nonrev_proof.responses)
-        Object.values(currProof.proof.nonrev_proof.responses).map(val =>
-          expect(checkValues).not.toContain(val)
-        )
-        // sacc = signed accumulator, i.e. this should equal
-        expect(currProof.proof.nonrev_proof.sacc).toStrictEqual(
-          prevProof.proof.nonrev_proof.sacc
-        )
-        // proof.nonrev_response
-        expect(currProof.proof.nonrev_response).not.toStrictEqual(
-          prevProof.proof.nonrev_response
-        )
-        // proof.v_response
-        expect(currProof.proof.v_response).not.toStrictEqual(
-          prevProof.proof.v_response
-        )
+        expect(expectProofsNotToRevealData(prevProof, currProof)).toBe(true)
         return currProof
       }, proofArr[proofArr.length - 1])
     })
-    it('Should not increase accumulator index after updating credential (no pre-revocation)', async () => {
-      const revCred = await gabiClaimer.updateCredential({
-        credential,
-        attesterPubKey: gabiAttester.getPubKey(),
-        update,
+    it('Should verify even after revocation when old accumulator is used', async () => {
+      // revoke credential
+      const accAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witnesses: [witness],
       })
-      expect(revCred).toBeDefined()
-      expect(revCred.valueOf()).not.toBe(credential.valueOf())
+      // verifier requests newer timestamp but uses accumulator in which credential is still valid
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        new Date(),
+        accumulator
+      )
+      // verifier uses newest accumulator in which credential is revoked
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
-        revCred,
+        credential,
         disclosedAttributes,
-        2
+        new Date(),
+        accAfterRev
       )
     })
-    it("Should increase attester's accumulator index (post-revocation)", async () => {
-      // index === 1 due to test 'Verifies current accumulator index is 1 for imported gabiAttester'
-      // attester attests new credential
-      const {
-        credential: credToBeRevoked,
-        witness: witnessToBeRevoked,
-      } = await attestationSetup({
+    it('Should verify even after revocation when timestamp before revocation is used', async () => {
+      // revoke credential
+      const accAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witnesses: [witness],
+      })
+      // this should always verify
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        dateBeforeRev,
+        accumulator
+      )
+      // this should not verify when requested timestamp > accumulator.timestamp
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        dateBeforeRev,
+        accAfterRev
+      )
+    })
+    it('Should not verify when sending credential created with too old accumulator', async () => {
+      const { witness: witnessRev } = await attestationSetup({
         claimer: gabiClaimer,
         attester: gabiAttester,
-        update,
+        accumulator,
       })
-      // attester revokes credential to increase accumulator index
-      const updateAfterRev = new Accumulator(
-        await gabiAttester.revokeAttestation({
-          update,
-          witness: witnessToBeRevoked,
-        })
-      )
-      expect(credToBeRevoked).toBeDefined()
-      expect(updateAfterRev).toBeDefined()
-      expect(updateAfterRev).not.toBeNull()
+      const accAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witnesses: [witnessRev],
+      })
 
-      const credAfterIndexIncrease = await gabiClaimer.updateCredential({
-        credential,
-        attesterPubKey: gabiAttester.getPubKey(),
-        update: updateAfterRev,
-      })
-      expect(credAfterIndexIncrease).toBeDefined()
-      expect(credAfterIndexIncrease.valueOf()).not.toBe(credential.valueOf())
-      await expectVerificationSucceeded(
-        gabiClaimer,
-        gabiAttester,
-        credAfterIndexIncrease,
-        disclosedAttributes,
-        2
-      )
-    })
-    it("Should not increase attester's accumulator index when revoking the same credential again", async () => {
-      const {
-        credential: credToBeRevoked,
-        witness: witnessToBeRevoked,
-      } = await attestationSetup({
-        claimer: gabiClaimer,
-        attester: gabiAttester,
-        update,
-      })
-      expect(credToBeRevoked).toEqual(expect.anything())
-      await gabiAttester.revokeAttestation({
-        update,
-        witness: witnessToBeRevoked,
-      })
-      const updateAfterRev = new Accumulator(
-        await gabiAttester.revokeAttestation({
-          update,
-          witness: witnessToBeRevoked,
-        })
-      )
-      const credAfterIndexIncrease = await gabiClaimer.updateCredential({
-        credential,
-        attesterPubKey: gabiAttester.getPubKey(),
-        update: updateAfterRev,
-      })
-      await expectVerificationSucceeded(
-        gabiClaimer,
-        gabiAttester,
-        credAfterIndexIncrease,
-        disclosedAttributes,
-        2
-      )
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        credAfterIndexIncrease,
-        disclosedAttributes,
-        3
-      )
-    })
-    it('Should verify even after revocation when reqMinIndex is too old (i.e. small)', async () => {
-      await gabiAttester.revokeAttestation({
-        update,
-        witness,
-      })
-      await expectVerificationSucceeded(
-        gabiClaimer,
-        gabiAttester,
-        credential,
-        disclosedAttributes,
-        1
-      )
-      // expect failure for current index
+      // credential is still verifiable but it wasn't updated after revocation
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
         credential,
         disclosedAttributes,
-        2
+        new Date(),
+        accAfterRev
       )
-    })
-    it('Should not verify when sending credential created with too old index', async () => {
-      const {
-        credential: credToBeRevoked,
-        witness: witnessToBeRevoked,
-      } = await attestationSetup({
-        claimer: gabiClaimer,
-        attester: gabiAttester,
-        update,
-      })
-      expect(credToBeRevoked).toEqual(expect.anything())
-      await gabiAttester.revokeAttestation({
-        update,
-        witness: witnessToBeRevoked,
-      })
-      await expectVerificationFailed(
+      // updated credential should be verified
+      await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
-        credential,
+        await credential.update({
+          attesterPubKey: gabiAttester.publicKey,
+          accumulators: [accAfterRev],
+        }),
         disclosedAttributes,
-        2
+        new Date(),
+        accAfterRev
       )
     })
-    it('Should verify even after revocation when reqNonRevocationProof === false', async () => {
-      await gabiAttester.revokeAttestation({
-        update,
-        witness,
+    it('Should verify even after revocation when requesting non-revocation proof (missing timestamp)', async () => {
+      const accAfterRev = await gabiAttester.revokeAttestation({
+        accumulator,
+        witnesses: [witness],
       })
-      // expect success with reqNonRevocationProof === true
+      // expect success when not sending requesting a revocation-proof by not sending reqUpdatedAfte
       await expectVerificationSucceeded(
         gabiClaimer,
         gabiAttester,
         credential,
         disclosedAttributes,
-        2,
-        false
+        undefined
       )
-      // expect failure with reqNonRevocationProof === true
+      await expectVerificationSucceeded(
+        gabiClaimer,
+        gabiAttester,
+        credential,
+        disclosedAttributes,
+        undefined,
+        accumulator
+      )
+      // expect failure when sending reqUpdatedAfter
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
         credential,
         disclosedAttributes,
-        2,
-        true
+        new Date(),
+        accAfterRev
       )
     })
   })
   describe('Negative tests', () => {
+    it('Should throw error and not "panic" when verifier requires revocation proof but does not use accumulator', async () => {
+      await expect(
+        presentationSetup({
+          claimer: gabiClaimer,
+          attester: gabiAttester,
+          credential,
+          requestedAttributes: disclosedAttributes,
+          reqUpdatedAfter: new Date(),
+        })
+      ).rejects.toThrowError(
+        'Missing accumulator for requested revocation proof'
+      )
+    })
     it('Should throw on empty requested/disclosed attributes array', async () => {
       await expect(
         presentationSetup({
@@ -451,7 +532,7 @@ describe('Test verifier functionality', () => {
           attester: gabiAttester,
           credential,
           requestedAttributes: [],
-          reqMinIndex: 0,
+          accumulator,
         })
       ).rejects.toThrow('requested attributes should not be empty')
     })
@@ -463,17 +544,19 @@ describe('Test verifier functionality', () => {
       tamperedCredential.credential.attributes[0] =
         'SSBoYXZlIGJlZW4gY2hhbmdlZA=='
 
-      const uCred = await gabiClaimer.updateCredential({
-        credential: new Credential(JSON.stringify(tamperedCredential)),
-        attesterPubKey: gabiAttester.getPubKey(),
-        update,
+      const uCred = await new Credential(
+        JSON.stringify(tamperedCredential)
+      ).update({
+        attesterPubKey: gabiAttester.publicKey,
+        accumulators: [accumulator],
       })
       await expectVerificationFailed(
         gabiClaimer,
         gabiAttester,
         uCred,
         disclosedAttributes,
-        1
+        new Date(),
+        accumulator
       )
     })
     it('Should not verify after re-arrenging attributes of credential', async () => {
@@ -489,10 +572,11 @@ describe('Test verifier functionality', () => {
         tamperedCredential.credential.attributes[0],
       ]
 
-      const uCred = await gabiClaimer.updateCredential({
-        credential: new Credential(JSON.stringify(tamperedCredential)),
-        attesterPubKey: gabiAttester.getPubKey(),
-        update,
+      const uCred = await new Credential(
+        JSON.stringify(tamperedCredential)
+      ).update({
+        attesterPubKey: gabiAttester.publicKey,
+        accumulators: [accumulator],
       })
       await expect(
         expectVerificationFailed(
@@ -500,7 +584,8 @@ describe('Test verifier functionality', () => {
           gabiAttester,
           uCred,
           disclosedAttributes,
-          1
+          new Date(),
+          accumulator
         )
       ).rejects.toThrow('missing magic byte')
     })
@@ -511,13 +596,12 @@ describe('Test verifier functionality', () => {
         session: verifierSession2,
       } = await GabiVerifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqNonRevocationProof: true,
-        reqMinIndex: 1,
+        reqUpdatedAfter: new Date(),
       })
       const proof2 = await gabiClaimer.buildPresentation({
         credential,
         presentationReq: presentationReq2, // from 2nd session
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       expect(proof2).toBeDefined()
       const {
@@ -526,7 +610,8 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: proof2, // from 2nd session
         verifierSession, // from 1st session
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
+        latestAccumulator: accumulator,
       })
       expectFailure(verified2, verifiedClaim2)
       const {
@@ -535,7 +620,8 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: presentation, // from 1st session
         verifierSession: verifierSession2, // from 2nd session
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
+        latestAccumulator: accumulator,
       })
       expectFailure(verified3, verifiedClaim3)
     })
@@ -547,6 +633,8 @@ describe('Test verifier functionality', () => {
           attester: gabiAttester2,
           credential,
           requestedAttributes: disclosedAttributes,
+          accumulator,
+          reqUpdatedAfter: new Date(),
         })
       ).rejects.toThrow('ecdsa signature was invalid')
       // use use gabiAttester2's pk instead of gabiAttester's one
@@ -556,25 +644,10 @@ describe('Test verifier functionality', () => {
       } = await GabiVerifier.verifyPresentation({
         proof: presentation,
         verifierSession,
-        attesterPubKey: gabiAttester2.getPubKey(),
+        attesterPubKey: gabiAttester2.publicKey,
+        latestAccumulator: accumulator,
       })
       expectFailure(verified2, verifiedClaim2)
-    })
-    it('Should not verify when sending index out of accumulator range', async () => {
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        credential,
-        disclosedAttributes,
-        2 // newest accumulator has index 1
-      )
-      await expectVerificationFailed(
-        gabiClaimer,
-        gabiAttester,
-        credential,
-        disclosedAttributes,
-        -1 // should be non negative
-      )
     })
     it('Should throw when a requested attribute is missing', async () => {
       const addedAttribute = 'thisDoesNotExit'
@@ -585,6 +658,7 @@ describe('Test verifier functionality', () => {
           attester: gabiAttester,
           credential,
           requestedAttributes,
+          accumulator,
         })
       ).rejects.toThrow(
         `could not find attribute with name '${addedAttribute}'`
@@ -609,7 +683,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         new Credential(JSON.stringify(credObj)),
         disclosedAttributes,
-        1
+        new Date(),
+        accumulator
       )
       credObj2.claim = {
         anythingButCtype: credObj.claim.contents,
@@ -627,7 +702,8 @@ describe('Test verifier functionality', () => {
         gabiAttester,
         new Credential(JSON.stringify(credObj2)),
         disclosedAttributes,
-        1
+        new Date(),
+        accumulator
       )
     })
   })

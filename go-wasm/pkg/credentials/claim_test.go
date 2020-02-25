@@ -3,11 +3,66 @@ package credentials
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
+	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/gabi/revocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNoUpdateAttestedClaim(t *testing.T) {
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
+	require.NoError(t, err)
+
+	sigMsg := &gabi.IssueSignatureMessage{}
+	err = json.Unmarshal(byteAttestationResponse, sigMsg)
+	require.NoError(t, err)
+
+	claimer := &Claimer{}
+	err = json.Unmarshal(byteClaimer, claimer)
+	require.NoError(t, err)
+
+	cred := &AttestedClaim{}
+	err = json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+	oldUpCount := cred.UpdateCounter
+
+	update := &revocation.Update{}
+	err = json.Unmarshal(byteUpdate, update)
+	require.NoError(t, err)
+	err = cred.Update(attester.PublicKey, update)
+	assert.NoError(t, err, "Could not request attributes")
+	assert.Equal(t, oldUpCount, cred.UpdateCounter)
+}
+
+func TestUpdateAttestedClaim(t *testing.T) {
+	attester := &Attester{}
+	err := json.Unmarshal(byteAttester, attester)
+	require.NoError(t, err)
+
+	sigMsg := &gabi.IssueSignatureMessage{}
+	err = json.Unmarshal(byteAttestationResponse, sigMsg)
+	require.NoError(t, err)
+
+	claimer := &Claimer{}
+	err = json.Unmarshal(byteClaimer, claimer)
+	require.NoError(t, err)
+
+	cred := &AttestedClaim{}
+	err = json.Unmarshal(byteCredential, cred)
+	require.NoError(t, err)
+	oldUpCount := cred.UpdateCounter
+
+	update := &revocation.Update{}
+	err = json.Unmarshal(byteUpdateRevocation, update)
+	require.NoError(t, err)
+	err = cred.Update(attester.PublicKey, update)
+	assert.NoError(t, err, "Could not request attributes")
+	assert.Equal(t, oldUpCount+1, cred.UpdateCounter)
+}
 
 func TestGetAttributeIndices(t *testing.T) {
 	cred := &AttestedClaim{}
@@ -26,7 +81,7 @@ func TestGetAttributeIndices(t *testing.T) {
 func TestGetMissingAttribute(t *testing.T) {
 	req := &PartialPresentationRequest{
 		ReqNonRevocationProof: true,
-		ReqMinIndex:           1,
+		ReqUpdatedAfter:       time.Now().Add(time.Duration(-OneYear)),
 		RequestedAttributes: []string{
 			"ctype",
 			"contents.age",

@@ -15,21 +15,22 @@ import {
   Attestation,
   Witness,
   AttesterAttestationSession,
-  Accumulator,
 } from '../types/Attestation'
 import {
   VerificationSession,
   PresentationRequest,
   CombinedPresentationRequest,
   CombinedVerificationSession,
+  IPresentationRequest,
 } from '../types/Verification'
 import {
   AttestationRequest,
   Presentation,
   ClaimerAttestationSession,
-  Credential,
+  CombinedPresentation,
 } from '../types/Claim'
-import CombinedRequestBuilder from '../verification/CombinedRequestBuilder'
+import Accumulator from '../attestation/Accumulator'
+import Credential from '../claim/Credential'
 
 // creates instances for two claimers, attesters and corresponding accumulators each
 export async function actorSetup(): Promise<{
@@ -39,15 +40,15 @@ export async function actorSetup(): Promise<{
 }> {
   const gabiAttester1 = new GabiAttester(pubKey, privKey)
   const gabiAttester2 = new GabiAttester(pubKey2, privKey2)
-  const gabiClaimer1 = await GabiClaimer.buildFromScratch()
-  const gabiClaimer2 = await GabiClaimer.buildFromScratch()
-  const update1 = await gabiAttester1.createAccumulator()
-  const update2 = await gabiAttester2.createAccumulator()
+  const gabiClaimer1 = await GabiClaimer.create()
+  const gabiClaimer2 = await GabiClaimer.create()
+  const accumulator1 = await gabiAttester1.createAccumulator()
+  const accumulator2 = await gabiAttester2.createAccumulator()
 
   return {
     claimers: [gabiClaimer1, gabiClaimer2],
     attesters: [gabiAttester1, gabiAttester2],
-    accumulators: [update1, update2],
+    accumulators: [accumulator1, accumulator2],
   }
 }
 
@@ -55,11 +56,11 @@ export async function actorSetup(): Promise<{
 export async function attestationSetup({
   claimer,
   attester,
-  update,
+  accumulator,
 }: {
   claimer: GabiClaimer
   attester: GabiAttester
-  update: Accumulator
+  accumulator: Accumulator
 }): Promise<{
   initiateAttestationReq: InitiateAttestationRequest
   attesterSession: AttesterAttestationSession
@@ -80,13 +81,13 @@ export async function attestationSetup({
   } = await claimer.requestAttestation({
     startAttestationMsg: initiateAttestationReq,
     claim,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
   })
   // Attester issues attestation
   const { attestation, witness } = await attester.issueAttestation({
     attestationSession: attesterSession,
     attestationRequest,
-    update,
+    accumulator,
   })
   // Claimer builds credential
   const credential = await claimer.buildCredential({
@@ -110,15 +111,15 @@ export async function presentationSetup({
   attester,
   credential,
   requestedAttributes = disclosedAttributes,
-  reqMinIndex = 1,
-  reqNonRevocationProof = true,
+  accumulator,
+  reqUpdatedAfter,
 }: {
   claimer: GabiClaimer
   attester: GabiAttester
   credential: Credential
+  accumulator?: Accumulator
   requestedAttributes?: string[]
-  reqMinIndex?: number
-  reqNonRevocationProof?: boolean
+  reqUpdatedAfter?: Date
 }): Promise<{
   verifierSession: VerificationSession
   presentationReq: PresentationRequest
@@ -132,20 +133,20 @@ export async function presentationSetup({
     message: presentationReq,
   } = await GabiVerifier.requestPresentation({
     requestedAttributes,
-    reqNonRevocationProof,
-    reqMinIndex,
+    reqUpdatedAfter,
   })
   // response
   const presentation = await claimer.buildPresentation({
     credential,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
     presentationReq,
   })
   // verify
   const { verified, claim: aClaim } = await GabiVerifier.verifyPresentation({
     proof: presentation,
     verifierSession,
-    attesterPubKey: attester.getPubKey(),
+    attesterPubKey: attester.publicKey,
+    latestAccumulator: accumulator,
   })
   return {
     verifierSession,
@@ -156,24 +157,24 @@ export async function presentationSetup({
   }
 }
 
-// creates mixed attestions that will fail buildCredential in almost all cases
+// creates mixed attestations that will fail buildCredential in almost all cases
 export async function mixedAttestationsSetup({
   gabiClaimer,
   gabiAttester,
-  update,
+  accumulator,
   initiateAttestationReq,
   attesterSession,
   attestationRequest,
 }: {
   gabiClaimer: GabiClaimer
   gabiAttester: GabiAttester
-  update: Accumulator
+  accumulator: Accumulator
   initiateAttestationReq: InitiateAttestationRequest
   attesterSession: AttesterAttestationSession
   attestationRequest: AttestationRequest
 }): Promise<{
   gabiAttester2: GabiAttester
-  update2: Accumulator
+  accumulator2: Accumulator
   witness2: Witness
   attestation2: Attestation
   startAttestationMsg2: InitiateAttestationRequest
@@ -188,7 +189,7 @@ export async function mixedAttestationsSetup({
     [key: number]: {
       attestationSession: AttesterAttestationSession
       attestationRequest: AttestationRequest
-      update: Accumulator
+      accumulator: Accumulator
     }
   }
   mixedAttestationsValid: {
@@ -200,7 +201,7 @@ export async function mixedAttestationsSetup({
   }
 }> {
   const gabiAttester2 = new GabiAttester(pubKey2, privKey2)
-  const update2 = await gabiAttester2.createAccumulator()
+  const accumulator2 = await gabiAttester2.createAccumulator()
 
   // (1) Start attestation
   const {
@@ -215,7 +216,7 @@ export async function mixedAttestationsSetup({
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
     claim,
-    attesterPubKey: gabiAttester2.getPubKey(),
+    attesterPubKey: gabiAttester2.publicKey,
   })
   // E12: Mixed data, should use startAttestationMsg2
   const {
@@ -224,16 +225,16 @@ export async function mixedAttestationsSetup({
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: initiateAttestationReq,
     claim,
-    attesterPubKey: gabiAttester2.getPubKey(),
+    attesterPubKey: gabiAttester2.publicKey,
   })
-  // E21: Mixed data, should use gabiAttester2.getPubKey()
+  // E21: Mixed data, should use gabiAttester2.publicKey
   const {
     message: attestationRequestE21,
     session: claimerSessionE21,
   } = await gabiClaimer.requestAttestation({
     startAttestationMsg: startAttestationMsg2,
     claim,
-    attesterPubKey: gabiAttester.getPubKey(),
+    attesterPubKey: gabiAttester.publicKey,
   })
 
   // (3) Issue attestation
@@ -243,39 +244,39 @@ export async function mixedAttestationsSetup({
   } = await gabiAttester2.issueAttestation({
     attestationSession: attesterSignSession2,
     attestationRequest: attestationRequest2,
-    update: update2,
+    accumulator: accumulator2,
   })
 
   const mixedAttestationsInvalid = {
     1112_2221: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequestE12, // 12
-      update,
+      accumulator,
     },
     1122_2211: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequest2, // 22
-      update,
+      accumulator,
     },
     1222_2111: {
       attestationSession: attesterSignSession2, // 2
       attestationRequest: attestationRequest2, // 22
-      update,
+      accumulator,
     },
     1211_2122: {
       attestationSession: attesterSignSession2, // 1
       attestationRequest, // 11
-      update,
+      accumulator,
     },
     1121_2212: {
       attestationSession: attesterSession, // 1
       attestationRequest: attestationRequestE21, // 21
-      update,
+      accumulator,
     },
     1212_2121: {
       attestationSession: attesterSignSession2, // 2
       attestationRequest: attestationRequestE12, // 12
-      update,
+      accumulator,
     },
   }
 
@@ -283,7 +284,7 @@ export async function mixedAttestationsSetup({
     issuance: await gabiAttester.issueAttestation({
       attestationSession: attesterSignSession2, // 1
       attestationRequest: attestationRequestE21, // 21
-      update,
+      accumulator,
     }),
     claimerSession: claimerSessionE21,
   }
@@ -291,7 +292,7 @@ export async function mixedAttestationsSetup({
   return {
     gabiAttester2,
     witness2,
-    update2,
+    accumulator2,
     attestation2,
     startAttestationMsg2,
     attesterSignSession2,
@@ -309,35 +310,29 @@ export async function mixedAttestationsSetup({
 export async function combinedSetup({
   claimer,
   attesters,
-  updates,
+  accumulators,
   disclosedAttsArr,
-  minIndices,
-  reqNonRevocationProof,
+  reqUpdatesAfter,
   inputCredentials,
 }: {
   claimer: GabiClaimer
   attesters: GabiAttester[]
-  updates: Accumulator[]
+  accumulators: Array<Accumulator | undefined>
   disclosedAttsArr: string[][]
-  minIndices: number[]
-  reqNonRevocationProof: boolean[]
+  reqUpdatesAfter: Array<Date | undefined>
   inputCredentials?: Credential[]
 }): Promise<{
-  combinedBuilder: CombinedRequestBuilder
-  combinedReq: CombinedPresentationRequest
+  combinedPresentation: CombinedPresentation
+  combinedPresentationReq: CombinedPresentationRequest
   combinedSession: CombinedVerificationSession
   verified: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   claims: any[]
 }> {
-  if (
-    attesters.length !== updates.length ||
-    updates.length !== disclosedAttsArr.length ||
-    disclosedAttsArr.length !== minIndices.length ||
-    minIndices.length !== reqNonRevocationProof.length
-  ) {
-    throw new Error('Array lengths dont match up in combined setup')
+  if (attesters.length !== disclosedAttsArr.length) {
+    throw new Error("Array lengths don't match up in combined setup")
   }
-  const attesterPubKeys = attesters.map(attester => attester.getPubKey())
+  const attesterPubKeys = attesters.map(attester => attester.publicKey)
   // build credentials if inputCredentials is missing
   let credentials: Credential[]
   if (
@@ -348,11 +343,12 @@ export async function combinedSetup({
     credentials = inputCredentials
   } else {
     credentials = await Promise.all(
-      attesters.map((attester, idx) =>
+      attesters.map(async (attester, idx) =>
         attestationSetup({
           attester,
           claimer,
-          update: updates[idx],
+          accumulator:
+            accumulators[idx] || (await attester.createAccumulator()),
         })
       )
     ).then(attestations =>
@@ -360,36 +356,34 @@ export async function combinedSetup({
     )
   }
   // build combined requests
-  let combinedBuilder = new CombinedRequestBuilder()
-  combinedBuilder = disclosedAttsArr.reduce(
-    (builder, requestedAttributes, idx) =>
-      builder.requestPresentation({
-        requestedAttributes,
-        reqNonRevocationProof: reqNonRevocationProof[idx],
-        reqMinIndex: minIndices[idx],
-      }),
-    combinedBuilder
+  const requests: IPresentationRequest[] = disclosedAttsArr.map(
+    (requestedAttributes, idx) => ({
+      requestedAttributes,
+      reqUpdatedAfter: reqUpdatesAfter[idx],
+    })
   )
+  // request combined presentation
   const {
-    message: combinedReq,
+    message: combinedPresentationReq,
     session: combinedSession,
-  } = await combinedBuilder.finalise()
+  } = await GabiVerifier.requestCombinedPresentation(requests)
   // build presentation
-  const combPresentation = await claimer.buildCombinedPresentation({
+  const combinedPresentation = await claimer.buildCombinedPresentation({
     credentials,
-    combinedPresentationReq: combinedReq,
+    combinedPresentationReq,
     attesterPubKeys,
   })
   // verify presentation
   const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
-    proof: combPresentation,
+    proof: combinedPresentation,
     attesterPubKeys,
     verifierSession: combinedSession,
+    latestAccumulators: accumulators,
   })
   return {
-    combinedBuilder,
-    combinedReq,
+    combinedPresentationReq,
     combinedSession,
+    combinedPresentation,
     verified,
     claims,
   }

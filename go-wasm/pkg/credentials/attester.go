@@ -63,7 +63,7 @@ func (attester *Attester) InitiateAttestation() (*AttesterSession, *StartSession
 
 // AttestClaim issues an attestation for the given claim. It takes the
 // RequestAttestedClaim which was send by the claimer and an AttesterSession.
-// It returns an gabi.IssueSignatureMessage which should be send to the claimer.
+// It returns an gabi.IssueSignatureMessage which should be sent to the claimer.
 func (attester *Attester) AttestClaim(reqCred *AttestedClaimRequest, session *AttesterSession, update *revocation.Update) (*gabi.IssueSignatureMessage, *revocation.Witness, error) {
 	ok := reqCred.CommitMsg.Proofs.Verify([]*gabi.PublicKey{attester.PublicKey}, session.Context, session.Nonce, false, nil)
 	if !ok {
@@ -90,7 +90,6 @@ func (attester *Attester) AttestClaim(reqCred *AttestedClaimRequest, session *At
 	if err != nil {
 		return nil, nil, err
 	}
-	witness.Accumulator = acc
 	witness.SignedAccumulator = update.SignedAccumulator
 	gabiIssuer := &gabi.Issuer{Pk: attester.PublicKey, Sk: attester.PrivateKey, Context: session.Context}
 	sig, err := gabiIssuer.IssueSignature(reqCred.CommitMsg.U, marshaledAttr, witness, reqCred.CommitMsg.Nonce2)
@@ -111,7 +110,8 @@ func (attester *Attester) CreateAccumulator() (*revocation.Update, error) {
 }
 
 // RevokeAttestation removes the attestation witness from the given accumulator.
-func (attester *Attester) RevokeAttestation(update *revocation.Update, witness *revocation.Witness) (*revocation.Update, error) {
+func (attester *Attester) RevokeAttestation(update *revocation.Update, witnesses []*revocation.Witness) (*revocation.Update, error) {
+	// get key pair and accumulator
 	pubK, err := attester.PublicKey.RevocationKey()
 	if err != nil {
 		return nil, err
@@ -125,5 +125,25 @@ func (attester *Attester) RevokeAttestation(update *revocation.Update, witness *
 		return nil, err
 	}
 
-	return acc.Remove(privK, witness.E, update.Events[0])
+	// calculate new accumulator which does not contain the witness
+	previousEvent := update.Events[len(update.Events)-1]
+	newAcc := acc
+	events := make([]*revocation.Event, len(witnesses))
+	for i, w := range witnesses {
+		newAcc, previousEvent, err = newAcc.Remove(privK, w.E, previousEvent)
+		if err != nil {
+			return nil, err
+		}
+		events[i] = previousEvent
+	}
+
+	// build update
+	signNewAcc, err := newAcc.Sign(privK)
+	if err != nil {
+		return nil, err
+	}
+	return &revocation.Update{
+		SignedAccumulator: signNewAcc,
+		Events:            events,
+	}, nil
 }

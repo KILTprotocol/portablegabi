@@ -122,7 +122,7 @@ func TestSignAndRevoke(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, sig)
 
-	revokedUpdate, err := attester.RevokeAttestation(update, witness)
+	revokedUpdate, err := attester.RevokeAttestation(update, []*revocation.Witness{witness})
 	require.NoError(t, err)
 	require.NotNil(t, revokedUpdate)
 }
@@ -135,5 +135,4 @@ func TestCreateAccumulator(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err)
 	require.NotNil(t, update)
-
 }

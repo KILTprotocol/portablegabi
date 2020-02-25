@@ -14,6 +14,7 @@ import (
 
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/gabi/revocation"
 )
 
 // Separator is used to separate JSON keys from each other.
@@ -23,12 +24,12 @@ const Separator = "."
 const MagicByte = byte(0xFF)
 
 type (
-
 	// AttestedClaim contains the Claim and the gabi.Credential. It can be used to
 	// disclose specific attributes to the verifier.
 	AttestedClaim struct {
-		Credential *gabi.Credential `json:"credential"`
-		Claim      Claim            `json:"claim"`
+		Credential    *gabi.Credential `json:"credential"`
+		UpdateCounter uint64           `json:"updateCounter"`
+		Claim         Claim            `json:"claim"`
 	}
 
 	// Claim contains the attributes the claimer claims to possess. Contents should
@@ -76,6 +77,7 @@ func NewAttestedClaim(cb *gabi.CredentialBuilder, attributes []*Attribute, signa
 	if err != nil {
 		return nil, err
 	}
+
 	return &AttestedClaim{
 		Credential: cred,
 		Claim:      claim,
@@ -128,6 +130,67 @@ func (attestedClaim *AttestedClaim) getAttributes() ([]*Attribute, error) {
 		return nil, errors.New("expected attributes inside credential to be sorted")
 	}
 	return attributes, nil
+}
+
+// Update updates the non revocation witness using the provided update.
+func (attestedClaim *AttestedClaim) Update(attesterPubK *gabi.PublicKey, update *revocation.Update) error {
+	pubRevKey, err := attesterPubK.RevocationKey()
+	if err != nil {
+		return err
+	}
+	witness := attestedClaim.Credential.NonRevocationWitness
+	oldAcc, err := witness.SignedAccumulator.UnmarshalVerify(pubRevKey)
+	if err != nil {
+		return fmt.Errorf("Could not verify old accumulator (%f)", err)
+	}
+
+	err = witness.Verify(pubRevKey)
+	if err != nil {
+		return err
+	}
+
+	err = witness.Update(pubRevKey, update)
+	if err != nil {
+		return err
+	}
+	if oldAcc.Index < update.SignedAccumulator.Accumulator.Index {
+		attestedClaim.UpdateCounter++
+	}
+	return nil
+}
+
+func verifyUpdateSequence(attesterPubK *gabi.PublicKey, updates []*revocation.Update) error {
+	revKey, err := attesterPubK.RevocationKey()
+	if err != nil {
+		return err
+	}
+	// We load all accumulators here. The unmarshalled accumulator is cached inside the SignedAccumulator.
+	// Unmarshalling during sorting would lead to possible errors while sorting.
+	for _, up := range updates {
+		if _, err := up.SignedAccumulator.UnmarshalVerify(revKey); err != nil {
+			return err
+		}
+	}
+	// sort using the unmarshalled accumulators
+	sort.Slice(updates, func(i, j int) bool {
+		return updates[i].SignedAccumulator.Accumulator.Index < updates[j].SignedAccumulator.Accumulator.Index
+	})
+	return nil
+}
+
+// UpdateAll updates the non revocation witness using all the provided updates.
+func (attestedClaim *AttestedClaim) UpdateAll(attesterPubK *gabi.PublicKey,
+	updates []*revocation.Update) error {
+
+	if err := verifyUpdateSequence(attesterPubK, updates); err != nil {
+		return err
+	}
+	for _, u := range updates {
+		if err := attestedClaim.Update(attesterPubK, u); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func newClaimFromAttribute(attributes []*Attribute) (Claim, error) {

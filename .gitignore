@@ -33,6 +33,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .npmrc
+package-lock.json
 
 # production
 /build
@@ -40,6 +41,7 @@ yarn-error.log*
 # testing
 /coverage/
 /src/coverage
+docs/example.mashnet.ts
 
 # tooling setup
 .DS_Store

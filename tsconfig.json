@@ -29,7 +29,8 @@
     "src/wasm/*.js",
     "src/attestation/GabiAttester.ts",
     "src/claim/GabiClaimer.ts",
-    "src/verification/GabiVerifier.ts"
+    "src/verification/GabiVerifier.ts",
+    "src/Teardown.js"
   ],
   "exclude": ["node_modules", "build"]
 }

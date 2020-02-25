@@ -1,6 +1,8 @@
 package credentials
 
 import (
+	"time"
+
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 )
@@ -30,9 +32,9 @@ type (
 
 	// PartialPresentationRequest contains partial information for a combined disclosure request
 	PartialPresentationRequest struct {
-		RequestedAttributes   []string `json:"requestedAttributes"`
-		ReqNonRevocationProof bool     `json:"reqNonRevocationProof"`
-		ReqMinIndex           uint64   `json:"reqMinIndex"`
+		RequestedAttributes   []string  `json:"requestedAttributes"`
+		ReqNonRevocationProof bool      `json:"reqNonRevocationProof"`
+		ReqUpdatedAfter       time.Time `json:"reqUpdatedAfter"`
 	}
 
 	// CombinedPresentationRequest request multiple credentials from a claimer

@@ -1,7 +1,6 @@
 import IGabiClaimer, {
   AttestationRequest,
   ClaimerAttestationSession,
-  Credential,
   Presentation,
   CombinedPresentation,
   ClaimError,
@@ -11,7 +10,6 @@ import {
   IGabiMsgSession,
   InitiateAttestationRequest,
   Attestation,
-  Accumulator,
   AttesterPublicKey,
 } from '../types/Attestation'
 import {
@@ -19,7 +17,13 @@ import {
   PresentationRequest,
 } from '../types/Verification'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
+import Credential from './Credential'
 
+/**
+ * Checks that the provided claim is a valid object.
+ *
+ * @param claim The object which should be a valid claim.
+ */
 function checkValidClaimStructure(claim: object): void | Error {
   if (!Object.keys(claim).length) {
     throw ClaimError.claimMissing
@@ -35,27 +39,53 @@ function checkValidClaimStructure(claim: object): void | Error {
 export default class GabiClaimer implements IGabiClaimer {
   private readonly secret: string
 
+  /**
+   * Generates a claimer using the provided mnemonic.
+   *
+   * @param mnemonic The mnemonic which is used to generate the key.
+   * @param password The password which is used to generate the key.
+   * @returns A new claimer.
+   */
   public static async buildFromMnemonic(
-    mnemonic: string
+    mnemonic: string,
+    password = ''
   ): Promise<GabiClaimer> {
     // secret's structure unmarshalled is { MasterSecret: string }
-    const secret = await GabiClaimer.genSecret(mnemonic)
-    return new GabiClaimer(secret)
+    const secret = await goWasmExec<string>(WasmHooks.keyFromMnemonic, [
+      mnemonic,
+      password,
+    ])
+    return new this(secret)
   }
 
-  public static async buildFromScratch(): Promise<GabiClaimer> {
+  /**
+   * Generates a new master secret and returns a new [[Claimer]] object.
+   *
+   * @returns A new [[Claimer]].
+   */
+  public static async create(): Promise<GabiClaimer> {
     const secret = await goWasmExec<string>(WasmHooks.genKey)
-    return new GabiClaimer(secret)
+    return new this(secret)
   }
 
+  /**
+   * Constructs a new [[Claimer]] using the given master secret.
+   *
+   * @param secret The master secret of the [[Claimer]].
+   */
   constructor(secret: string) {
     this.secret = secret
   }
 
-  private static async genSecret(mnemonic: string): Promise<string> {
-    return goWasmExec<string>(WasmHooks.keyFromMnemonic, [mnemonic, ''])
-  }
-
+  /**
+   * Creates an [[AttestationRequest]] using the provided [[InitiateAttestationRequest]].
+   *
+   * @param p The parameter object.
+   * @param p.claim The claim which should get attested.
+   * @param p.startAttestationMsg The [[InitiateAttestationRequest]] provided by the attester.
+   * @param p.attesterPubKey The [[PublicKey]] of the attester.
+   * @returns An [[AttestationRequest]] and a [[ClaimerAttestationSession]] which together with an [[AttestationResponse]] can be used to create a [[Credential]].
+   */
   public async requestAttestation({
     claim,
     startAttestationMsg,
@@ -85,6 +115,14 @@ export default class GabiClaimer implements IGabiClaimer {
     }
   }
 
+  /**
+   * Builds a [[Credential]] using the [[ClaimerAttestationSession]] and the [[Attestation]].
+   *
+   * @param p The parameter object.
+   * @param p.claimerSession The session object corresponding to the [[AttestationRequest]].
+   * @param p.attestation The [[Attestation]] provided by the [[Attester]].
+   * @returns A signed and valid [[Credential]].
+   */
   public async buildCredential({
     claimerSession,
     attestation,
@@ -101,6 +139,16 @@ export default class GabiClaimer implements IGabiClaimer {
     )
   }
 
+  /**
+   * Uses the [[PresentationRequest]] and a [[Credential]] to build an anonymous presentation.
+   *
+   * @param p The parameter object.
+   * @param p.credential The [[Credential]] which contains all the requested attributes.
+   * @param p.presentationReq The [[PresentationRequest]] received from the [[Verifier]].
+   * @param p.attesterPubKey The public key of the [[Attester]] who signed the [[Credential]].
+   * @returns A [[Presentation]] that can be used to disclose attributes with a [[Verifier]].
+   *    Must only be used once!
+   */
   public async buildPresentation({
     credential,
     presentationReq,
@@ -120,6 +168,16 @@ export default class GabiClaimer implements IGabiClaimer {
     )
   }
 
+  /**
+   * Uses the [[PresentationRequest]] and a [[Credential]] to build an anonymous presentation.
+   *
+   * @param p The parameter object.
+   * @param p.credentials An array of [[Credential]]s which is used to provide the requested attributes.
+   * @param p.combinedPresentationReq The array of [[PresentationRequest]]s received from the [[Verifier]].
+   * @param p.attesterPubKeys An array of [[PublicKey]]s which corresponds to the array of [[Credential]]s.
+   * @returns A [[CombinedPresentation]] that can be used to disclose attributes with a [[Verifier]].
+   *    Must only be used once!
+   */
   public async buildCombinedPresentation({
     credentials,
     combinedPresentationReq,
@@ -129,7 +187,7 @@ export default class GabiClaimer implements IGabiClaimer {
     combinedPresentationReq: CombinedPresentationRequest
     attesterPubKeys: AttesterPublicKey[]
   }): Promise<CombinedPresentation> {
-    // make an json array out of already json serialised values
+    // make a json array out of already json serialised values
     // we don't want a json array of strings
     return new CombinedPresentation(
       await goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
@@ -137,25 +195,6 @@ export default class GabiClaimer implements IGabiClaimer {
         `[${credentials.join(',')}]`,
         combinedPresentationReq.valueOf(),
         `[${attesterPubKeys.join(',')}]`,
-      ])
-    )
-  }
-
-  public async updateCredential({
-    credential,
-    attesterPubKey,
-    update,
-  }: {
-    credential: Credential
-    attesterPubKey: AttesterPublicKey
-    update: Accumulator
-  }): Promise<Credential> {
-    return new Credential(
-      await goWasmExec<string>(WasmHooks.updateCredential, [
-        this.secret,
-        credential.valueOf(),
-        update.valueOf(),
-        attesterPubKey.valueOf(),
       ])
     )
   }

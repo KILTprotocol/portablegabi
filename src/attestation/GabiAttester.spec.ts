@@ -1,4 +1,3 @@
-import { goWasmClose } from '../wasm/wasm_exec_wrapper'
 import GabiAttester from './GabiAttester'
 import { privKey, pubKey, claim } from '../testSetup/testConfig'
 import {
@@ -7,7 +6,6 @@ import {
   actorSetup,
 } from '../testSetup/testSetup'
 import {
-  Accumulator,
   InitiateAttestationRequest,
   AttesterAttestationSession,
   Attestation,
@@ -15,15 +13,13 @@ import {
 } from '../types/Attestation'
 import GabiClaimer from '../claim/GabiClaimer'
 import { AttestationRequest, ClaimError } from '../types/Claim'
-
-// close WASM instance after tests ran
-afterAll(() => goWasmClose())
+import Accumulator from './Accumulator'
 
 describe('Test attester', () => {
   let gabiAttester: GabiAttester
   let gabiClaimer: GabiClaimer
-  let update: Accumulator
-  let update2: Accumulator
+  let accumulator: Accumulator
+  let accumulator2: Accumulator
   let initiateAttestationReq: InitiateAttestationRequest
   let attesterSession: AttesterAttestationSession
   let attestationRequest: AttestationRequest
@@ -34,14 +30,14 @@ describe('Test attester', () => {
     [key: number]: {
       attestationSession: AttesterAttestationSession
       attestationRequest: AttestationRequest
-      update: Accumulator
+      accumulator: Accumulator
     }
   }
   beforeAll(async () => {
     ;({
       claimers: [gabiClaimer],
       attesters: [gabiAttester],
-      accumulators: [update],
+      accumulators: [accumulator],
     } = await actorSetup())
     ;({
       initiateAttestationReq,
@@ -52,16 +48,16 @@ describe('Test attester', () => {
     } = await attestationSetup({
       claimer: gabiClaimer,
       attester: gabiAttester,
-      update,
+      accumulator,
     }))
     ;({
-      update2,
+      accumulator2,
       witness2,
       mixedAttestationsInvalid,
     } = await mixedAttestationsSetup({
       gabiClaimer,
       gabiAttester,
-      update,
+      accumulator,
       initiateAttestationReq,
       attesterSession,
       attestationRequest,
@@ -72,10 +68,6 @@ describe('Test attester', () => {
       const attester = new GabiAttester(pubKey, privKey)
       expect(attester).toBeDefined()
       expect(attester).toStrictEqual(gabiAttester)
-    })
-    it('Checks non-deterministic accumulator creation', async () => {
-      const updateNew = gabiAttester.createAccumulator()
-      expect(update.valueOf()).not.toStrictEqual(updateNew.valueOf())
     })
     it('Checks valid startAttestation', () => {
       expect(initiateAttestationReq).toBeDefined()
@@ -112,13 +104,13 @@ describe('Test attester', () => {
           ({
             attestationSession: attestationSessionMixed,
             attestationRequest: attestationRequestMixed,
-            update: updateMixed,
+            accumulator: updateMixed,
           }) =>
             expect(
               gabiAttester.issueAttestation({
                 attestationSession: attestationSessionMixed,
                 attestationRequest: attestationRequestMixed,
-                update: updateMixed,
+                accumulator: updateMixed,
               })
             ).rejects.toThrow('commit message could not be verified')
         )
@@ -126,28 +118,46 @@ describe('Test attester', () => {
         response.map(item => expect(item).not.toEqual(expect.anything()))
       )
     })
+    it('Should not throw when revoking with missing witnesses array', async () => {
+      const updateNew = await gabiAttester.createAccumulator()
+      await expect(
+        gabiAttester.revokeAttestation({
+          accumulator: updateNew,
+          witnesses: (undefined as unknown) as Witness[],
+        })
+      ).resolves.toEqual(expect.anything())
+    })
+    it('Should not throw when revoking with empty witnesses array', async () => {
+      const updateNew = await gabiAttester.createAccumulator()
+      await expect(
+        gabiAttester.revokeAttestation({
+          accumulator: updateNew,
+          witnesses: [],
+        })
+      ).resolves.toEqual(expect.anything())
+    })
     it('Should not throw when revoking with another accumulator of same attester', async () => {
       const updateNew = await gabiAttester.createAccumulator()
       await expect(
         gabiAttester.revokeAttestation({
-          update: updateNew,
-          witness,
+          accumulator: updateNew,
+          witnesses: [witness],
         })
       ).resolves.toEqual(expect.anything())
     })
     it('Should not throw when revoking with witness from another attester', async () => {
       await expect(
         gabiAttester.revokeAttestation({
-          update,
-          witness: witness2,
+          accumulator,
+          witnesses: [witness2],
         })
       ).resolves.toEqual(expect.anything())
     })
     it('Should throw when revoking with accumulator from another attester', async () => {
       await expect(
         gabiAttester.revokeAttestation({
-          update: update2,
-          witness,
+          accumulator: accumulator2,
+          witnesses: [witness],
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
@@ -167,13 +177,13 @@ describe('Test attester', () => {
           JSON.stringify(tamperObj)
         ),
         claim,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       await expect(
         gabiAttester.issueAttestation({
           attestationSession: attesterSession2,
           attestationRequest: attestationRequest2,
-          update,
+          accumulator,
         })
       ).rejects.toThrow('commit message could not be verified')
     })
@@ -193,13 +203,13 @@ describe('Test attester', () => {
           JSON.stringify(tamperObj)
         ),
         claim,
-        attesterPubKey: gabiAttester.getPubKey(),
+        attesterPubKey: gabiAttester.publicKey,
       })
       await expect(
         gabiAttester.issueAttestation({
           attestationSession: attesterSession2,
           attestationRequest: attestationRequest2,
-          update,
+          accumulator,
         })
       ).rejects.toThrow('commit message could not be verified')
     })

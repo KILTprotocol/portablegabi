@@ -26,14 +26,17 @@ func main() {
 	methods["keyFromMnemonic"] = js.FuncOf(wasm.Callbacker(wasm.KeyFromMnemonic))
 	methods["requestAttestation"] = js.FuncOf(wasm.Callbacker(wasm.RequestAttestation))
 	methods["buildCredential"] = js.FuncOf(wasm.Callbacker(wasm.BuildCredential))
-	methods["updateCredential"] = js.FuncOf(wasm.Callbacker(wasm.UpdateCredential))
 	methods["buildPresentation"] = js.FuncOf(wasm.Callbacker(wasm.BuildPresentation))
 	methods["buildCombinedPresentation"] = js.FuncOf(wasm.Callbacker(wasm.BuildCombinedPresentation))
+	methods["updateCredential"] = js.FuncOf(wasm.Callbacker(wasm.UpdateCredential))
+	methods["updateAllCredential"] = js.FuncOf(wasm.Callbacker(wasm.UpdateAllCredential))
 
 	methods["requestPresentation"] = js.FuncOf(wasm.Callbacker(wasm.RequestPresentation))
 	methods["requestCombinedPresentation"] = js.FuncOf(wasm.Callbacker(wasm.RequestCombinedPresentation))
 	methods["verifyPresentation"] = js.FuncOf(wasm.Callbacker(wasm.VerifyPresentation))
 	methods["verifyCombinedPresentation"] = js.FuncOf(wasm.Callbacker(wasm.VerifyCombinedPresentation))
+
+	methods["getAccumulatorIndex"] = js.FuncOf(wasm.Callbacker(wasm.GetAccumulatorIndex))
 
 	for k, v := range methods {
 		js.Global().Set(k, v)
