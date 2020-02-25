@@ -39,7 +39,7 @@ export function daysToNanoSecs(days: number): number {
  * The Attester can be used to create and revoke [[Attestation]]s of [[Credential]]s.
  */
 export default class Attester implements IAttester {
-  private readonly privateKey: AttesterPrivateKey
+  readonly privateKey: AttesterPrivateKey
   readonly publicKey: AttesterPublicKey
 
   /**
