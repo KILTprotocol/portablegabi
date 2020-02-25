@@ -169,8 +169,8 @@ describe('Test verifier functionality', () => {
       expect(verObj.reqNonRevocationProof).toEqual(
         presObj.partialPresentationRequest.reqNonRevocationProof
       )
-      expect(verObj.reqMinIndex).toEqual(
-        presObj.partialPresentationRequest.reqMinIndex
+      expect(verObj.ReqUpdatedAfter).toEqual(
+        presObj.partialPresentationRequest.ReqUpdatedAfter
       )
     })
     it('Checks valid verifyPresentation', () => {
