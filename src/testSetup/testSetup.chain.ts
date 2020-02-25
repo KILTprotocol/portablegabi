@@ -2,10 +2,10 @@
 import { KeypairType } from '@polkadot/util-crypto/types'
 import Accumulator from '../attestation/Accumulator'
 import { pubKey, privKey, pubKey2, privKey2, chainCfg } from './testConfig'
-import GabiAttesterChain from '../attestation/GabiAttester.chain'
+import AttesterChain from '../attestation/Attester.chain'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import { PgabiModName } from '../types/Chain'
-import GabiClaimer from '../claim/GabiClaimer'
+import Claimer from '../claim/Claimer'
 
 // creates instances for two claimers, attesters and corresponding accumulators each
 export async function actorSetupChain({
@@ -17,20 +17,20 @@ export async function actorSetupChain({
   mnemonics?: [string, string]
   keypairTypes?: [KeypairType, KeypairType]
 }): Promise<{
-  claimers: GabiClaimer[]
-  attesters: GabiAttesterChain[]
+  claimers: Claimer[]
+  attesters: AttesterChain[]
   accumulators: Accumulator[]
 }> {
   const chain = await connect({ pgabiModName })
-  const gabiClaimer1 = await GabiClaimer.create()
-  const gabiClaimer2 = await GabiClaimer.create()
-  const gabiAttester1 = await GabiAttesterChain.buildFromMnemonic(
+  const claimer1 = await Claimer.create()
+  const claimer2 = await Claimer.create()
+  const attester1 = await AttesterChain.buildFromMnemonic(
     pubKey,
     privKey,
     mnemonics[0],
     keypairTypes[0]
   )
-  const gabiAttester2 = await GabiAttesterChain.buildFromMnemonic(
+  const attester2 = await AttesterChain.buildFromMnemonic(
     pubKey2,
     privKey2,
     mnemonics[1],
@@ -41,24 +41,24 @@ export async function actorSetupChain({
   let accumulator1
   let accumulator2
   try {
-    accumulator1 = await chain.getLatestAccumulator(gabiAttester1.address)
+    accumulator1 = await chain.getLatestAccumulator(attester1.address)
   } catch (e) {
-    accumulator1 = await gabiAttester1.createAccumulator()
-    await Promise.resolve(gabiAttester1.updateAccumulator(accumulator1)).catch(
+    accumulator1 = await attester1.createAccumulator()
+    await Promise.resolve(attester1.updateAccumulator(accumulator1)).catch(
       err => err
     )
   }
   try {
-    accumulator2 = await chain.getLatestAccumulator(gabiAttester2.address)
+    accumulator2 = await chain.getLatestAccumulator(attester2.address)
   } catch (e) {
-    accumulator2 = await gabiAttester1.createAccumulator()
-    await Promise.resolve(gabiAttester2.updateAccumulator(accumulator2)).catch(
+    accumulator2 = await attester1.createAccumulator()
+    await Promise.resolve(attester2.updateAccumulator(accumulator2)).catch(
       err => err
     )
   }
   return {
-    claimers: [gabiClaimer1, gabiClaimer2],
-    attesters: [gabiAttester1, gabiAttester2],
+    claimers: [claimer1, claimer2],
+    attesters: [attester1, attester2],
     accumulators: [accumulator1, accumulator2],
   }
 }

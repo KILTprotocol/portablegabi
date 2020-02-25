@@ -1,13 +1,13 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
-export default interface IGabiClaimer {
+export default interface IClaimer {
   requestAttestation: Function
   buildCredential: Function
   buildPresentation: Function
   buildCombinedPresentation: Function
 }
 
-export interface IGabiClaimerChain {
+export interface IClaimerChain {
   updateCredentialChain: Function
 }
 

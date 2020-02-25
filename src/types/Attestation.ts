@@ -7,7 +7,7 @@ export interface IGabiMsgSession {
   session: string
 }
 
-export default interface IGabiAttester {
+export default interface IAttester {
   publicKey: AttesterPublicKey
   createAccumulator: Function
   startAttestation: Function
@@ -63,7 +63,7 @@ export class Attestation extends String {
   private thisIsOnlyHereToPreventClassMixes: int
 }
 
-export interface IGabiAttesterChain extends IGabiAttester {
+export interface IAttesterChain extends IAttester {
   address: string
   revokeAttestation: ({
     witnesses,

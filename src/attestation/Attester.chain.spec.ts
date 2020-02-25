@@ -1,6 +1,6 @@
 import { mnemonicToSeed, mnemonicToMiniSecret } from '@polkadot/util-crypto'
 import { Keyring } from '@polkadot/api'
-import GabiAttesterChain from './GabiAttester.chain'
+import AttesterChain from './Attester.chain'
 import { actorSetupChain } from '../testSetup/testSetup.chain'
 import Accumulator from './Accumulator'
 import Blockchain from '../blockchain/Blockchain'
@@ -8,13 +8,13 @@ import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import { attestationSetup } from '../testSetup/testSetup'
 import api from '../blockchain/__mocks__/BlockchainApi'
 import { AttesterPublicKey, AttesterPrivateKey } from '../types/Attestation'
-import GabiClaimer from '../claim/GabiClaimer'
+import Claimer from '../claim/Claimer'
 
 jest.mock('../blockchainApiConnection/BlockchainApiConnection')
 
-describe('Test GabiAttester on chain', () => {
-  let claimer: GabiClaimer
-  let attester: GabiAttesterChain
+describe('Test Attester on chain', () => {
+  let claimer: Claimer
+  let attester: AttesterChain
   let chain: Blockchain
   let accumulator: Accumulator
   beforeAll(async () => {
@@ -26,22 +26,20 @@ describe('Test GabiAttester on chain', () => {
     } = await actorSetupChain({}))
     accumulator = await attester.createAccumulator()
   })
-  // NOTE: if this test fails after updating @polkadot packages, we should adjust GabiAttester.chain.ts
+  // NOTE: if this test fails after updating @polkadot packages, we should adjust Attester.chain.ts
   // see issue https://github.com/polkadot-js/common/blob/d889c71056158df72b34b994506d062c2e731cc0/packages/keyring/src/keyring.ts#L174
   it('Should generate correct keypair for signature type sr25519', async () => {
-    const mnemonic = GabiAttesterChain.generateMnemonic()
+    const mnemonic = AttesterChain.generateMnemonic()
     const miniSecretSeed = mnemonicToMiniSecret(mnemonic)
     const seed = mnemonicToSeed(mnemonic)
-    const {
-      address: attesterAddress,
-    } = await GabiAttesterChain.buildFromMnemonic(
+    const { address: attesterAddress } = await AttesterChain.buildFromMnemonic(
       new AttesterPublicKey('pb'),
       new AttesterPrivateKey('pk'),
       mnemonic
     )
     const {
       address: attesterAddressFromURI,
-    } = await GabiAttesterChain.buildFromURI(
+    } = await AttesterChain.buildFromURI(
       new AttesterPublicKey('pb'),
       new AttesterPrivateKey('pk'),
       mnemonic
@@ -61,14 +59,12 @@ describe('Test GabiAttester on chain', () => {
     expect(attesterAddress).not.toBe(fromSeed)
     expect(attesterAddress).toBe(attesterAddressFromURI)
   }, 10000)
-  // NOTE: if this test fails after updating @polkadot packages, we should adjust GabiAttester.chain.ts
+  // NOTE: if this test fails after updating @polkadot packages, we should adjust Attester.chain.ts
   // see issue https://github.com/polkadot-js/common/blob/d889c71056158df72b34b994506d062c2e731cc0/packages/keyring/src/keyring.ts#L174
   it('Should generate correct keypair for signature type ed25519', async () => {
-    const mnemonic = GabiAttesterChain.generateMnemonic()
+    const mnemonic = AttesterChain.generateMnemonic()
     const seed = mnemonicToSeed(mnemonic)
-    const {
-      address: attesterAddress,
-    } = await GabiAttesterChain.buildFromMnemonic(
+    const { address: attesterAddress } = await AttesterChain.buildFromMnemonic(
       new AttesterPublicKey('pb'),
       new AttesterPrivateKey('pk'),
       mnemonic,
@@ -76,7 +72,7 @@ describe('Test GabiAttester on chain', () => {
     )
     const {
       address: attesterAddressFromURI,
-    } = await GabiAttesterChain.buildFromURI(
+    } = await AttesterChain.buildFromURI(
       new AttesterPublicKey('pb'),
       new AttesterPrivateKey('pk'),
       mnemonic,
@@ -97,7 +93,7 @@ describe('Test GabiAttester on chain', () => {
   it('Should generate new mnemonic with every call', () => {
     const mnemonics = new Array(5)
       .fill(0)
-      .map(() => GabiAttesterChain.generateMnemonic())
+      .map(() => AttesterChain.generateMnemonic())
     mnemonics.forEach((mnemonic, idx) => {
       expect(typeof mnemonic).toBe('string')
       expect(mnemonic.split(' ')).toHaveLength(12)

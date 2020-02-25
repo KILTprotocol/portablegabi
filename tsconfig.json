@@ -27,9 +27,9 @@
     "./src/*.ts",
     "./src/types/*.ts",
     "src/wasm/*.js",
-    "src/attestation/GabiAttester.ts",
-    "src/claim/GabiClaimer.ts",
-    "src/verification/GabiVerifier.ts",
+    "src/attestation/Attester.ts",
+    "src/claim/Claimer.ts",
+    "src/verification/Verifier.ts",
     "src/Teardown.js"
   ],
   "exclude": ["node_modules", "build"]

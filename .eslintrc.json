@@ -61,7 +61,7 @@
   },
   "overrides": [
     {
-      "files": ["**/*.spec.ts", "**/testSetup/*"],
+      "files": ["**/*.spec.ts", "**/testSetup/*", "**/examples/**"],
       "env": {
         "jest": true
       },

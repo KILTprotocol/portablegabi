@@ -3,21 +3,21 @@ import {
   disclosedAttributesCombined,
   //   claimCombined,
 } from '../testSetup/testConfig'
-import GabiClaimer from '../claim/GabiClaimer'
-import GabiAttester from '../attestation/GabiAttester'
+import Claimer from '../claim/Claimer'
+import Attester from '../attestation/Attester'
 import Credential from '../claim/Credential'
 import {
   actorSetup,
   combinedSetup,
   attestationSetup,
 } from '../testSetup/testSetup'
-import GabiVerifier from './GabiVerifier'
+import Verifier from './Verifier'
 import CombinedRequestBuilder from './CombinedRequestBuilder'
 import Accumulator from '../attestation/Accumulator'
 
 // }: {
-//   claimer: GabiClaimer
-//   attesters: GabiAttester[]
+//   claimer: Claimer
+//   attesters: Attester[]
 //   accumulators: Array<Accumulator | undefined>
 //   disclosedAttsArr: string[][]
 //   reqUpdatesAfter: Array<Date | undefined>
@@ -64,8 +64,8 @@ async function expectCombinedSetupToBe(
 }
 
 describe('Test combined requests', () => {
-  let claimer: GabiClaimer
-  let attesters: GabiAttester[]
+  let claimer: Claimer
+  let attesters: Attester[]
   let accumulators: Accumulator[]
   beforeAll(async () => {
     ;({
@@ -128,7 +128,7 @@ describe('Test combined requests', () => {
       combinedPresentationReq,
       attesterPubKeys: attesters.map(attester => attester.publicKey),
     })
-    const { verified, claims } = await GabiVerifier.verifyCombinedPresentation({
+    const { verified, claims } = await Verifier.verifyCombinedPresentation({
       proof: combPresentation,
       attesterPubKeys: [attesters[1].publicKey, attesters[0].publicKey],
       verifierSession: combinedSession,

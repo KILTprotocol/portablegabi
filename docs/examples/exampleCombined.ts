@@ -3,7 +3,7 @@ import { testEnv1, testEnv2, mnemonic } from './exampleConfig'
 import actorProcess from './offchain/1_actorProcess'
 import issuanceProcess from './offchain/2_issuanceProcess'
 import verificationProcessCombined from './offchain/3_verificationProcessCombined'
-import GabiAttester from '../../src/attestation/GabiAttester'
+import Attester from '../../src/attestation/Attester'
 import {
   AttesterPublicKey,
   AttesterPrivateKey,
@@ -42,7 +42,7 @@ async function completeProcessCombined(
     attesterPubKey: pubKey1,
     attesterPrivKey: privKey1,
   })
-  const attester2 = new GabiAttester(
+  const attester2 = new Attester(
     new AttesterPublicKey(pubKey2),
     new AttesterPrivateKey(privKey2)
   )

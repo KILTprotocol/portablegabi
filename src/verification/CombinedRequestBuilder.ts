@@ -1,4 +1,4 @@
-import GabiVerifier from './GabiVerifier'
+import Verifier from './Verifier'
 import {
   CombinedVerificationSession,
   CombinedPresentationRequest,
@@ -37,7 +37,7 @@ export default class CombinedRequestBuilder {
     message: CombinedPresentationRequest
     session: CombinedVerificationSession
   }> {
-    return GabiVerifier.requestCombinedPresentation(
+    return Verifier.requestCombinedPresentation(
       this.partialRequests as IPresentationRequest[]
     )
   }

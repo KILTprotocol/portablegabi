@@ -24,9 +24,6 @@ export default class BlockchainError extends Error {
   public static maxIndexZero = (address: string): BlockchainError =>
     new BlockchainError(`Missing accumulator for address "${address}"`)
 
-  public static missingRevIndex = (address: string): BlockchainError =>
-    new BlockchainError(`Missing revocation index for address "${address}"`)
-
   /**
    * If no [[Accumulator]] at the specified index can be found.
    *

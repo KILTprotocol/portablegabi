@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
-import GabiClaimer from '../../../src/claim/GabiClaimer'
-import GabiAttester from '../../../src/attestation/GabiAttester'
+import Claimer from '../../../src/claim/Claimer'
+import Attester from '../../../src/attestation/Attester'
 import {
   VerificationSession,
   PresentationRequest,
 } from '../../../src/types/Verification'
 import { Presentation } from '../../../src/types/Claim'
-import GabiVerifier from '../../../src/verification/GabiVerifier'
+import Verifier from '../../../src/verification/Verifier'
 import Accumulator from '../../../src/attestation/Accumulator'
 import Credential from '../../../src/claim/Credential'
 
@@ -19,8 +19,8 @@ export async function verificationProcessSingle({
   reqUpdatedAfter,
   accumulator,
 }: {
-  claimer: GabiClaimer
-  attester: GabiAttester
+  claimer: Claimer
+  attester: Attester
   credential: Credential
   requestedAttributes: string[]
   reqUpdatedAfter?: Date
@@ -36,7 +36,7 @@ export async function verificationProcessSingle({
   const {
     session: verifierSession,
     message: presentationReq,
-  } = await GabiVerifier.requestPresentation({
+  } = await Verifier.requestPresentation({
     requestedAttributes,
     reqUpdatedAfter,
   })
@@ -48,10 +48,7 @@ export async function verificationProcessSingle({
     attesterPubKey: attester.publicKey,
   })
   // verifier checks presentation for non revocation, valid data and matching attester's public key
-  const {
-    verified,
-    claim: verifiedClaim,
-  } = await GabiVerifier.verifyPresentation({
+  const { verified, claim: verifiedClaim } = await Verifier.verifyPresentation({
     proof: presentation,
     verifierSession,
     attesterPubKey: attester.publicKey,

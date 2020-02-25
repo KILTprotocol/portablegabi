@@ -1,9 +1,9 @@
-import GabiClaimer from './claim/GabiClaimer'
-import GabiAttester from './attestation/GabiAttester'
+import Claimer from './claim/Claimer'
+import Attester from './attestation/Attester'
 import Accumulator from './attestation/Accumulator'
 import Credential from './claim/Credential'
-import GabiAttesterChain from './attestation/GabiAttester.chain'
-import GabiVerifier from './verification/GabiVerifier'
+import AttesterChain from './attestation/Attester.chain'
+import Verifier from './verification/Verifier'
 import CombinedRequestBuilder from './verification/CombinedRequestBuilder'
 import Blockchain from './blockchain/Blockchain'
 import BlockchainError from './blockchain/BlockchainError'
@@ -20,10 +20,10 @@ export * from './blockchainApiConnection/BlockchainApiConnection'
 
 export {
   goWasmClose,
-  GabiClaimer,
-  GabiAttester,
-  GabiVerifier,
-  GabiAttesterChain,
+  Claimer,
+  Attester,
+  Verifier,
+  AttesterChain,
   Accumulator,
   Blockchain,
   BlockchainError,
@@ -34,10 +34,10 @@ export {
 
 export default {
   goWasmClose,
-  GabiClaimer,
-  GabiAttester,
-  GabiVerifier,
-  GabiAttesterChain,
+  Claimer,
+  Attester,
+  Verifier,
+  AttesterChain,
   Accumulator,
   Credential,
   Blockchain,

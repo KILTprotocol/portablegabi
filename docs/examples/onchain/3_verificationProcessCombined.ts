@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import GabiClaimer from '../../../src/claim/GabiClaimer'
-import GabiAttesterChain from '../../../src/attestation/GabiAttester.chain'
+import Claimer from '../../../src/claim/Claimer'
+import AttesterChain from '../../../src/attestation/Attester.chain'
 import { IPresentationRequest } from '../../../src/types/Verification'
-import GabiVerifier from '../../../src/verification/GabiVerifier'
+import Verifier from '../../../src/verification/Verifier'
 import Credential from '../../../src/claim/Credential'
 import connect from '../../../src/blockchainApiConnection/BlockchainApiConnection'
 
@@ -15,8 +15,8 @@ export async function verificationProcessCombinedChain({
   reqUpdatedAfter,
   reqNonRevocationProofArr,
 }: {
-  claimer: GabiClaimer
-  attesters: GabiAttesterChain[]
+  claimer: Claimer
+  attesters: AttesterChain[]
   credentials: Credential[]
   requestedAttributesArr: string[][]
   reqUpdatedAfter: Date[]
@@ -58,7 +58,7 @@ export async function verificationProcessCombinedChain({
   const {
     message: combinedPresentationReq,
     session: combinedSession,
-  } = await GabiVerifier.requestCombinedPresentation(requests)
+  } = await Verifier.requestCombinedPresentation(requests)
 
   // claimer builds combined presentation
   const proof = await claimer.buildCombinedPresentation({
@@ -71,7 +71,7 @@ export async function verificationProcessCombinedChain({
   const {
     verified,
     claims: verifiedClaims,
-  } = await GabiVerifier.verifyCombinedPresentation({
+  } = await Verifier.verifyCombinedPresentation({
     proof,
     attesterPubKeys,
     verifierSession: combinedSession,

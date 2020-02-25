@@ -1,5 +1,5 @@
 /**
- * This module contains the GabiAttesterChain class which adds on-chain functionality to the super [[Attester]] class.
+ * This module contains the AttesterChain class which adds on-chain functionality to the super [[Attester]] class.
  */
 import { KeyringPair } from '@polkadot/keyring/types'
 import { Keyring } from '@polkadot/api'
@@ -10,21 +10,20 @@ import {
 } from '@polkadot/util-crypto'
 import { KeypairType } from '@polkadot/util-crypto/types'
 import { u8aToHex } from '@polkadot/util'
-import GabiAttester from './GabiAttester'
+import Attester, { daysToNanoSecs } from './Attester'
 import {
   Witness,
   AttesterPublicKey,
-  IGabiAttesterChain,
+  IAttesterChain,
   AttesterPrivateKey,
 } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Accumulator from './Accumulator'
 
 /**
- * The GabiAttesterChain extends an [[Attester]]'s creation process and functionality to on-chain compatibility.
+ * The AttesterChain extends an [[Attester]]'s creation process and functionality to on-chain compatibility.
  */
-export default class GabiAttesterChain extends GabiAttester
-  implements IGabiAttesterChain {
+export default class AttesterChain extends Attester implements IAttesterChain {
   private readonly keyringPair: KeyringPair
   /**
    * The address of the [[Attester]]'s keyring pair .
@@ -43,18 +42,19 @@ export default class GabiAttesterChain extends GabiAttester
   /**
    * Generates a new key pair and returns a new [[AttesterChain]].
    *
-   * @param validityDuration The duration for which the public key will be valid.
+   * @param validityDuration The duration in days for which the public key will be valid.
    * @param maxAttributes The maximum number of attributes that can be signed with the generated private key.
    * @param keypairType The signature scheme used in the keyring pair, either 'sr25519' or 'ed25519'.
    * @returns A [[AttesterChain]] instance including a chain address and a public and private key pair.
    */
   public static async create(
-    validityDuration: number,
-    maxAttributes: number,
+    validityDuration?: number,
+    maxAttributes = 70,
     keypairType: KeypairType = 'sr25519'
-  ): Promise<GabiAttesterChain> {
+  ): Promise<AttesterChain> {
+    const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
     const { publicKey, privateKey } = await super.genKeyPair(
-      validityDuration,
+      durationInNanoSecs,
       maxAttributes
     )
     const mnemonic = this.generateMnemonic()
@@ -75,7 +75,7 @@ export default class GabiAttesterChain extends GabiAttester
     privateKey: AttesterPrivateKey,
     mnemonic: string,
     type: KeypairType = 'sr25519'
-  ): Promise<GabiAttesterChain> {
+  ): Promise<AttesterChain> {
     await cryptoWaitReady()
     // see https://github.com/polkadot-js/common/blob/d889c71056158df72b34b994506d062c2e731cc0/packages/keyring/src/keyring.ts#L174
     if (type === 'sr25519') {
@@ -84,7 +84,7 @@ export default class GabiAttesterChain extends GabiAttester
     const keyringPair = new Keyring({ type }).addFromUri(
       u8aToHex(mnemonicToSeed(mnemonic))
     )
-    return new GabiAttesterChain(publicKey, privateKey, keyringPair)
+    return new AttesterChain(publicKey, privateKey, keyringPair)
   }
 
   /**
@@ -101,11 +101,11 @@ export default class GabiAttesterChain extends GabiAttester
     privateKey: AttesterPrivateKey,
     uri: string,
     type: KeypairType = 'sr25519'
-  ): Promise<GabiAttesterChain> {
+  ): Promise<AttesterChain> {
     await cryptoWaitReady()
     const keyring = new Keyring({ type })
     const keyringPair = keyring.addFromUri(uri)
-    return new GabiAttesterChain(publicKey, privateKey, keyringPair)
+    return new AttesterChain(publicKey, privateKey, keyringPair)
   }
 
   /**

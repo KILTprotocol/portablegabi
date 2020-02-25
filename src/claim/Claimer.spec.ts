@@ -5,8 +5,8 @@ import {
   presentationSetup,
   actorSetup,
 } from '../testSetup/testSetup'
-import GabiClaimer from './GabiClaimer'
-import GabiAttester from '../attestation/GabiAttester'
+import Claimer from './Claimer'
+import Attester from '../attestation/Attester'
 import { claim } from '../testSetup/testConfig'
 import {
   ICredential,
@@ -30,7 +30,7 @@ import Accumulator from '../attestation/Accumulator'
 import Credential from './Credential'
 
 async function buildCredentialError(
-  claimer: GabiClaimer,
+  claimer: Claimer,
   attestation: Attestation,
   claimerSession: ClaimerAttestationSession
 ): Promise<void> {
@@ -43,49 +43,49 @@ async function buildCredentialError(
 }
 
 describe('Test claimer creation', () => {
-  let gabiClaimer: GabiClaimer
+  let claimer: Claimer
   beforeEach(async () => {
-    gabiClaimer = await GabiClaimer.create()
+    claimer = await Claimer.create()
   })
   it('Builds claimer from scratch', async () => {
-    const claimerWithoutPass = await GabiClaimer.create()
+    const claimerWithoutPass = await Claimer.create()
     expect(claimerWithoutPass).toHaveProperty('secret')
-    expect(gabiClaimer).toHaveProperty('secret')
-    expect(claimerWithoutPass).not.toStrictEqual(gabiClaimer)
-    const claimerWithPass = await GabiClaimer.buildFromMnemonic(
+    expect(claimer).toHaveProperty('secret')
+    expect(claimerWithoutPass).not.toStrictEqual(claimer)
+    const claimerWithPass = await Claimer.buildFromMnemonic(
       mnemonicGenerate(),
       'password'
     )
     expect(claimerWithPass).toHaveProperty('secret')
-    expect(gabiClaimer).toHaveProperty('secret')
-    expect(claimerWithPass).not.toStrictEqual(gabiClaimer)
+    expect(claimer).toHaveProperty('secret')
+    expect(claimerWithPass).not.toStrictEqual(claimer)
     expect(claimerWithPass).not.toStrictEqual(claimerWithoutPass)
   })
   it('Builds claimer from empty mnemonic seed', async () => {
-    const claimerWithoutPass = await GabiClaimer.buildFromMnemonic('')
+    const claimerWithoutPass = await Claimer.buildFromMnemonic('')
     expect(claimerWithoutPass).toHaveProperty(
       'secret',
       '{"MasterSecret":"HdWjkfn17XNA/01FE6q5zORPlJel5+2F/YGIdrbrQC4="}'
     )
-    expect(claimerWithoutPass).not.toStrictEqual(gabiClaimer)
-    const claimerWithPass = await GabiClaimer.buildFromMnemonic('', 'password')
+    expect(claimerWithoutPass).not.toStrictEqual(claimer)
+    const claimerWithPass = await Claimer.buildFromMnemonic('', 'password')
     expect(claimerWithPass).toHaveProperty(
       'secret',
       '{"MasterSecret":"Ugc7cbbFMn0UzRGkxgahlb6GxLohyWp2/6G2L6GrCVo="}'
     )
-    expect(claimerWithPass).not.toStrictEqual(gabiClaimer)
+    expect(claimerWithPass).not.toStrictEqual(claimer)
     expect(claimerWithPass).not.toStrictEqual(claimerWithoutPass)
   })
   it('Builds claimer from non-empty mnemonic seed', async () => {
-    const claimerWithoutPass = await GabiClaimer.buildFromMnemonic(
+    const claimerWithoutPass = await Claimer.buildFromMnemonic(
       'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
     )
     expect(claimerWithoutPass).toHaveProperty(
       'secret',
       '{"MasterSecret":"ZaWdr/rKSi4/cZNZbsZlMtx71K1foTFbp/QUJXMsrbk="}'
     )
-    expect(claimerWithoutPass).not.toStrictEqual(gabiClaimer)
-    const claimerWithPass = await GabiClaimer.buildFromMnemonic(
+    expect(claimerWithoutPass).not.toStrictEqual(claimer)
+    const claimerWithPass = await Claimer.buildFromMnemonic(
       'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken',
       'password'
     )
@@ -93,15 +93,15 @@ describe('Test claimer creation', () => {
       'secret',
       '{"MasterSecret":"PvsekZdNUr2t+l4WW/m3jloFRBUlIHtBhdIueW19KlM="}'
     )
-    expect(claimerWithPass).not.toStrictEqual(gabiClaimer)
+    expect(claimerWithPass).not.toStrictEqual(claimer)
     expect(claimerWithPass).not.toStrictEqual(claimerWithoutPass)
   })
 })
 
 describe('Test claimer functionality', () => {
   let spy: Spy<'log'>
-  let gabiClaimer: GabiClaimer
-  let gabiAttester: GabiAttester
+  let claimer: Claimer
+  let attester: Attester
   let accumulator: Accumulator
   let initiateAttestationReq: InitiateAttestationRequest
   let attesterSession: AttesterAttestationSession
@@ -125,8 +125,8 @@ describe('Test claimer functionality', () => {
   // get data from testSetup
   beforeAll(async () => {
     ;({
-      claimers: [gabiClaimer],
-      attesters: [gabiAttester],
+      claimers: [claimer],
+      attesters: [attester],
       accumulators: [accumulator],
     } = await actorSetup())
     ;({
@@ -137,17 +137,17 @@ describe('Test claimer functionality', () => {
       attestation,
       credential,
     } = await attestationSetup({
-      claimer: gabiClaimer,
-      attester: gabiAttester,
+      claimer,
+      attester,
       accumulator,
     }))
-    credential = await gabiClaimer.buildCredential({
+    credential = await claimer.buildCredential({
       claimerSession,
       attestation,
     })
     ;({ presentation } = await presentationSetup({
-      claimer: gabiClaimer,
-      attester: gabiAttester,
+      claimer,
+      attester,
       credential,
       accumulator,
     }))
@@ -158,8 +158,8 @@ describe('Test claimer functionality', () => {
       claimerSessionE12,
       claimerSessionE21,
     } = await mixedAttestationsSetup({
-      gabiClaimer,
-      gabiAttester,
+      claimer,
+      attester,
       accumulator,
       initiateAttestationReq,
       attesterSession,
@@ -184,10 +184,10 @@ describe('Test claimer functionality', () => {
   // run tests on valid data
   describe('Positive tests', () => {
     it('Checks valid requestAttestation', async () => {
-      const request = await gabiClaimer.requestAttestation({
+      const request = await claimer.requestAttestation({
         startAttestationMsg: initiateAttestationReq,
         claim,
-        attesterPubKey: gabiAttester.publicKey,
+        attesterPubKey: attester.publicKey,
       })
       expect(request).toBeDefined()
       expect(typeof request).toBe('object')
@@ -202,49 +202,49 @@ describe('Test claimer functionality', () => {
     })
     it('Should throw when requesting attestation with empty object as claim', async () => {
       await expect(
-        gabiClaimer.requestAttestation({
+        claimer.requestAttestation({
           startAttestationMsg: initiateAttestationReq,
           claim: {},
-          attesterPubKey: gabiAttester.publicKey,
+          attesterPubKey: attester.publicKey,
         })
       ).rejects.toThrowError(ClaimError.claimMissing)
     })
     it('Should throw when requesting attestation with non-object as claim', async () => {
       await expect(
-        gabiClaimer.requestAttestation({
+        claimer.requestAttestation({
           startAttestationMsg: initiateAttestationReq,
           claim: ('string' as unknown) as object,
-          attesterPubKey: gabiAttester.publicKey,
+          attesterPubKey: attester.publicKey,
         })
       ).rejects.toThrowError(ClaimError.notAnObject('string'))
     })
     it('Should throw when requesting attestation with array as claim', async () => {
       await expect(
-        gabiClaimer.requestAttestation({
+        claimer.requestAttestation({
           startAttestationMsg: initiateAttestationReq,
           claim: [1],
-          attesterPubKey: gabiAttester.publicKey,
+          attesterPubKey: attester.publicKey,
         })
       ).rejects.toThrowError(ClaimError.duringParsing)
     })
-    it('Should build credential for gabiAttester', async () => {
+    it('Should build credential for attester', async () => {
       await expect(
-        gabiClaimer.buildCredential({
+        claimer.buildCredential({
           attestation,
           claimerSession,
         })
       ).resolves.toEqual(expect.anything())
     })
-    it('Should build credential for gabiAttester2', async () => {
+    it('Should build credential for attester2', async () => {
       await expect(
-        gabiClaimer.buildCredential({
+        claimer.buildCredential({
           attestation: attestation2,
           claimerSession: claimerSession2,
         })
       ).resolves.toEqual(expect.anything())
     })
     it('Checks for correct data in buildCredential', async () => {
-      const cred = await gabiClaimer.buildCredential({
+      const cred = await claimer.buildCredential({
         claimerSession,
         attestation,
       })
@@ -276,21 +276,21 @@ describe('Test claimer functionality', () => {
     })
     it('Should not throw when two claimers interchange credential', async () => {
       // reason: credential is a secret one should not share
-      const gabiClaimer2 = await GabiClaimer.create()
-      const sameCredFromOtherClaimer = await gabiClaimer2.buildCredential({
+      const claimer2 = await Claimer.create()
+      const sameCredFromOtherClaimer = await claimer2.buildCredential({
         claimerSession,
         attestation,
       })
       expect(sameCredFromOtherClaimer).toEqual(expect.anything())
       const { credential: diffCredFromOtherClaimer } = await attestationSetup({
-        claimer: gabiClaimer2,
-        attester: gabiAttester,
+        claimer: claimer2,
+        attester,
         accumulator,
       })
       expect(diffCredFromOtherClaimer).toEqual(expect.anything())
       await expect(
         diffCredFromOtherClaimer.update({
-          attesterPubKey: gabiAttester.publicKey,
+          attesterPubKey: attester.publicKey,
           accumulators: [accumulator],
         })
       ).resolves.toEqual(expect.anything())
@@ -299,12 +299,12 @@ describe('Test claimer functionality', () => {
     describe('Negative tests', () => {
       it('Should throw in buildCredential for incorrect combination of session and signature', async () => {
         await buildCredentialError(
-          gabiClaimer,
+          claimer,
           attestation, // attester 1
           claimerSession2 // attester 2
         )
         return buildCredentialError(
-          gabiClaimer,
+          claimer,
           attestation2, // attester 2
           claimerSession // attester 1
         )
@@ -312,7 +312,7 @@ describe('Test claimer functionality', () => {
       it('Should throw for 3 of all 4 possibilties to build a credential from valid mixed attestation', async () => {
         expect(mixedAttestationsValid).toEqual(expect.anything())
         await expect(
-          gabiClaimer.buildCredential({
+          claimer.buildCredential({
             attestation: mixedAttestationsValid.issuance.attestation,
             claimerSession: claimerSessionE21,
           })
@@ -325,7 +325,7 @@ describe('Test claimer functionality', () => {
         return Promise.all(
           throwingSessions.map(session =>
             buildCredentialError(
-              gabiClaimer,
+              claimer,
               mixedAttestationsValid.issuance.attestation,
               session
             )

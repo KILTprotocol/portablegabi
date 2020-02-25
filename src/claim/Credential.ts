@@ -96,7 +96,7 @@ export default class Credential extends String {
   /**
    * Returns the number of updates done. Combining this method with [[getLatestAccumulator]] in [[updateFromChain]],
    * it shows how many updates of this [[Credential]] would be required to be up to date.
-   *
+   * @throws `Invalid credential` If the credential does not have an update counter.
    * @returns The number of accumulator updates done with this credential.
    */
   public getUpdateCounter(): number {

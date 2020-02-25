@@ -1,13 +1,13 @@
 /* eslint-disable no-console */
 import Blockchain from '../../../src/blockchain/Blockchain'
-import GabiAttesterChain from '../../../src/attestation/GabiAttester.chain'
+import AttesterChain from '../../../src/attestation/Attester.chain'
 import {
   AttesterPrivateKey,
   AttesterPublicKey,
 } from '../../../src/types/Attestation'
 import { testEnv1, mnemonic } from '../exampleConfig'
 import Accumulator from '../../../src/attestation/Accumulator'
-import GabiClaimer from '../../../src/claim/GabiClaimer'
+import Claimer from '../../../src/claim/Claimer'
 
 export async function actorProcessChain({
   blockchain,
@@ -24,17 +24,17 @@ export async function actorProcessChain({
   attesterPrivKey?: string | AttesterPrivateKey
   attesterURI?: string
 }): Promise<{
-  claimer: GabiClaimer
-  attester: GabiAttesterChain
+  claimer: Claimer
+  attester: AttesterChain
   accumulator: Accumulator
 }> {
   // create claimer either from scratch or from mnemonic input
   const claimer = claimerMnemonic
-    ? await GabiClaimer.create()
-    : await GabiClaimer.buildFromMnemonic(mnemonic, claimerMnemonicPw)
+    ? await Claimer.create()
+    : await Claimer.buildFromMnemonic(mnemonic, claimerMnemonicPw)
 
   // create attester
-  const attester = await GabiAttesterChain.buildFromURI(
+  const attester = await AttesterChain.buildFromURI(
     new AttesterPublicKey(attesterPubKey),
     new AttesterPrivateKey(attesterPrivKey),
     attesterURI
