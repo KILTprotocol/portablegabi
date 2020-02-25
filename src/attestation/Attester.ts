@@ -16,6 +16,16 @@ import IAttester, {
 } from '../types/Attestation'
 
 /**
+ * Converts days to nano seconds.
+ *
+ * @param days The amount of days that should be converted.
+ * @returns The amount of nanoseconds for the specified amount of days.
+ */
+export function daysToNanoSecs(days: number): number {
+  return days * 24 * 60 * 60 * 1000 * 1000 * 1000
+}
+
+/**
  * The Attester can be used to create and revoke [[Attestation]]s of [[Credential]]s.
  */
 export default class Attester implements IAttester {
@@ -25,21 +35,22 @@ export default class Attester implements IAttester {
   /**
    * Generates a new key pair.
    *
-   * @param validityDuration The duration for which the public key will be valid.
+   * @param validityDuration The duration in days for which the public key will be valid.
    * @param maxAttributes The maximum number of attributes that can be signed with the generated private key.
    * @returns A newly generated key pair.
    */
   public static async genKeyPair(
-    validityDuration: number,
-    maxAttributes: number
+    validityDuration?: number,
+    maxAttributes = 70
   ): Promise<{
     privateKey: AttesterPrivateKey
     publicKey: AttesterPublicKey
   }> {
+    const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
     const { privateKey, publicKey } = await goWasmExec<{
       privateKey: string
       publicKey: string
-    }>(WasmHooks.genKeypair, [maxAttributes, validityDuration])
+    }>(WasmHooks.genKeypair, [maxAttributes, durationInNanoSecs])
     return {
       privateKey: new AttesterPrivateKey(privateKey),
       publicKey: new AttesterPublicKey(publicKey),
@@ -49,16 +60,17 @@ export default class Attester implements IAttester {
   /**
    * Generates a new key pair and returns a new [[Attester]].
    *
-   * @param validityDuration The duration for which the public key will be valid.
+   * @param validityDuration The duration in days for which the public key will be valid.
    * @param maxAttributes The maximal number of attributes that can be signed with the generated private key.
    * @returns A new [[Attester]].
    */
   public static async create(
-    validityDuration: number,
-    maxAttributes: number
+    validityDuration?: number,
+    maxAttributes = 70
   ): Promise<Attester> {
+    const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
     const { publicKey, privateKey } = await this.genKeyPair(
-      validityDuration,
+      durationInNanoSecs,
       maxAttributes
     )
     return new Attester(publicKey, privateKey)

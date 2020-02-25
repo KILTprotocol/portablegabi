@@ -10,7 +10,7 @@ import {
 } from '@polkadot/util-crypto'
 import { KeypairType } from '@polkadot/util-crypto/types'
 import { u8aToHex } from '@polkadot/util'
-import Attester from './Attester'
+import Attester, { daysToNanoSecs } from './Attester'
 import {
   Witness,
   AttesterPublicKey,
@@ -42,18 +42,19 @@ export default class AttesterChain extends Attester implements IAttesterChain {
   /**
    * Generates a new key pair and returns a new [[AttesterChain]].
    *
-   * @param validityDuration The duration for which the public key will be valid.
+   * @param validityDuration The duration in days for which the public key will be valid.
    * @param maxAttributes The maximum number of attributes that can be signed with the generated private key.
    * @param keypairType The signature scheme used in the keyring pair, either 'sr25519' or 'ed25519'.
    * @returns A [[AttesterChain]] instance including a chain address and a public and private key pair.
    */
   public static async create(
-    validityDuration: number,
-    maxAttributes: number,
+    validityDuration?: number,
+    maxAttributes = 70,
     keypairType: KeypairType = 'sr25519'
   ): Promise<AttesterChain> {
+    const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
     const { publicKey, privateKey } = await super.genKeyPair(
-      validityDuration,
+      durationInNanoSecs,
       maxAttributes
     )
     const mnemonic = this.generateMnemonic()
