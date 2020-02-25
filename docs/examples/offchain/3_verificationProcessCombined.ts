@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import GabiClaimer from '../../../src/claim/GabiClaimer'
-import GabiAttester from '../../../src/attestation/GabiAttester'
+import Claimer from '../../../src/claim/Claimer'
+import Attester from '../../../src/attestation/Attester'
 import Credential from '../../../src/claim/Credential'
-import GabiVerifier from '../../../src/verification/GabiVerifier'
+import Verifier from '../../../src/verification/Verifier'
 import CombinedRequestBuilder from '../../../src/verification/CombinedRequestBuilder'
 import Accumulator from '../../../src/attestation/Accumulator'
 
@@ -15,8 +15,8 @@ export async function verificationProcessCombined({
   reqUpdatesAfter,
   accumulators,
 }: {
-  claimer: GabiClaimer
-  attesters: GabiAttester[]
+  claimer: Claimer
+  attesters: Attester[]
   credentials: Credential[]
   requestedAttributesArr: string[][]
   reqUpdatesAfter: Array<Date | undefined>
@@ -61,7 +61,7 @@ export async function verificationProcessCombined({
   const {
     verified,
     claims: verifiedClaims,
-  } = await GabiVerifier.verifyCombinedPresentation({
+  } = await Verifier.verifyCombinedPresentation({
     proof,
     attesterPubKeys,
     verifierSession: session,

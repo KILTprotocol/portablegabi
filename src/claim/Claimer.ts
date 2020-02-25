@@ -1,4 +1,4 @@
-import IGabiClaimer, {
+import IClaimer, {
   AttestationRequest,
   ClaimerAttestationSession,
   Presentation,
@@ -23,6 +23,9 @@ import Credential from './Credential'
  * Checks that the provided claim is a valid object.
  *
  * @param claim The object which should be a valid claim.
+ * @throws {ClaimError.claimMissing} If the claim is missing inside the [[AttestationRequest]].
+ * @throws {ClaimError.notAnObject} If the [[Attestation]] object includes a non-object type claim.
+ * @throws {ClaimError.duringParsing} If an error occurs during JSON deserialization.
  */
 function checkValidClaimStructure(claim: object): void | Error {
   if (!Object.keys(claim).length) {
@@ -36,7 +39,7 @@ function checkValidClaimStructure(claim: object): void | Error {
   }
 }
 
-export default class GabiClaimer implements IGabiClaimer {
+export default class Claimer implements IClaimer {
   private readonly secret: string
 
   /**
@@ -49,7 +52,7 @@ export default class GabiClaimer implements IGabiClaimer {
   public static async buildFromMnemonic(
     mnemonic: string,
     password = ''
-  ): Promise<GabiClaimer> {
+  ): Promise<Claimer> {
     // secret's structure unmarshalled is { MasterSecret: string }
     const secret = await goWasmExec<string>(WasmHooks.keyFromMnemonic, [
       mnemonic,
@@ -63,7 +66,7 @@ export default class GabiClaimer implements IGabiClaimer {
    *
    * @returns A new [[Claimer]].
    */
-  public static async create(): Promise<GabiClaimer> {
+  public static async create(): Promise<Claimer> {
     const secret = await goWasmExec<string>(WasmHooks.genKey)
     return new this(secret)
   }

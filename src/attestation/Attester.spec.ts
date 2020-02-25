@@ -1,4 +1,4 @@
-import GabiAttester from './GabiAttester'
+import Attester from './Attester'
 import { privKey, pubKey, claim } from '../testSetup/testConfig'
 import {
   attestationSetup,
@@ -11,13 +11,13 @@ import {
   Attestation,
   Witness,
 } from '../types/Attestation'
-import GabiClaimer from '../claim/GabiClaimer'
+import Claimer from '../claim/Claimer'
 import { AttestationRequest, ClaimError } from '../types/Claim'
 import Accumulator from './Accumulator'
 
 describe('Test attester', () => {
-  let gabiAttester: GabiAttester
-  let gabiClaimer: GabiClaimer
+  let attester: Attester
+  let claimer: Claimer
   let accumulator: Accumulator
   let accumulator2: Accumulator
   let initiateAttestationReq: InitiateAttestationRequest
@@ -35,8 +35,8 @@ describe('Test attester', () => {
   }
   beforeAll(async () => {
     ;({
-      claimers: [gabiClaimer],
-      attesters: [gabiAttester],
+      claimers: [claimer],
+      attesters: [attester],
       accumulators: [accumulator],
     } = await actorSetup())
     ;({
@@ -46,8 +46,8 @@ describe('Test attester', () => {
       attestation,
       witness,
     } = await attestationSetup({
-      claimer: gabiClaimer,
-      attester: gabiAttester,
+      claimer,
+      attester,
       accumulator,
     }))
     ;({
@@ -55,8 +55,8 @@ describe('Test attester', () => {
       witness2,
       mixedAttestationsInvalid,
     } = await mixedAttestationsSetup({
-      gabiClaimer,
-      gabiAttester,
+      claimer,
+      attester,
       accumulator,
       initiateAttestationReq,
       attesterSession,
@@ -65,9 +65,9 @@ describe('Test attester', () => {
   })
   describe('Confirm valid data from testSetup', () => {
     it('Checks valid buildFromKeyPair for existing keys', async () => {
-      const attester = new GabiAttester(pubKey, privKey)
-      expect(attester).toBeDefined()
-      expect(attester).toStrictEqual(gabiAttester)
+      const attester2 = new Attester(pubKey, privKey)
+      expect(attester2).toBeDefined()
+      expect(attester2).toStrictEqual(attester)
     })
     it('Checks valid startAttestation', () => {
       expect(initiateAttestationReq).toBeDefined()
@@ -96,7 +96,7 @@ describe('Test attester', () => {
       )
     })
   })
-  // since the attester acts as a middleman, most of the functionality is tested in GabiClaimer and GabiVerifier
+  // since the attester acts as a middleman, most of the functionality is tested in Claimer and Verifier
   describe('Test attester functionality', () => {
     it('Should throw when issuing unsigned attestations', async () => {
       return Promise.all(
@@ -107,7 +107,7 @@ describe('Test attester', () => {
             accumulator: updateMixed,
           }) =>
             expect(
-              gabiAttester.issueAttestation({
+              attester.issueAttestation({
                 attestationSession: attestationSessionMixed,
                 attestationRequest: attestationRequestMixed,
                 accumulator: updateMixed,
@@ -119,27 +119,27 @@ describe('Test attester', () => {
       )
     })
     it('Should not throw when revoking with missing witnesses array', async () => {
-      const updateNew = await gabiAttester.createAccumulator()
+      const updateNew = await attester.createAccumulator()
       await expect(
-        gabiAttester.revokeAttestation({
+        attester.revokeAttestation({
           accumulator: updateNew,
           witnesses: (undefined as unknown) as Witness[],
         })
       ).resolves.toEqual(expect.anything())
     })
     it('Should not throw when revoking with empty witnesses array', async () => {
-      const updateNew = await gabiAttester.createAccumulator()
+      const updateNew = await attester.createAccumulator()
       await expect(
-        gabiAttester.revokeAttestation({
+        attester.revokeAttestation({
           accumulator: updateNew,
           witnesses: [],
         })
       ).resolves.toEqual(expect.anything())
     })
     it('Should not throw when revoking with another accumulator of same attester', async () => {
-      const updateNew = await gabiAttester.createAccumulator()
+      const updateNew = await attester.createAccumulator()
       await expect(
-        gabiAttester.revokeAttestation({
+        attester.revokeAttestation({
           accumulator: updateNew,
           witnesses: [witness],
         })
@@ -147,7 +147,7 @@ describe('Test attester', () => {
     })
     it('Should not throw when revoking with witness from another attester', async () => {
       await expect(
-        gabiAttester.revokeAttestation({
+        attester.revokeAttestation({
           accumulator,
           witnesses: [witness2],
         })
@@ -155,7 +155,7 @@ describe('Test attester', () => {
     })
     it('Should throw when revoking with accumulator from another attester', async () => {
       await expect(
-        gabiAttester.revokeAttestation({
+        attester.revokeAttestation({
           accumulator: accumulator2,
           witnesses: [witness],
         })
@@ -165,22 +165,22 @@ describe('Test attester', () => {
       const {
         session: attesterSession2,
         message: initiateAttestationReq2,
-      } = await gabiAttester.startAttestation()
+      } = await attester.startAttestation()
       const tamperObj: { nonce: string; context: string } = {
         ...JSON.parse(initiateAttestationReq2.valueOf()),
         context: 'El1fs5GK2sko8JkfEhWiCITaD38uA2CZN29opxU6TKM=',
       }
-      const {
-        message: attestationRequest2,
-      } = await gabiClaimer.requestAttestation({
-        startAttestationMsg: new InitiateAttestationRequest(
-          JSON.stringify(tamperObj)
-        ),
-        claim,
-        attesterPubKey: gabiAttester.publicKey,
-      })
+      const { message: attestationRequest2 } = await claimer.requestAttestation(
+        {
+          startAttestationMsg: new InitiateAttestationRequest(
+            JSON.stringify(tamperObj)
+          ),
+          claim,
+          attesterPubKey: attester.publicKey,
+        }
+      )
       await expect(
-        gabiAttester.issueAttestation({
+        attester.issueAttestation({
           attestationSession: attesterSession2,
           attestationRequest: attestationRequest2,
           accumulator,
@@ -191,22 +191,22 @@ describe('Test attester', () => {
       const {
         session: attesterSession2,
         message: initiateAttestationReq2,
-      } = await gabiAttester.startAttestation()
+      } = await attester.startAttestation()
       const tamperObj: { nonce: string; context: string } = {
         ...JSON.parse(initiateAttestationReq2.valueOf()),
         nonce: 'w4eSUP9HnptKog==',
       }
-      const {
-        message: attestationRequest2,
-      } = await gabiClaimer.requestAttestation({
-        startAttestationMsg: new InitiateAttestationRequest(
-          JSON.stringify(tamperObj)
-        ),
-        claim,
-        attesterPubKey: gabiAttester.publicKey,
-      })
+      const { message: attestationRequest2 } = await claimer.requestAttestation(
+        {
+          startAttestationMsg: new InitiateAttestationRequest(
+            JSON.stringify(tamperObj)
+          ),
+          claim,
+          attesterPubKey: attester.publicKey,
+        }
+      )
       await expect(
-        gabiAttester.issueAttestation({
+        attester.issueAttestation({
           attestationSession: attesterSession2,
           attestationRequest: attestationRequest2,
           accumulator,

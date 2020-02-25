@@ -3,8 +3,8 @@ import {
   mixedAttestationsSetup,
   actorSetup,
 } from '../testSetup/testSetup'
-import GabiClaimer from './GabiClaimer'
-import GabiAttester from '../attestation/GabiAttester'
+import Claimer from './Claimer'
+import Attester from '../attestation/Attester'
 import {
   Attestation,
   InitiateAttestationRequest,
@@ -16,8 +16,8 @@ import Accumulator from '../attestation/Accumulator'
 import Credential from './Credential'
 
 describe('Test claimer functionality', () => {
-  let gabiClaimer: GabiClaimer
-  let gabiAttester: GabiAttester
+  let claimer: Claimer
+  let attester: Attester
   let accumulator: Accumulator
   let initiateAttestationReq: InitiateAttestationRequest
   let attesterSession: AttesterAttestationSession
@@ -26,14 +26,14 @@ describe('Test claimer functionality', () => {
   let witness: Witness
   let attestation: Attestation
   let credential: Credential
-  let gabiAttester2: GabiAttester
+  let attester2: Attester
   let accumulator2: Accumulator
 
   // get data from testSetup
   beforeAll(async () => {
     ;({
-      claimers: [gabiClaimer],
-      attesters: [gabiAttester],
+      claimers: [claimer],
+      attesters: [attester],
       accumulators: [accumulator],
     } = await actorSetup())
     ;({
@@ -45,17 +45,17 @@ describe('Test claimer functionality', () => {
       witness,
       credential,
     } = await attestationSetup({
-      claimer: gabiClaimer,
-      attester: gabiAttester,
+      claimer,
+      attester,
       accumulator,
     }))
-    credential = await gabiClaimer.buildCredential({
+    credential = await claimer.buildCredential({
       claimerSession,
       attestation,
     })
-    ;({ gabiAttester2, accumulator2 } = await mixedAttestationsSetup({
-      gabiClaimer,
-      gabiAttester,
+    ;({ attester2, accumulator2 } = await mixedAttestationsSetup({
+      claimer,
+      attester,
       accumulator,
       initiateAttestationReq,
       attesterSession,
@@ -67,7 +67,7 @@ describe('Test claimer functionality', () => {
   describe('Positive tests', () => {
     it('Updates single credential and compares both versions (without revoking)', async () => {
       const updatedCred = await credential.updateSingle({
-        attesterPubKey: gabiAttester.publicKey,
+        attesterPubKey: attester.publicKey,
         accumulator,
       })
       expect(updatedCred).toBeDefined()
@@ -75,14 +75,14 @@ describe('Test claimer functionality', () => {
       expect(updatedCred).toStrictEqual(credential)
     })
     it('Should throw when updating a revoked credential', async () => {
-      const revUpdate = await gabiAttester.revokeAttestation({
+      const revUpdate = await attester.revokeAttestation({
         accumulator,
         witnesses: [witness],
       })
       expect(revUpdate).toBeDefined()
       await expect(
         credential.update({
-          attesterPubKey: gabiAttester.publicKey,
+          attesterPubKey: attester.publicKey,
           accumulators: [revUpdate],
         })
       ).rejects.toThrowError('revoked')
@@ -98,24 +98,24 @@ describe('Test claimer functionality', () => {
         await Promise.all(
           new Array(limit).fill(1).map(() =>
             attestationSetup({
-              claimer: gabiClaimer,
-              attester: gabiAttester,
+              claimer,
+              attester,
               accumulator,
             })
           )
         )
       ).map(x => x.witness)
       // revoke witnesses
-      const accRev1 = await gabiAttester.revokeAttestation({
+      const accRev1 = await attester.revokeAttestation({
         accumulator,
         witnesses: [witnesses[0]],
       })
-      const accRev2 = await gabiAttester.revokeAttestation({
+      const accRev2 = await attester.revokeAttestation({
         accumulator: accRev1,
         witnesses: [witnesses[1]],
       })
 
-      const accRev3 = await gabiAttester.revokeAttestation({
+      const accRev3 = await attester.revokeAttestation({
         accumulator: accRev2,
         witnesses: witnesses.slice(2, limit),
       })
@@ -125,7 +125,7 @@ describe('Test claimer functionality', () => {
       // expect failure when updating from revIndex === 0 to revIndex === limit
       await expect(
         credential.update({
-          attesterPubKey: gabiAttester.publicKey,
+          attesterPubKey: attester.publicKey,
           accumulators: [accumulators[2]],
         })
       ).rejects.toThrowError('update too new')
@@ -133,7 +133,7 @@ describe('Test claimer functionality', () => {
     it('Should not throw when updating credential from sorted accumulator array', async () => {
       const oldCount = credential.getUpdateCounter()
       const newCred = await credential.update({
-        attesterPubKey: gabiAttester.publicKey,
+        attesterPubKey: attester.publicKey,
         accumulators,
       })
       expect(newCred).toEqual(expect.anything())
@@ -143,7 +143,7 @@ describe('Test claimer functionality', () => {
     it('Should not throw when updating credential from unsorted accumulator array', async () => {
       await expect(
         credential.update({
-          attesterPubKey: gabiAttester.publicKey,
+          attesterPubKey: attester.publicKey,
           accumulators: [
             accumulators[2],
             accumulators[1],
@@ -154,7 +154,7 @@ describe('Test claimer functionality', () => {
       ).resolves.toEqual(expect.anything())
       await expect(
         credential.update({
-          attesterPubKey: gabiAttester.publicKey,
+          attesterPubKey: attester.publicKey,
           accumulators: [
             accumulators[1],
             accumulators[2],
@@ -196,16 +196,16 @@ describe('Test claimer functionality', () => {
     it('Should throw in updateCredential with pubkey from different attester', async () => {
       await expect(
         credential.update({
-          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
+          attesterPubKey: attester2.publicKey, // should be attester to be valid
           accumulators: [accumulator],
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
     it('Should throw in updateCredential with different accumulator of same attester', async () => {
-      const acc = await gabiAttester.createAccumulator()
+      const acc = await attester.createAccumulator()
       await expect(
         credential.update({
-          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
+          attesterPubKey: attester2.publicKey, // should be attester to be valid
           accumulators: [acc],
         })
       ).rejects.toThrow('ecdsa signature was invalid')
@@ -213,16 +213,16 @@ describe('Test claimer functionality', () => {
     it('Should throw in updateCredential with accumulator from different attester', async () => {
       await expect(
         credential.update({
-          attesterPubKey: gabiAttester.publicKey,
-          accumulators: [accumulator2], // should be gabiAttester to be valid
+          attesterPubKey: attester.publicKey,
+          accumulators: [accumulator2], // should be attester to be valid
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })
     it('Should throw in updateCredential with accumulator + pubkey from different attester', async () => {
       await expect(
         credential.update({
-          attesterPubKey: gabiAttester2.publicKey, // should be gabiAttester to be valid
-          accumulators: [accumulator2], // should be gabiAttester to be valid
+          attesterPubKey: attester2.publicKey, // should be attester to be valid
+          accumulators: [accumulator2], // should be attester to be valid
         })
       ).rejects.toThrow('ecdsa signature was invalid')
     })

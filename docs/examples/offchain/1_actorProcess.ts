@@ -1,6 +1,6 @@
-import GabiClaimer from '../../../src/claim/GabiClaimer'
+import Claimer from '../../../src/claim/Claimer'
 import { mnemonic, testEnv1, testEnv2 } from '../exampleConfig'
-import GabiAttester from '../../../src/attestation/GabiAttester'
+import Attester from '../../../src/attestation/Attester'
 
 import {
   AttesterPublicKey,
@@ -19,17 +19,17 @@ export async function actorProcess({
   attesterPubKey?: string | AttesterPublicKey
   attesterPrivKey?: string | AttesterPrivateKey
 }): Promise<{
-  claimer: GabiClaimer
-  attester: GabiAttester
+  claimer: Claimer
+  attester: Attester
   accumulator: Accumulator
 }> {
   // create claimer either from scratch or from mnemonic input
   const claimer = claimerMnemonic
-    ? await GabiClaimer.create()
-    : await GabiClaimer.buildFromMnemonic(mnemonic, claimerMnemonicPw)
+    ? await Claimer.create()
+    : await Claimer.buildFromMnemonic(mnemonic, claimerMnemonicPw)
 
   // create attester from (pk, sk) pair
-  const attester = new GabiAttester(
+  const attester = new Attester(
     new AttesterPublicKey(attesterPubKey),
     new AttesterPrivateKey(attesterPrivKey)
   )

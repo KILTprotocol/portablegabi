@@ -1,5 +1,5 @@
 /**
- * This module contains the GabiAttesterChain class which adds on-chain functionality to the super [[Attester]] class.
+ * This module contains the AttesterChain class which adds on-chain functionality to the super [[Attester]] class.
  */
 import { KeyringPair } from '@polkadot/keyring/types'
 import { Keyring } from '@polkadot/api'
@@ -10,21 +10,20 @@ import {
 } from '@polkadot/util-crypto'
 import { KeypairType } from '@polkadot/util-crypto/types'
 import { u8aToHex } from '@polkadot/util'
-import GabiAttester from './GabiAttester'
+import Attester from './Attester'
 import {
   Witness,
   AttesterPublicKey,
-  IGabiAttesterChain,
+  IAttesterChain,
   AttesterPrivateKey,
 } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Accumulator from './Accumulator'
 
 /**
- * The GabiAttesterChain extends an [[Attester]]'s creation process and functionality to on-chain compatibility.
+ * The AttesterChain extends an [[Attester]]'s creation process and functionality to on-chain compatibility.
  */
-export default class GabiAttesterChain extends GabiAttester
-  implements IGabiAttesterChain {
+export default class AttesterChain extends Attester implements IAttesterChain {
   private readonly keyringPair: KeyringPair
   /**
    * The address of the [[Attester]]'s keyring pair .
@@ -52,7 +51,7 @@ export default class GabiAttesterChain extends GabiAttester
     validityDuration: number,
     maxAttributes: number,
     keypairType: KeypairType = 'sr25519'
-  ): Promise<GabiAttesterChain> {
+  ): Promise<AttesterChain> {
     const { publicKey, privateKey } = await super.genKeyPair(
       validityDuration,
       maxAttributes
@@ -75,7 +74,7 @@ export default class GabiAttesterChain extends GabiAttester
     privateKey: AttesterPrivateKey,
     mnemonic: string,
     type: KeypairType = 'sr25519'
-  ): Promise<GabiAttesterChain> {
+  ): Promise<AttesterChain> {
     await cryptoWaitReady()
     // see https://github.com/polkadot-js/common/blob/d889c71056158df72b34b994506d062c2e731cc0/packages/keyring/src/keyring.ts#L174
     if (type === 'sr25519') {
@@ -84,7 +83,7 @@ export default class GabiAttesterChain extends GabiAttester
     const keyringPair = new Keyring({ type }).addFromUri(
       u8aToHex(mnemonicToSeed(mnemonic))
     )
-    return new GabiAttesterChain(publicKey, privateKey, keyringPair)
+    return new AttesterChain(publicKey, privateKey, keyringPair)
   }
 
   /**
@@ -101,11 +100,11 @@ export default class GabiAttesterChain extends GabiAttester
     privateKey: AttesterPrivateKey,
     uri: string,
     type: KeypairType = 'sr25519'
-  ): Promise<GabiAttesterChain> {
+  ): Promise<AttesterChain> {
     await cryptoWaitReady()
     const keyring = new Keyring({ type })
     const keyringPair = keyring.addFromUri(uri)
-    return new GabiAttesterChain(publicKey, privateKey, keyringPair)
+    return new AttesterChain(publicKey, privateKey, keyringPair)
   }
 
   /**

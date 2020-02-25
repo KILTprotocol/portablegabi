@@ -1,11 +1,11 @@
 /**
- * This module contains the GabiAttester class which is used to create and revoke [[Attestation]]s.
+ * This module contains the Attester class which is used to create and revoke [[Attestation]]s.
  */
 import { AttestationRequest } from '../types/Claim'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
 import Accumulator from './Accumulator'
-import IGabiAttester, {
+import IAttester, {
   IGabiMsgSession,
   InitiateAttestationRequest,
   AttesterAttestationSession,
@@ -16,9 +16,9 @@ import IGabiAttester, {
 } from '../types/Attestation'
 
 /**
- * The GabiAttester can be used to create and revoke [[Attestation]]s of [[Credential]]s.
+ * The Attester can be used to create and revoke [[Attestation]]s of [[Credential]]s.
  */
-export default class GabiAttester implements IGabiAttester {
+export default class Attester implements IAttester {
   private readonly privateKey: AttesterPrivateKey
   readonly publicKey: AttesterPublicKey
 
@@ -56,12 +56,12 @@ export default class GabiAttester implements IGabiAttester {
   public static async create(
     validityDuration: number,
     maxAttributes: number
-  ): Promise<GabiAttester> {
+  ): Promise<Attester> {
     const { publicKey, privateKey } = await this.genKeyPair(
       validityDuration,
       maxAttributes
     )
-    return new GabiAttester(publicKey, privateKey)
+    return new Attester(publicKey, privateKey)
   }
 
   /**

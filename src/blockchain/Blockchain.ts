@@ -43,9 +43,10 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   /**
-   * Get the number of stored accumulators for a specific attester.
+   * Get the number of stored [[Accumulator]]s for a specific [[Attester]].
    *
-   * @param address The address if the attester.
+   * @param address The address of the [[Attester]].
+   * @returns The number of the [[Attester]]'s [[Accumulator]]s.
    */
   public async getAccumulatorCount(address: string): Promise<number> {
     const count = await this.api.query[this.chainmod].accumulatorCount(address)
@@ -53,9 +54,11 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   /**
-   * Check for existing accumulator count and return max index for query.
+   * Check for existing [[Accumulator]] count and return max index for query.
    *
-   * @param address The chain address of the attester.
+   * @param address The chain address of the [[Attester]].
+   * @throws {BlockchainError.maxIndexZero} If the address does not have an [[Accumulator]] stored yet.
+   * @returns The accumulator count minus one.
    */
   private async getMaxIndex(address: string): Promise<number> {
     const maxIndex = (await this.getAccumulatorCount(address)) - 1
@@ -66,10 +69,11 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   /**
-   * Check for existing accumulator count and whether given index exceeds maxIndex.
+   * Check for existing [[Accumulator]] count and whether given index exceeds maxIndex.
    *
-   * @param address The chain address of the attester.
+   * @param address The chain address of the [[Attester]].
    * @param index The index of the [[Accumulator]].
+   * @throws {BlockchainError.indexOutOfRange} If the requested index is less than zero or greater than the maximum index.
    */
   private async checkIndex(address: string, index: number): Promise<void> {
     const maxIndex = await this.getMaxIndex(address)
@@ -81,9 +85,11 @@ export default class Blockchain implements IBlockchainApi {
   /**
    * Check whether codec is empty and convert codec->string->hex->accumulator.
    *
-   * @param address The chain address of the attester.
-   * @param codec The raw accumulator.
-   * @param index The index of the accumulator.
+   * @param address The chain address of the [[Attester]].
+   * @param codec The raw [[Accumulator]].
+   * @param index The index of the [[Accumulator]].
+   * @throws {BlockchainError.missingAccIndex} If there is no [[Accumulator]] at the specified index.
+   * @returns An [[Accumulator]].
    */
   private static async codecToAccumulator(
     address: string,
@@ -99,8 +105,9 @@ export default class Blockchain implements IBlockchainApi {
   /**
    * Fetches a single [[Accumulator]] from the chain.
    *
-   * @param address The on chain address of the attester.
+   * @param address The on chain address of the [[Attester]].
    * @param index The index of the [[Accumulator]] to fetch.
+   * @returns The [[Accumulator]] at the specified index.
    */
   public async getAccumulator(
     address: string,
@@ -122,9 +129,10 @@ export default class Blockchain implements IBlockchainApi {
   /**
    * Fetches multiple [[Accumulators]] at once.
    *
-   * @param address The chain address of the attester.
+   * @param address The chain address of the [[Attester]].
    * @param startIndex The index of the first [[Accumulator]] to fetch.
    * @param _endIndex The index of the last [[Accumulator]] to fetch.
+   * @returns An array of [[Accumulator]]s from startIndex to endIndex or the latest one.
    */
   public async getAccumulatorArray(
     address: string,
@@ -155,9 +163,10 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   /**
-   * Fetches the last published [[Accumulator]] for the specified attester.
+   * Fetches the last published [[Accumulator]] for the specified [[Attester]].
    *
-   * @param address The chain address of the attester.
+   * @param address The chain address of the [[Attester]].
+   * @returns The last published [[Accumulator]].
    */
   public async getLatestAccumulator(address: string): Promise<Accumulator> {
     const maxIndex = await this.getMaxIndex(address)
@@ -167,7 +176,7 @@ export default class Blockchain implements IBlockchainApi {
   /**
    * Pushes a new [[Accumulator]] on chain.
    *
-   * @param address The chain address of the attester.
+   * @param address The chain address of the [[Attester]].
    * @param accumulator The new [[Accumulator]].
    */
   public async updateAccumulator(

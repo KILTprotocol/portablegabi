@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
-import GabiClaimer from '../../../src/claim/GabiClaimer'
-import GabiAttesterChain from '../../../src/attestation/GabiAttester.chain'
+import Claimer from '../../../src/claim/Claimer'
+import AttesterChain from '../../../src/attestation/Attester.chain'
 import {
   VerificationSession,
   PresentationRequest,
 } from '../../../src/types/Verification'
 import { Presentation } from '../../../src/types/Claim'
-import GabiVerifier from '../../../src/verification/GabiVerifier'
+import Verifier from '../../../src/verification/Verifier'
 import Accumulator from '../../../src/attestation/Accumulator'
 import Credential from '../../../src/claim/Credential'
 
@@ -19,8 +19,8 @@ export async function verificationProcessSingleChain({
   reqUpdatedAfter,
   accumulator,
 }: {
-  claimer: GabiClaimer
-  attester: GabiAttesterChain
+  claimer: Claimer
+  attester: AttesterChain
   credential: Credential
   requestedAttributes: string[]
   reqUpdatedAfter?: Date
@@ -36,7 +36,7 @@ export async function verificationProcessSingleChain({
   const {
     session: verifierSession,
     message: presentationReq,
-  } = await GabiVerifier.requestPresentation({
+  } = await Verifier.requestPresentation({
     requestedAttributes,
     reqUpdatedAfter,
   })
@@ -49,10 +49,7 @@ export async function verificationProcessSingleChain({
   })
 
   // verifier checks presentation for non revocation, valid data and matching attester's public key
-  const {
-    verified,
-    claim: verifiedClaim,
-  } = await GabiVerifier.verifyPresentation({
+  const { verified, claim: verifiedClaim } = await Verifier.verifyPresentation({
     proof: presentation,
     verifierSession,
     attesterPubKey: attester.publicKey,

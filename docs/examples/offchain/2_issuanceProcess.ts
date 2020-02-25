@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
-import GabiAttester from '../../../src/attestation/GabiAttester'
-import GabiClaimer from '../../../src/claim/GabiClaimer'
+import Attester from '../../../src/attestation/Attester'
+import Claimer from '../../../src/claim/Claimer'
 import Accumulator from '../../../src/attestation/Accumulator'
 import { Witness } from '../../../src/types/Attestation'
 import Credential from '../../../src/claim/Credential'
@@ -22,8 +22,8 @@ export async function issuanceProcess({
   accumulator,
   claim,
 }: {
-  attester: GabiAttester
-  claimer: GabiClaimer
+  attester: Attester
+  claimer: Claimer
   accumulator: Accumulator
   claim: object
 }): Promise<{

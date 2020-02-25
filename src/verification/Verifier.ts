@@ -1,5 +1,5 @@
 /**
- * This module contains the GabiVerifier class which is used to verify [[Credential]]s.
+ * This module contains the Verifier class which is used to verify [[Credential]]s.
  */
 import Accumulator from '../attestation/Accumulator'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
@@ -17,9 +17,9 @@ import { IGabiMsgSession, AttesterPublicKey } from '../types/Attestation'
 import { Presentation, CombinedPresentation } from '../types/Claim'
 
 /**
- * The GabiVerifier can be used to request presentations of claims and verify [[Credential]]s.
+ * The Verifier can be used to request presentations of claims and verify [[Credential]]s.
  */
-export default class GabiVerifier {
+export default class Verifier {
   /**
    * Initiates a verification session.
    *
@@ -98,6 +98,7 @@ export default class GabiVerifier {
    * @param p.verifierSession The [[Verifier]]s session generated in [[requestPresentation]].
    * @param p.attesterPubKey The public key of the [[Attester]] of the [[Credential]].
    * @param p.latestAccumulator The [[Accumulator]] used to create or update the [[Credential]].
+   * @throws If a revocation proof was requested but the necessary [[Accumulator]] was not provided.
    *
    * @returns Whether the presentation could be verified.
    */

@@ -1,22 +1,22 @@
 import { stringToHex } from '@polkadot/util'
-import GabiAttesterChain from '../attestation/GabiAttester.chain'
+import AttesterChain from '../attestation/Attester.chain'
 import { actorSetupChain } from '../testSetup/testSetup.chain'
 import Accumulator from '../attestation/Accumulator'
 import { attestationSetup, actorSetup } from '../testSetup/testSetup'
 import api from '../blockchain/__mocks__/BlockchainApi'
 import { AttesterPublicKey } from '../types/Attestation'
 import Credential from './Credential'
-import GabiClaimer from './GabiClaimer'
-import GabiAttester from '../attestation/GabiAttester'
+import Claimer from './Claimer'
+import Attester from '../attestation/Attester'
 import BlockchainError from '../blockchain/BlockchainError'
 
 jest.mock('../blockchainApiConnection/BlockchainApiConnection')
 const apiMultiQuery = (api.query.portablegabi.accumulatorList as any).multi
 
 describe('Test Credential on chain functionality', () => {
-  let claimer: GabiClaimer
-  let attesterChain: GabiAttesterChain
-  let attester: GabiAttester
+  let claimer: Claimer
+  let attesterChain: AttesterChain
+  let attester: Attester
   let accumulator: Accumulator
   let credential: Credential
   let attesterChainAddress: string
