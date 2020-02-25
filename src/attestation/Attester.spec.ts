@@ -1,4 +1,4 @@
-import Attester from './Attester'
+import Attester, { daysToNanoSecs } from './Attester'
 import { privKey, pubKey, claim } from '../testSetup/testConfig'
 import {
   attestationSetup,
@@ -10,10 +10,14 @@ import {
   AttesterAttestationSession,
   Attestation,
   Witness,
+  AttesterPrivateKey,
+  AttesterPublicKey,
 } from '../types/Attestation'
 import Claimer from '../claim/Claimer'
 import { AttestationRequest, ClaimError } from '../types/Claim'
 import Accumulator from './Accumulator'
+import goWasmExec from '../wasm/wasm_exec_wrapper'
+import AttesterChain from './Attester.chain'
 
 describe('Test attester', () => {
   let attester: Attester
@@ -63,6 +67,39 @@ describe('Test attester', () => {
       attestationRequest,
     }))
   })
+  describe('Mock key generation', () => {
+    const goWasmExecOrig = goWasmExec
+    const keypair = {
+      privateKey: new AttesterPrivateKey('sk'),
+      publicKey: new AttesterPublicKey('pk'),
+    }
+    afterAll(() => {
+      ;(goWasmExec as any) = goWasmExecOrig
+    })
+    it('Should generate dummy key pair', async () => {
+      ;(goWasmExec as any) = jest.fn(async () => keypair)
+      await expect(Attester.genKeyPair(1, 10)).resolves.toEqual(keypair)
+      await expect(Attester.genKeyPair()).resolves.toEqual(keypair)
+    })
+    it('Should create attester', async () => {
+      await expect(Attester.create(1, 10)).resolves.toHaveProperty(
+        'privateKey',
+        keypair.privateKey
+      )
+      await expect(Attester.create()).resolves.toHaveProperty(
+        'publicKey',
+        keypair.publicKey
+      )
+      await expect(
+        AttesterChain.create(1, 10, 'ed25519')
+      ).resolves.toHaveProperty('privateKey', keypair.privateKey)
+      expect(daysToNanoSecs).toHaveBeenCalledWith(1)
+      await expect(AttesterChain.create()).resolves.toHaveProperty(
+        'publicKey',
+        keypair.publicKey
+      )
+    })
+  })
   describe('Confirm valid data from testSetup', () => {
     it('Checks valid buildFromKeyPair for existing keys', async () => {
       const attester2 = new Attester(pubKey, privKey)
@@ -98,6 +135,10 @@ describe('Test attester', () => {
   })
   // since the attester acts as a middleman, most of the functionality is tested in Claimer and Verifier
   describe('Test attester functionality', () => {
+    it('Tests daysToNanoSecs', () => {
+      expect(daysToNanoSecs(1)).toEqual(8.64 * 10 ** 13)
+      expect(daysToNanoSecs(2)).toEqual(2 * 8.64 * 10 ** 13)
+    })
     it('Should throw when issuing unsigned attestations', async () => {
       return Promise.all(
         Object.values(mixedAttestationsInvalid).map(
