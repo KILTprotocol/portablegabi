@@ -16,18 +16,33 @@ export interface IVerifiedCombinedPresentation {
   claims: object[]
 }
 
+/**
+ * The session result of [[requestPresentation]] which should be kept private by the [[Verifier]] and used in [[verifyPresentation]].
+ */
 export class VerificationSession extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }
+
+/**
+ * The message result of [[requestPresentation]] which should be sent to the [[Claimer]] and used in [[buildPresentation]].
+ */
 export class PresentationRequest extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }
+
+/**
+ * The session result of [[requestCombinedPresentation]] which should be kept private by the [[Verifier]] and used in [[verifyCombinedPresentation]].
+ */
 export class CombinedVerificationSession extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }
+
+/**
+ * The message result of [[requestCombinedPresentation]] which should be sent to the [[Claimer]] and used in [[buildCombiendPresentation]].
+ */
 export class CombinedPresentationRequest extends String {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int

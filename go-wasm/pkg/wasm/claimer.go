@@ -37,7 +37,7 @@ func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
 }
 
 // RequestAttestation creates a session object and a message which request the
-// attestation of specific attributes. The second object should be send to an
+// attestation of specific attributes. The second object should be sent to an
 // attester. This method expects as inputs the private key of the claimer, a
 // json encoded string containing the claim which should be attested, the
 // handshake message from the attester and the public key of the attester.

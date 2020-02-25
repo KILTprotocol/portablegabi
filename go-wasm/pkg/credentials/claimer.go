@@ -44,7 +44,7 @@ func ClaimerFromMnemonic(sysParams *gabi.SystemParameters, mnemonic string, pass
 }
 
 // RequestAttestationForClaim creates a RequestAttestedClaim and a UserIssuanceSession.
-// The request should be send to the attester.
+// The request should be sent to the attester.
 func (user *Claimer) RequestAttestationForClaim(attesterPubK *gabi.PublicKey, startMsg *StartSessionMsg, claim Claim) (*UserIssuanceSession, *AttestedClaimRequest, error) {
 	nonce, err := common.RandomBigInt(attesterPubK.Params.Lstatzk)
 	if err != nil {
