@@ -54,7 +54,7 @@ func KeyFromSeed(this js.Value, inputs []js.Value) (interface{}, error) {
 	}
 
 	// create claimer
-	claimer, err := credentials.NewClaimerFromBytes(sysParams, seed)
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, seed)
 	if err != nil {
 		return nil, err
 	}

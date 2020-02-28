@@ -30,15 +30,17 @@ func NewClaimer(sysParams *gabi.SystemParameters) (*Claimer, error) {
 	return &Claimer{masterSecret}, nil
 }
 
-// NewClaimerFromBytes derives a secret from a given seed
-func NewClaimerFromBytes(sysParams *gabi.SystemParameters, seed []byte) (*Claimer, error) {
+// NewClaimerFromSecret derives a secret from a given seed
+func NewClaimerFromSecret(sysParams *gabi.SystemParameters, seed []byte) (*Claimer, error) {
 	// Lm is in bit, len returns byte
 	seedLen := uint(len(seed)) * 8
 	if seedLen < sysParams.Lm {
-		return nil, errors.New("seed to small")
+		return nil, fmt.Errorf("secret to small (was %d, need %d)", seedLen, sysParams.Lm)
 	} else if seedLen > sysParams.Lm {
+		// shorten the seed if it is to long
 		seed = seed[:sysParams.Lm/8]
 	}
+	seed[0] = seed[0] | 0x80 // set the first bit to ensure desired bit length
 	bigSeed := big.NewInt(0).SetBytes(seed)
 	return &Claimer{bigSeed}, nil
 }

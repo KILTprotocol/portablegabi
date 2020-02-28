@@ -119,7 +119,7 @@ func TestCredential(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
-	claimer, err := credentials.NewClaimerFromBytes(sysParams, binSeed)
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, binSeed)
 	require.NoError(t, err, "Error in claimer key generation")
 
 	claim, cred := buildCredential(t, sysParams, attester, claimer, update)
@@ -173,7 +173,7 @@ func TestCombinedPresentation(t *testing.T) {
 	update2, err := attester2.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
-	claimer, err := credentials.NewClaimerFromBytes(sysParams, binSeed)
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, binSeed)
 	require.NoError(t, err, "Error in claimer key generation")
 
 	claim, cred := buildCredential(t, sysParams, attester1, claimer, update1)
@@ -327,7 +327,7 @@ func TestFullWorkflow(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Printf("byteUpdate      = []byte(`%s`)\n", string(bts))
 
-	claimer, err := credentials.NewClaimerFromBytes(sysParams, binSeed)
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, binSeed)
 	require.NoError(t, err, "Error in claimer key generation")
 	bts, err = json.Marshal(claimer)
 	require.NoError(t, err)
@@ -515,7 +515,7 @@ func TestMixingVerificationSessions(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
-	claimer, err := credentials.NewClaimerFromBytes(sysParams, binSeed)
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, binSeed)
 	require.NoError(t, err, "Error in claimer key generation")
 
 	_, cred := buildCredential(t, sysParams, attester, claimer, update)
@@ -563,7 +563,7 @@ func TestForgedCombinedPresentation(t *testing.T) {
 	update2, err := attester2.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
-	claimer, err := credentials.NewClaimerFromBytes(sysParams, binSeed)
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, binSeed)
 	require.NoError(t, err, "Error in claimer key generation")
 
 	claim, cred := buildCredential(t, sysParams, attester1, claimer, update1)
@@ -652,7 +652,7 @@ func TestPresentForgedAttributes(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
-	claimer, err := credentials.NewClaimerFromBytes(sysParams, binSeed)
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, binSeed)
 	require.NoError(t, err, "Error in claimer key generation")
 
 	_, cred := buildCredential(t, sysParams, attester, claimer, update)
@@ -697,7 +697,7 @@ func TestPresentRequestNonexistent(t *testing.T) {
 	update, err := attester.CreateAccumulator()
 	require.NoError(t, err, "Could not create update")
 
-	claimer, err := credentials.NewClaimerFromBytes(sysParams, binSeed)
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, binSeed)
 	require.NoError(t, err, "Error in claimer key generation")
 
 	_, cred := buildCredential(t, sysParams, attester, claimer, update)
