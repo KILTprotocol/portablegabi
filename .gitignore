@@ -43,6 +43,9 @@ package-lock.json
 /src/coverage
 docs/example.mashnet.ts
 
+# documentation
+docs/api/*
+
 # tooling setup
 .DS_Store
 .env.local
