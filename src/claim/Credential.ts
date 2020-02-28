@@ -3,13 +3,15 @@ import WasmHooks from '../wasm/WasmHooks'
 import Accumulator from '../attestation/Accumulator'
 import { AttesterPublicKey } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
+import { ICredential } from '../types/Claim'
 
 /**
  * The credential contains information which are used to create presentations.
  * It must be kept secret.
  */
 export default class Credential extends String {
-  private parseCache: { updateCounter: number } | undefined
+  private counterParseCache: { updateCounter: number } | undefined
+  private dateParseCache: ICredential<any> | undefined
 
   /**
    * This methods updates a [[Credential]] using a new [[Accumulator]].
@@ -94,24 +96,62 @@ export default class Credential extends String {
   }
 
   /**
-   * Returns the number of updates done. Combining this method with [[getLatestAccumulator]] in [[updateFromChain]],
-   * it shows how many updates of this [[Credential]] would be required to be up to date.
-   * @throws `Invalid credential` If the credential does not have an update counter.
-   * @returns The number of accumulator updates done with this credential.
+   * Compares the [[Credential]]'s date with another date.
+   *
+   * @param reqUpdatedAfter The comparison date.
+   * @throws If the requested date is greater than the [[Credential]]'s one.
+   * @returns Whether the [[Credential]] has been created or updated after the required one.
    */
-  public getUpdateCounter(): number {
-    let parsed = this.parseCache
+  public checkDate(reqUpdatedAfter: Date): boolean {
+    const credDate = this.getDate()
+    if (reqUpdatedAfter.getTime() > credDate.getTime()) {
+      throw new Error(
+        `Credential is outdated, you need to update it with a newer accumulator!\n\t The current date of accumulator used to build/update the credential is "${credDate.toISOString()}" vs. the required one "${reqUpdatedAfter.toISOString()}".`
+      )
+    }
+    return true
+  }
+
+  /**
+   * Returns the date when this [[Credential]] has been updated the last time.
+   *
+   * @throws `Invalid credential` If the credential does not have an Updated field.
+   * @returns The date of the [[Credential]]'s last update as ISO string.
+   */
+  public getDate(): Date {
+    let parsed = this.dateParseCache
     try {
       parsed = JSON.parse(this.valueOf())
-      const counter =
-        parsed && 'updateCounter' in parsed ? parsed.updateCounter : undefined
-      if (typeof counter !== 'number') {
-        throw new Error()
+      const date = parsed?.credential?.nonrevWitness?.Updated
+      if (date && typeof date === 'string') {
+        this.dateParseCache = parsed
+        return new Date(date)
       }
-      this.parseCache = parsed
-      return counter
+      throw new Error()
     } catch (e) {
-      throw new Error('Invalid credential')
+      throw new Error('Invalid credential, missing updated date')
+    }
+  }
+
+  /**
+   * Returns the number of updates done. Combining this method with [[getLatestAccumulator]] in [[updateFromChain]],
+   * it shows how many updates of this [[Credential]] would be required to be up to date.
+   *
+   * @throws `Invalid credential` If the credential does not have an update counter.
+   * @returns The number of [[Accumulator]] updates done with this [[Credential]].
+   */
+  public getUpdateCounter(): number {
+    let parsed = this.counterParseCache
+    try {
+      parsed = JSON.parse(this.valueOf())
+      const counter = parsed?.updateCounter
+      if (typeof counter === 'number') {
+        this.counterParseCache = parsed
+        return counter
+      }
+      throw new Error()
+    } catch (e) {
+      throw new Error('Invalid credential, missing updateCounter')
     }
   }
 }

@@ -1,5 +1,7 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
+import { IIssueAttestation } from './Attestation'
+
 export default interface IClaimer {
   requestAttestation: Function
   buildCredential: Function
@@ -9,6 +11,15 @@ export default interface IClaimer {
 
 export interface IClaimerChain {
   updateCredentialChain: Function
+}
+
+export interface ICredential<Claim> {
+  claim: Claim
+  credential: {
+    attributes: string[]
+    nonrevWitness: IIssueAttestation['nonrev']
+    signature: IIssueAttestation['signature']
+  }
 }
 
 /**

@@ -40,7 +40,7 @@ export default class Verifier {
       args = [
         false,
         // date will be ignored, we won't check for a revocation proof
-        new Date().toISOString(),
+        new Date(0).toISOString(),
         JSON.stringify(requestedAttributes),
       ]
     } else {

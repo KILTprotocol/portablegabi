@@ -15,6 +15,27 @@ export default interface IAttester {
   revokeAttestation: Function
 }
 
+export interface IIssueAttestation {
+  nonrev: {
+    Updated: string
+    e: string
+    sacc: {
+      data: string
+      pk: number
+    }
+  }
+  proof: {
+    c: string
+    e_response: string
+  }
+  signature: {
+    A: 'string'
+    KeyShareP: string | null
+    e: string
+    v: string
+  }
+}
+
 /**
  * The off-chain public key of the [[Attester]].
  */
