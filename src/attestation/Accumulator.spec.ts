@@ -13,7 +13,17 @@ describe('Test accumulator', () => {
     } = await actorSetup())
   })
   it('Checks non-deterministic accumulator creation', async () => {
-    const updateNew = attester.createAccumulator()
-    expect(accumulator.valueOf()).not.toStrictEqual(updateNew.valueOf())
+    const accumulator2 = await attester.createAccumulator()
+    expect(accumulator2).toEqual(expect.anything())
+    expect(accumulator2.valueOf()).toBeDefined()
+    expect(accumulator.valueOf()).not.toStrictEqual(accumulator2.valueOf())
+  })
+  it('Should return the accumulators timestamp', async () => {
+    const compTimestamp = new Date().getTime()
+    const accumulator2 = await attester.createAccumulator()
+    const accTimestamp = await (
+      await accumulator2.getDate(attester.publicKey)
+    ).getTime()
+    expect(Math.abs(accTimestamp - compTimestamp)).toBeLessThanOrEqual(1000)
   })
 })
