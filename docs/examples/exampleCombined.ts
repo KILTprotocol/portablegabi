@@ -25,7 +25,7 @@ const {
 
 // Do all processes from attestation, to possibly revocation and final verification
 async function completeProcessCombined(
-  expectedVerificationOutcome: boolean,
+  expectedVerificationOutcome: boolean | 'error',
   doRevocation = false,
   reqUpdatesAfter: [Date?, Date?]
 ): Promise<boolean> {
@@ -71,37 +71,53 @@ async function completeProcessCombined(
     })
   }
 
-  // verify credential with revocation check
-  const { verified } = await verificationProcessCombined({
-    claimer,
-    attesters: [attester1, attester2],
-    credentials: [credential1, credential2],
-    requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
-    reqUpdatesAfter, // requires that witnesses are updates after specified date or using the latests available accumulator
-    accumulators: [accumulator1, accumulator2],
-  })
-  console.log(
-    `Expected outcome achieved? ${expectedVerificationOutcome === verified}`
-  )
-  return expectedVerificationOutcome === verified
+  let achievedExpectedOutcome = false
+  // we need to try and catch since we expect an error throw when we set reqUpdatedAfter to some future date
+  try {
+    // verify credential with revocation check
+    const { verified } = await verificationProcessCombined({
+      claimer,
+      attesters: [attester1, attester2],
+      credentials: [credential1, credential2],
+      requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
+      reqUpdatesAfter, // requires that witnesses are updates after specified date or using the latests available accumulator
+      accumulators: [accumulator1, accumulator2],
+    })
+    achievedExpectedOutcome = expectedVerificationOutcome === verified
+  } catch (e) {
+    console.log('Error was thrown')
+    achievedExpectedOutcome =
+      expectedVerificationOutcome === 'error' &&
+      e.message.includes('Credential is outdated')
+  }
+  console.groupEnd()
+  console.log(`Expected outcome achieved? ${achievedExpectedOutcome}`)
+  return achievedExpectedOutcome
 }
 
 // all calls of completeProcessCombined should return true
 async function completeProcessCombinedExamples(): Promise<void> {
-  // we accept every accumulator create later on
-  const now = new Date()
+  // we accept every accumulator when requiring past in reqUpdatedAfter
+  const past = new Date()
   // we only accept the newest accumulator
   const future = new Date()
-  future.setDate(now.getDate() + 100)
+  future.setDate(past.getDate() + 100)
 
   // without credential revocation
   await completeProcessCombined(true, false, [undefined, undefined])
 
-  // with revocation of 1st credential
-  await completeProcessCombined(false, true, [future, future])
+  // without credential revocation but required dates in future => should throw
+  await completeProcessCombined('error', false, [future, undefined])
+  await completeProcessCombined('error', false, [undefined, future])
 
-  // with revocation (1st) but revocation not required in verification
-  await completeProcessCombined(true, true, [undefined, future])
+  // with revocation of 2nd credential and required date in future => should throw
+  await completeProcessCombined('error', true, [future, future])
+
+  // with revocation of 2nd credential but required date in past => should verify
+  await completeProcessCombined(true, true, [past, past])
+
+  // with revocation (2nd) but revocation not required in verification
+  await completeProcessCombined(true, true, [undefined, past])
 
   // close wasm
   return goWasmClose().finally(() => process.exit())
