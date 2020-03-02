@@ -9,7 +9,7 @@ import connect from '../blockchainApiConnection/BlockchainApiConnection'
  * It must be kept secret.
  */
 export default class Credential extends String {
-  private parseCache: { updateCounter: number } | undefined
+  private parseCache: any | undefined
 
   /**
    * This methods updates a [[Credential]] using a new [[Accumulator]].
@@ -96,6 +96,7 @@ export default class Credential extends String {
   /**
    * Returns the number of updates done. Combining this method with [[getLatestAccumulator]] in [[updateFromChain]],
    * it shows how many updates of this [[Credential]] would be required to be up to date.
+   *
    * @throws `Invalid credential` If the credential does not have an update counter.
    * @returns The number of accumulator updates done with this credential.
    */
@@ -112,6 +113,27 @@ export default class Credential extends String {
       return counter
     } catch (e) {
       throw new Error('Invalid credential')
+    }
+  }
+
+  /**
+   * Returns the date when this [[Credential]] has been updated the last time.
+   *
+   * @throws `Invalid credential` If the credential does not have an Updated field.
+   * @returns The date of the [[Credential]]'s last update as ISO string.
+   */
+  public getDate(): Date {
+    let parsed = this.parseCache
+    try {
+      parsed = JSON.parse(this.valueOf())
+      this.parseCache = parsed
+      const date = parsed.credential.nonrevWitness.Updated
+      if (typeof date === 'undefined') {
+        throw new Error()
+      }
+      return new Date(date)
+    } catch (e) {
+      throw new Error('Invalid credential, missing updated date')
     }
   }
 }
