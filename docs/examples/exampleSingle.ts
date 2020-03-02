@@ -9,7 +9,7 @@ const { pubKey, privKey, disclosedAttributes, claim } = testEnv1
 
 // all processes from attestation, to possibly revocation and final verification
 async function completeProcessSingle(
-  expectedVerificationOutcome: boolean,
+  expectedVerificationOutcome: boolean | 'error',
   doRevocation = false,
   reqUpdatedAfter?: Date
 ): Promise<boolean> {
@@ -39,36 +39,52 @@ async function completeProcessSingle(
     })
   }
 
-  // verify credential with revocation check
-  const { verified } = await verificationProcessSingle({
-    claimer,
-    attester,
-    credential,
-    requestedAttributes: disclosedAttributes,
-    reqUpdatedAfter, // require that the witness is not older than the provided date or updated to the latest accumulator
-    accumulator,
-  })
+  let achievedExpectedOutcome = false
+  // we need to try and catch since we expect an error throw when we set reqUpdatedAfter to some future date
+  try {
+    // verify credential with revocation check
+    const { verified } = await verificationProcessSingle({
+      claimer,
+      attester,
+      credential,
+      requestedAttributes: disclosedAttributes,
+      reqUpdatedAfter, // require that the witness is not older than the provided date or updated to the latest accumulator
+      accumulator,
+    })
+    achievedExpectedOutcome = expectedVerificationOutcome === verified
+  } catch (e) {
+    console.log('Error was thrown')
+    achievedExpectedOutcome =
+      expectedVerificationOutcome === 'error' &&
+      e.message.includes('Credential is outdated')
+  }
   console.groupEnd()
-  console.log(
-    `Expected outcome achieved? ${expectedVerificationOutcome === verified}`
-  )
-  return expectedVerificationOutcome === verified
+  console.log(`Expected outcome achieved? ${achievedExpectedOutcome}`)
+  return achievedExpectedOutcome
 }
 
 // all calls of completeProcessSingle should return true
 async function completeProcessSingleExamples(): Promise<void> {
-  const now = new Date()
+  // we accept every accumulator when requiring past in reqUpdatedAfter
+  const past = new Date()
+  // we only accept the newest accumulator
   const future = new Date()
-  future.setDate(now.getDate() + 100)
+  future.setDate(past.getDate() + 100)
 
   // without credential revocation
-  await completeProcessSingle(true, false)
+  await completeProcessSingle(true, false, undefined)
 
-  // with credential revocation but accept old accumulator
-  await completeProcessSingle(true, true, now)
+  // without revocation but required dates in future => should throw
+  await completeProcessSingle('error', false, future)
 
-  // with credential revocation but require new accumulator
-  await completeProcessSingle(false, true, future)
+  // with revocation and required date in future => should throw
+  await completeProcessSingle('error', true, future)
+
+  // with revocation but required date in past => should verify
+  await completeProcessSingle(true, true, past)
+
+  // with revocation but revocation not required in verification
+  await completeProcessSingle(true, true, undefined)
 
   // close wasm
   return goWasmClose().finally(() => process.exit())

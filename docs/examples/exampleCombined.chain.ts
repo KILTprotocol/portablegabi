@@ -30,7 +30,7 @@ async function completeProcessCombined({
   reqNonRevocationProofArr = [true, true],
 }: {
   blockchain: Blockchain
-  expectedVerificationOutcome: boolean
+  expectedVerificationOutcome: boolean | 'error'
   doRevocation: boolean
   reqUpdatedAfter: [Date, Date]
   reqNonRevocationProofArr: [boolean, boolean]
@@ -88,20 +88,27 @@ async function completeProcessCombined({
       await blockchain.getAccumulatorCount(attester1.address)
     )
   }
-
-  // verify credential with revocation check
-  const { verified } = await verificationProcessCombinedChain({
-    claimer,
-    attesters: [attester1, attester2],
-    credentials: [credential1, credential2],
-    requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
-    reqUpdatedAfter, // require accumulator's revocation index of 0 or greater
-    reqNonRevocationProofArr, // check revocation status
-  })
-  console.log(
-    `Expected outcome achieved? ${expectedVerificationOutcome === verified}`
-  )
-  return expectedVerificationOutcome === verified
+  let achievedExpectedOutcome = false
+  // we need to try and catch since we expect an error throw when we set reqUpdatedAfter to some future date
+  try {
+    const { verified } = await verificationProcessCombinedChain({
+      claimer,
+      attesters: [attester1, attester2],
+      credentials: [credential1, credential2],
+      requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
+      reqUpdatedAfter,
+      reqNonRevocationProofArr, // check revocation status
+    })
+    achievedExpectedOutcome = expectedVerificationOutcome === verified
+  } catch (e) {
+    console.log('Error was thrown')
+    achievedExpectedOutcome =
+      expectedVerificationOutcome === 'error' &&
+      e.message.includes('Credential is outdated')
+  }
+  console.groupEnd()
+  console.log(`Expected outcome achieved? ${achievedExpectedOutcome}`)
+  return achievedExpectedOutcome
 }
 
 // all calls of completeProcessCombined should return true
@@ -111,32 +118,61 @@ async function completeProcessCombinedExamples(): Promise<void> {
     pgabiModName: 'portablegabiPallet',
   })
   console.log('Connected to chain')
+  // we accept every accumulator when requiring past in reqUpdatedAfter
+  const past = new Date(0)
+  // we only accept the newest accumulator
+  const future = new Date()
 
   // without credential revocation
   await completeProcessCombined({
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: false,
-    reqUpdatedAfter: [new Date(), new Date()],
+    reqUpdatedAfter: [past, past],
     reqNonRevocationProofArr: [true, true],
   })
 
-  // with credential revocation
+  // without credential revocation but required dates in future => should throw
   await completeProcessCombined({
     blockchain,
-    expectedVerificationOutcome: false,
-    doRevocation: true,
-    reqUpdatedAfter: [new Date(), new Date()],
-    reqNonRevocationProofArr: [true, true],
+    expectedVerificationOutcome: 'error',
+    doRevocation: false,
+    reqUpdatedAfter: [future, past],
+    reqNonRevocationProofArr: [true, false],
+  })
+  await completeProcessCombined({
+    blockchain,
+    expectedVerificationOutcome: 'error',
+    doRevocation: false,
+    reqUpdatedAfter: [past, future],
+    reqNonRevocationProofArr: [false, true],
   })
 
-  // with credential revocation but revocation not required in verification
+  // with revocation of 2nd credential and required date in future => should throw
+  await completeProcessCombined({
+    blockchain,
+    expectedVerificationOutcome: 'error',
+    doRevocation: true,
+    reqUpdatedAfter: [future, future],
+    reqNonRevocationProofArr: [false, true],
+  })
+
+  // with revocation of 2nd credential but required date in past => should verify
   await completeProcessCombined({
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: true,
-    reqUpdatedAfter: [new Date(), new Date()],
+    reqUpdatedAfter: [future, past],
     reqNonRevocationProofArr: [false, true],
+  })
+
+  // with revocation (2nd) but revocation not required in verification
+  await completeProcessCombined({
+    blockchain,
+    expectedVerificationOutcome: true,
+    doRevocation: true,
+    reqUpdatedAfter: [past, past],
+    reqNonRevocationProofArr: [false, false],
   })
 
   // disconnect from chain

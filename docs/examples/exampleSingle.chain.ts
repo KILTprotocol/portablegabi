@@ -18,7 +18,7 @@ async function completeProcessSingle({
   reqUpdatedAfter,
 }: {
   blockchain: Blockchain
-  expectedVerificationOutcome: boolean
+  expectedVerificationOutcome: boolean | 'error'
   doRevocation: boolean
   reqUpdatedAfter?: Date
 }): Promise<boolean> {
@@ -59,22 +59,27 @@ async function completeProcessSingle({
     )
   }
 
-  // verify credential with revocation check
-  const { verified } = await verificationProcessSingleChain({
-    claimer,
-    attester,
-    credential,
-    requestedAttributes: disclosedAttributes,
-    reqUpdatedAfter, // require accumulator's revocation index of 0 or greater
-    accumulator,
-  })
-
+  let achievedExpectedOutcome = false
+  // we need to try and catch since we expect an error throw when we set reqUpdatedAfter to some future date
+  try {
+    const { verified } = await verificationProcessSingleChain({
+      claimer,
+      attester,
+      credential,
+      requestedAttributes: disclosedAttributes,
+      reqUpdatedAfter,
+      accumulator,
+    })
+    achievedExpectedOutcome = expectedVerificationOutcome === verified
+  } catch (e) {
+    console.log('Error was thrown')
+    achievedExpectedOutcome =
+      expectedVerificationOutcome === 'error' &&
+      e.message.includes('Credential is outdated')
+  }
   console.groupEnd()
-  console.log(
-    // eslint-disable-next-line eqeqeq
-    `Expected outcome achieved? ${expectedVerificationOutcome == verified}`
-  )
-  return expectedVerificationOutcome === verified
+  console.log(`Expected outcome achieved? ${achievedExpectedOutcome}`)
+  return achievedExpectedOutcome
 }
 
 // all calls of completeProcessSingle should return true
@@ -82,9 +87,11 @@ async function completeProcessSingleExamples(): Promise<void> {
   // connect to chain
   const blockchain = await connect({ pgabiModName: 'portablegabiPallet' })
   console.log('Connected to chain')
-  const past = new Date()
+  // we accept every accumulator when requiring past in reqUpdatedAfter
+  const past = new Date(0)
+  // we only accept the newest accumulator
   const future = new Date()
-  future.setDate(past.getDate() + 100)
+  future.setDate(future.getDate() + 100)
 
   // without credential revocation
   await completeProcessSingle({
@@ -94,19 +101,35 @@ async function completeProcessSingleExamples(): Promise<void> {
     reqUpdatedAfter: past,
   })
 
-  // with credential revocation
+  // without revocation but required date in future => should throw
   await completeProcessSingle({
     blockchain,
-    expectedVerificationOutcome: false,
+    expectedVerificationOutcome: 'error',
+    doRevocation: false,
+    reqUpdatedAfter: future,
+  })
+
+  // with revocation and required date in future => should throw
+  await completeProcessSingle({
+    blockchain,
+    expectedVerificationOutcome: 'error',
     doRevocation: true,
     reqUpdatedAfter: future,
   })
 
-  // with credential revocation but revocation not required in verification
+  // with credential revocation but revocation not required in verification => should verify
   await completeProcessSingle({
     blockchain,
     expectedVerificationOutcome: true,
     doRevocation: true,
+  })
+
+  // with credential revocation but date in past => should verify
+  await completeProcessSingle({
+    blockchain,
+    expectedVerificationOutcome: true,
+    doRevocation: true,
+    reqUpdatedAfter: past,
   })
 
   // disconnect from chain

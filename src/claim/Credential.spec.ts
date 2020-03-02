@@ -28,6 +28,7 @@ describe('Test claimer functionality', () => {
   let credential: Credential
   let attester2: Attester
   let accumulator2: Accumulator
+  const dateBefore = new Date()
 
   // get data from testSetup
   beforeAll(async () => {
@@ -65,6 +66,13 @@ describe('Test claimer functionality', () => {
 
   // run tests on valid data
   describe('Positive tests', () => {
+    it('Should return the date', () => {
+      const dateCred = credential.getDate()
+      expect(dateCred).toEqual(expect.anything())
+      expect(
+        Math.abs(dateCred.getTime() - dateBefore.getTime())
+      ).toBeLessThanOrEqual(10000)
+    })
     it('Updates single credential and compares both versions (without revoking)', async () => {
       const updatedCred = await credential.updateSingle({
         attesterPubKey: attester.publicKey,

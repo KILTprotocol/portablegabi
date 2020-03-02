@@ -5,6 +5,6 @@ import { IPortablegabiApi } from '../../types/Chain'
 
 const BlockchainMock: Blockchain = new Blockchain(
   'portablegabi',
-  (api as unknown) as ApiPromise & IPortablegabiApi<'portablegabi'>
+  (api as unknown) as ApiPromise & IPortablegabiApi<any>
 )
 export default BlockchainMock
