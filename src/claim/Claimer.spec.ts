@@ -8,20 +8,23 @@ import {
 import Claimer from './Claimer'
 import Attester from '../attestation/Attester'
 import { claim } from '../testSetup/testConfig'
-import { Spy, IProof } from '../testSetup/testTypes'
+import {
+  ICredential,
+  IIssueAttestation,
+  Spy,
+  IProof,
+} from '../testSetup/testTypes'
 import {
   Attestation,
   InitiateAttestationRequest,
   AttesterAttestationSession,
   Witness,
-  IIssueAttestation,
 } from '../types/Attestation'
 import {
   ClaimerAttestationSession,
   AttestationRequest,
   Presentation,
   ClaimError,
-  ICredential,
 } from '../types/Claim'
 import Accumulator from '../attestation/Accumulator'
 import Credential from './Credential'

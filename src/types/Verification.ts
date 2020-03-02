@@ -28,36 +28,8 @@ export class VerificationSession extends String {
  * The message result of [[requestPresentation]] which should be sent to the [[Claimer]] and used in [[buildPresentation]].
  */
 export class PresentationRequest extends String {
-  private parseCache?: {
-    partialPresentationRequest: {
-      requestedAttributes: string[]
-      reqNonRevocationproof: boolean
-      reqUpdatedAfter: string
-    }
-    context: string
-    nonce: string
-  }
-
-  /**
-   * Returns the [[Verifier]]'s requested date for the presentation of the [[PresentationRequest]].
-   *
-   * @throws `Invalid presentation request` If the reqUpdateAfter field is missing or empty.
-   * @returns The required date of the [[PresentationRequest]] as ISO string.
-   */
-  public getDate(): Date {
-    let parsed = this.parseCache
-    try {
-      parsed = JSON.parse(this.valueOf())
-      const date = parsed?.partialPresentationRequest?.reqUpdatedAfter
-      if (date && typeof date === 'string') {
-        this.parseCache = parsed
-        return new Date(date)
-      }
-      throw new Error()
-    } catch (e) {
-      throw new Error('Invalid presentation request, missing required date')
-    }
-  }
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: int
 }
 
 /**
@@ -72,42 +44,6 @@ export class CombinedVerificationSession extends String {
  * The message result of [[requestCombinedPresentation]] which should be sent to the [[Claimer]] and used in [[buildCombiendPresentation]].
  */
 export class CombinedPresentationRequest extends String {
-  private parseCache?: {
-    partialPresentationRequests: Array<{
-      requestedAttributes: string[]
-      reqNonRevocationproof: boolean
-      reqUpdatedAfter: string
-    }>
-    context: string
-    nonce: string
-  }
-
-  /**
-   * Returns the [[Verifier]]'s requested dates for the presentation of the [[CombinedPresentationRequest]].
-   *
-   * @throws `Invalid combined presentation request` If for any request the reqUpdateAfter field is missing or empty.
-   * @returns An array of required dates as ISO strings.
-   */
-  public getDates(): Date[] {
-    let parsed = this.parseCache
-    try {
-      parsed = JSON.parse(this.valueOf())
-      const requests = parsed?.partialPresentationRequests
-      if (
-        requests &&
-        Array.isArray(requests) &&
-        requests.every(
-          req => req.reqUpdatedAfter && typeof req.reqUpdatedAfter === 'string'
-        )
-      ) {
-        this.parseCache = parsed
-        return requests.map(req => new Date(req.reqUpdatedAfter))
-      }
-      throw new Error()
-    } catch (e) {
-      throw new Error(
-        'Invalid combined presentation request, missing at least one required date'
-      )
-    }
-  }
+  // @ts-ignore
+  private thisIsOnlyHereToPreventClassMixes: int
 }

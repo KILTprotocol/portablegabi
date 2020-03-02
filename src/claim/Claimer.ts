@@ -161,11 +161,6 @@ export default class Claimer implements IClaimer {
     presentationReq: PresentationRequest
     attesterPubKey: AttesterPublicKey
   }): Promise<Presentation> {
-    // check whether the credential's updated date matches the requested date
-    // check whether each credential's date is at least the required one
-    const reqDate = presentationReq.getDate()
-    credential.checkDate(reqDate)
-
     return new Presentation(
       await goWasmExec<string>(WasmHooks.buildPresentation, [
         this.secret,
@@ -195,10 +190,6 @@ export default class Claimer implements IClaimer {
     combinedPresentationReq: CombinedPresentationRequest
     attesterPubKeys: AttesterPublicKey[]
   }): Promise<CombinedPresentation> {
-    // check whether each credential's date is at least the required one
-    const reqDates = combinedPresentationReq.getDates()
-    credentials.every((credential, i) => credential.checkDate(reqDates[i]))
-
     // make a json array out of already json serialised values
     // we don't want a json array of strings
     return new CombinedPresentation(

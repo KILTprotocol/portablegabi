@@ -136,23 +136,11 @@ export async function presentationSetup({
     reqUpdatedAfter,
   })
   // response
-  const presentation = await claimer
-    .buildPresentation({
-      credential,
-      attesterPubKey: attester.publicKey,
-      presentationReq,
-    })
-    // catch outdated credential and attempt update
-    .catch(async () =>
-      claimer.buildPresentation({
-        credential: await credential.updateSingle({
-          attesterPubKey: attester.publicKey,
-          accumulator: accumulator || new Accumulator(''),
-        }),
-        attesterPubKey: attester.publicKey,
-        presentationReq,
-      })
-    )
+  const presentation = await claimer.buildPresentation({
+    credential,
+    attesterPubKey: attester.publicKey,
+    presentationReq,
+  })
   // verify
   const { verified, claim: aClaim } = await Verifier.verifyPresentation({
     proof: presentation,

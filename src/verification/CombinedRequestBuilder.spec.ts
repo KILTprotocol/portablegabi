@@ -14,7 +14,6 @@ import {
 import Verifier from './Verifier'
 import CombinedRequestBuilder from './CombinedRequestBuilder'
 import Accumulator from '../attestation/Accumulator'
-import { CombinedPresentationRequest } from '../types/Verification'
 
 // }: {
 //   claimer: Claimer
@@ -68,7 +67,6 @@ describe('Test combined requests', () => {
   let claimer: Claimer
   let attesters: Attester[]
   let accumulators: Accumulator[]
-  const dateBefore = new Date()
   beforeAll(async () => {
     ;({
       attesters,
@@ -76,22 +74,15 @@ describe('Test combined requests', () => {
       claimers: [claimer],
     } = await actorSetup())
   })
-  it('Should throw when requesting date from invalid combined presentationReq', async () => {
-    try {
-      new CombinedPresentationRequest('dummy').getDates()
-    } catch (e) {
-      expect(e.message).toContain('Invalid combined presentation request')
-    }
-  })
   it('Checks valid CombinedRequestBuilder', async () => {
     const { message, session } = await new CombinedRequestBuilder()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqUpdatedAfter: dateBefore,
+        reqUpdatedAfter: new Date(),
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributesCombined,
-        reqUpdatedAfter: dateBefore,
+        reqUpdatedAfter: new Date(),
       })
       .finalise()
     expect(message).toEqual(expect.anything())
@@ -115,11 +106,11 @@ describe('Test combined requests', () => {
     } = await new CombinedRequestBuilder()
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqUpdatedAfter: dateBefore,
+        reqUpdatedAfter: new Date(),
       })
       .requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqUpdatedAfter: dateBefore,
+        reqUpdatedAfter: new Date(),
       })
       .finalise()
     // (1) test swapped attesters pubkey positions in buildCombinedPresentation
@@ -152,7 +143,7 @@ describe('Test combined requests', () => {
       attesters,
       accumulators,
       disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-      reqUpdatesAfter: [dateBefore, dateBefore],
+      reqUpdatesAfter: [new Date(), new Date()],
     })
   })
   it('Should throw when using incorrect attester key', async () => {
@@ -162,7 +153,7 @@ describe('Test combined requests', () => {
         attesters: [attesters[0], attesters[0]],
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        reqUpdatesAfter: [dateBefore, dateBefore],
+        reqUpdatesAfter: [new Date(), new Date()],
       })
     ).rejects.toThrowError('ecdsa signature was invalid')
     await expect(
@@ -171,7 +162,7 @@ describe('Test combined requests', () => {
         attesters: [attesters[1], attesters[1]],
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        reqUpdatesAfter: [dateBefore, dateBefore],
+        reqUpdatesAfter: [new Date(), new Date()],
       })
     ).rejects.toThrowError('ecdsa signature was invalid')
   })
@@ -182,7 +173,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, []],
-        reqUpdatesAfter: [dateBefore, dateBefore],
+        reqUpdatesAfter: [new Date(), new Date()],
       })
     ).rejects.toThrow(
       'requested attributes should not be empty for the 2. credential'
@@ -193,7 +184,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [[], disclosedAttributes],
-        reqUpdatesAfter: [dateBefore, dateBefore],
+        reqUpdatesAfter: [new Date(), new Date()],
       })
     ).rejects.toThrow(
       'requested attributes should not be empty for the 1. credential'
@@ -206,7 +197,7 @@ describe('Test combined requests', () => {
         attesters: [attesters[0]],
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        reqUpdatesAfter: [dateBefore],
+        reqUpdatesAfter: [new Date()],
       })
     ).rejects.toThrow("Array lengths don't match up in combined setup")
   })
@@ -226,6 +217,7 @@ describe('Test combined requests', () => {
     let credentials: Credential[]
     let accAfterRev: Accumulator
     const revCredIdx = 1
+    const dateBeforeRev = new Date()
     beforeAll(async () => {
       const attestations = await Promise.all(
         attesters.map((attester, idx) =>
@@ -249,29 +241,19 @@ describe('Test combined requests', () => {
         attesters,
         accumulators,
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        reqUpdatesAfter: [dateBefore, dateBefore],
+        reqUpdatesAfter: [new Date(), new Date()],
         inputCredentials: credentials,
       })
     })
-    it('Should throw when verifier requests timestamp of revocation', async () => {
-      let success = false
-      try {
-        await expectCombinedSetupToBe(false, {
-          claimer,
-          attesters,
-          accumulators: [accumulators[0], accAfterRev],
-          disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-          reqUpdatesAfter: [
-            dateBefore,
-            await accAfterRev.getDate(attesters[1].publicKey),
-          ],
-          inputCredentials: credentials,
-        })
-        success = true
-      } catch (e) {
-        expect(e.message).toContain('Credential is outdated')
-      }
-      expect(success).toBe(false)
+    it('Should not verify when latest accumulators are used by verifier', async () => {
+      await expectCombinedSetupToBe(false, {
+        claimer,
+        attesters,
+        accumulators: [accumulators[0], accAfterRev],
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
+        reqUpdatesAfter: [new Date(), new Date()],
+        inputCredentials: credentials,
+      })
     })
     it('Should verify when timestamp of revoked credential is older than revocation', async () => {
       await expectCombinedSetupToBe(true, {
@@ -279,41 +261,19 @@ describe('Test combined requests', () => {
         attesters,
         accumulators: [accumulators[0], accAfterRev],
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        reqUpdatesAfter: [dateBefore, dateBefore],
+        reqUpdatesAfter: [new Date(), dateBeforeRev],
         inputCredentials: credentials,
       })
     })
-    it('Should throw when requesting a timestamp greater than the one of the credential', async () => {
-      let success = false
-      // first request has too new date
-      try {
-        await combinedSetup({
-          claimer,
-          attesters,
-          accumulators: [accumulators[0], accAfterRev],
-          disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-          reqUpdatesAfter: [new Date(), dateBefore],
-          inputCredentials: credentials,
-        })
-        success = true
-      } catch (e) {
-        expect(e.message).toContain('Credential is outdated')
-      }
-      // second request has too new date
-      try {
-        await combinedSetup({
-          claimer,
-          attesters,
-          accumulators: [accumulators[0], accAfterRev],
-          disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-          reqUpdatesAfter: [dateBefore, new Date()],
-          inputCredentials: credentials,
-        })
-        success = true
-      } catch (e) {
-        expect(e.message).toContain('Credential is outdated')
-      }
-      expect(success).toBe(false)
+    it('Should not verify when timestamp of revoked credential is newer than revocation', async () => {
+      await expectCombinedSetupToBe(false, {
+        claimer,
+        attesters,
+        accumulators: [accumulators[0], accAfterRev],
+        disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
+        reqUpdatesAfter: [new Date(), new Date()],
+        inputCredentials: credentials,
+      })
     })
     it('Should verify when no timestamp is required, i.e. is a non-revocation proof', async () => {
       await expectCombinedSetupToBe(true, {
@@ -321,7 +281,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators: [accumulators[0], accAfterRev],
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        reqUpdatesAfter: [dateBefore, undefined],
+        reqUpdatesAfter: [new Date(), undefined],
         inputCredentials: credentials,
       })
     })
@@ -331,7 +291,7 @@ describe('Test combined requests', () => {
         attesters,
         accumulators: [accumulators[0]],
         disclosedAttsArr: [disclosedAttributes, disclosedAttributes],
-        reqUpdatesAfter: [dateBefore],
+        reqUpdatesAfter: [new Date()],
         inputCredentials: credentials,
       })
     })

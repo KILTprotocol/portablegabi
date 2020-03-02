@@ -28,7 +28,6 @@ describe('Test claimer functionality', () => {
   let credential: Credential
   let attester2: Attester
   let accumulator2: Accumulator
-  const dateBefore = new Date()
 
   // get data from testSetup
   beforeAll(async () => {
@@ -64,42 +63,8 @@ describe('Test claimer functionality', () => {
     }))
   }, 20000)
 
-  function expectThrow(
-    credentialValue: string,
-    fn: 'getDate' | 'getUpdateCounter' = 'getDate'
-  ): void {
-    let success = false
-    const cred = new Credential(credentialValue)
-    if (fn === 'getDate') {
-      try {
-        cred.getDate()
-        success = true
-      } catch (e) {
-        expect(e.message).toEqual('Invalid credential, missing updated date')
-      }
-    } else {
-      try {
-        cred.getUpdateCounter()
-        success = true
-      } catch (e) {
-        expect(e.message).toEqual('Invalid credential, missing updateCounter')
-      }
-    }
-    expect(success).toBe(false)
-  }
-
   // run tests on valid data
   describe('Positive tests', () => {
-    it('Should return the date', () => {
-      const dateCred = credential.getDate()
-      expect(dateCred).toEqual(expect.anything())
-      expect(
-        Math.abs(dateCred.getTime() - dateBefore.getTime())
-      ).toBeLessThanOrEqual(10000)
-    })
-    it('Should return true in checkDate', () => {
-      expect(credential.checkDate(new Date(0))).toBe(true)
-    })
     it('Updates single credential and compares both versions (without revoking)', async () => {
       const updatedCred = await credential.updateSingle({
         attesterPubKey: attester.publicKey,
@@ -121,15 +86,6 @@ describe('Test claimer functionality', () => {
           accumulators: [revUpdate],
         })
       ).rejects.toThrowError('revoked')
-    })
-    it('Should throw when the required date is greater than the one of the credential', async () => {
-      const credDate = credential.getDate()
-      const greaterDate = new Date(credDate.getTime() + 1)
-      try {
-        expect(credential.checkDate(greaterDate)).not.toReturn()
-      } catch (e) {
-        expect(e.message).toContain('Credential is outdated')
-      }
     })
   })
   describe('Test updating with multiple accumulators', () => {
@@ -211,24 +167,31 @@ describe('Test claimer functionality', () => {
   })
   // run tests on invalid data
   describe('Negative tests', () => {
-    it('Should throw when calling getDate for invalid credential', async () => {
-      expectThrow('dummyCredential')
-      expectThrow(JSON.stringify({ credential: '' }))
-      expectThrow(JSON.stringify({ credential: { nonrevWitness: '' } }))
-      expectThrow(
-        JSON.stringify({ credential: { nonrevWitness: { Updated: '' } } })
-      )
-      expectThrow(
-        JSON.stringify({ credential: { nonrevWitness: { Updated: 1223213 } } })
-      )
-    })
-    it('Should throw when calling updateCounter for invalid credential', async () => {
-      expectThrow('dummyCredential', 'getUpdateCounter')
-      expectThrow(JSON.stringify({ updateCounter: 'NaN' }), 'getUpdateCounter')
-      expectThrow(
-        JSON.stringify({ notUpdateCounter: 'NaN' }),
-        'getUpdateCounter'
-      )
+    it('Should throw for invalid credential', async () => {
+      let success = false
+      try {
+        new Credential('dummyCredential').getUpdateCounter()
+        success = true
+      } catch (e) {
+        expect(e.message).toEqual('Invalid credential')
+      }
+      try {
+        new Credential(
+          JSON.stringify({ updateCounter: 'NaN' })
+        ).getUpdateCounter()
+        success = true
+      } catch (e) {
+        expect(e.message).toEqual('Invalid credential')
+      }
+      try {
+        new Credential(
+          JSON.stringify({ notUpdateCounter: 'NaN' })
+        ).getUpdateCounter()
+        success = true
+      } catch (e) {
+        expect(e.message).toEqual('Invalid credential')
+      }
+      expect(success).toBe(false)
     })
     it('Should throw in updateCredential with pubkey from different attester', async () => {
       await expect(

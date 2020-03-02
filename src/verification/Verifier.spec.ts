@@ -9,11 +9,11 @@ import {
   PresentationRequest,
   IPresentationRequest,
 } from '../types/Verification'
-import { IProof } from '../testSetup/testTypes'
+import { ICredential, IProof } from '../testSetup/testTypes'
 import Verifier from './Verifier'
 import Claimer from '../claim/Claimer'
 import { Witness } from '../types/Attestation'
-import { Presentation, ICredential } from '../types/Claim'
+import { Presentation } from '../types/Claim'
 import Attester from '../attestation/Attester'
 import Accumulator from '../attestation/Accumulator'
 import Credential from '../claim/Credential'
@@ -72,32 +72,6 @@ async function expectVerificationSucceeded(
   })
   expectSuccess(verified, presentationClaim)
   return { verified, presentationClaim }
-}
-
-// run presentationSetup and expect an error throw
-async function expectVerificationThrows(
-  errMsg:
-    | 'Credential is outdated'
-    | 'updateCredential' = 'Credential is outdated',
-  ...[
-    claimer,
-    attester,
-    credential,
-    requestedAttributes,
-    reqUpdatedAfter,
-    accumulator,
-  ]: Parameters<typeof expectVerificationFailed>
-): Promise<void> {
-  await expect(
-    presentationSetup({
-      claimer,
-      attester,
-      credential,
-      requestedAttributes,
-      reqUpdatedAfter,
-      accumulator,
-    })
-  ).rejects.toThrowError(errMsg)
 }
 
 function expectProofsNotToRevealData(proofA: IProof, proofB: IProof): boolean {
@@ -176,7 +150,7 @@ describe('Test verifier functionality', () => {
       attester,
       credential,
       accumulator,
-      reqUpdatedAfter: dateBeforeRev,
+      reqUpdatedAfter: new Date(),
     }))
   }, 10000)
 
@@ -217,8 +191,16 @@ describe('Test verifier functionality', () => {
         dateBeforeRev,
         accumulator
       )
+      await expectVerificationSucceeded(
+        claimer,
+        attester,
+        credential,
+        disclosedAttributes,
+        new Date(),
+        accumulator
+      )
     })
-    it('Should throw in presentationSetup for revoked credentials', async () => {
+    it('Verifies presentationSetup works as intended for revoked credentials', async () => {
       const {
         credential: credToBeRevoked,
         attestation: attestationRev,
@@ -234,26 +216,23 @@ describe('Test verifier functionality', () => {
         witnesses: [witnessRev],
       })
 
-      const dateOfRev = await accAfterRev.getDate(attester.publicKey)
-
       // expect failure when verifier uses latest accumulator
-      await expectVerificationThrows(
-        'updateCredential',
+      await expectVerificationFailed(
         claimer,
         attester,
         credToBeRevoked,
         disclosedAttributes,
-        dateOfRev,
+        new Date(),
         accAfterRev
       )
-      // expect success even when verifier uses new accumulator but timestamp before revocation
+      // expect success when verifier uses old accumulator in which credential has not been revoked
       await expectVerificationSucceeded(
         claimer,
         attester,
         credToBeRevoked,
         disclosedAttributes,
-        dateBeforeRev,
-        accAfterRev
+        new Date(),
+        accumulator
       )
 
       // test for build
@@ -261,13 +240,12 @@ describe('Test verifier functionality', () => {
         claimerSession: claimerSessionRev,
         attestation: attestationRev,
       })
-      await expectVerificationThrows(
-        'updateCredential',
+      await expectVerificationFailed(
         claimer,
         attester,
         credToBeRevokedBuilt,
         disclosedAttributes,
-        dateOfRev,
+        new Date(),
         accAfterRev
       )
       await expectVerificationSucceeded(
@@ -275,8 +253,8 @@ describe('Test verifier functionality', () => {
         attester,
         credToBeRevokedBuilt,
         disclosedAttributes,
-        dateBeforeRev,
-        accAfterRev
+        new Date(),
+        accumulator
       )
 
       // test for update
@@ -284,13 +262,12 @@ describe('Test verifier functionality', () => {
         attesterPubKey: attester.publicKey,
         accumulators: [accumulator],
       })
-      await expectVerificationThrows(
-        'updateCredential',
+      await expectVerificationFailed(
         claimer,
         attester,
         credToBeRevokedUpdated,
         disclosedAttributes,
-        dateOfRev,
+        new Date(),
         accAfterRev
       )
       await expectVerificationSucceeded(
@@ -298,8 +275,8 @@ describe('Test verifier functionality', () => {
         attester,
         credToBeRevokedUpdated,
         disclosedAttributes,
-        dateBeforeRev,
-        accAfterRev
+        new Date(),
+        accumulator
       )
     })
     // this is intended to work since the original claim data is already hidden inside the credential
@@ -324,7 +301,7 @@ describe('Test verifier functionality', () => {
         attester,
         uCred,
         disclosedAttributes,
-        dateBeforeRev,
+        new Date(),
         accumulator
       )
     })
@@ -332,7 +309,7 @@ describe('Test verifier functionality', () => {
       // verifier #2 sends same challenge (i.e. presentationRequest) as verifier #1
       const { session: vSessionFakedReq } = await Verifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqUpdatedAfter: dateBeforeRev,
+        reqUpdatedAfter: new Date(),
       })
       const presFakedReq = await claimer.buildPresentation({
         credential,
@@ -364,7 +341,7 @@ describe('Test verifier functionality', () => {
         session: verifierSession2,
       } = await Verifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqUpdatedAfter: dateBeforeRev,
+        reqUpdatedAfter: new Date(),
       })
       const proof2 = await claimer.buildPresentation({
         credential,
@@ -378,7 +355,7 @@ describe('Test verifier functionality', () => {
         session: verifierSession3,
       } = await Verifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqUpdatedAfter: dateBeforeRev,
+        reqUpdatedAfter: new Date(),
       })
       const proof3 = await claimer.buildPresentation({
         credential,
@@ -423,25 +400,22 @@ describe('Test verifier functionality', () => {
         accumulator,
         witnesses: [witness],
       })
-      const dateOfRev = await accAfterRev.getDate(attester.publicKey)
-
       // verifier requests newer timestamp but uses accumulator in which credential is still valid
       await expectVerificationSucceeded(
         claimer,
         attester,
         credential,
         disclosedAttributes,
-        dateBeforeRev,
+        new Date(),
         accumulator
       )
       // verifier uses newest accumulator in which credential is revoked
-      await expectVerificationThrows(
-        'updateCredential',
+      await expectVerificationFailed(
         claimer,
         attester,
         credential,
         disclosedAttributes,
-        dateOfRev,
+        new Date(),
         accAfterRev
       )
     })
@@ -480,11 +454,9 @@ describe('Test verifier functionality', () => {
         accumulator,
         witnesses: [witnessRev],
       })
-      const dateOfRev = await accAfterRev.getDate(attester.publicKey)
 
       // credential is still verifiable but it wasn't updated after revocation
-      await expectVerificationThrows(
-        'Credential is outdated',
+      await expectVerificationFailed(
         claimer,
         attester,
         credential,
@@ -501,7 +473,7 @@ describe('Test verifier functionality', () => {
           accumulators: [accAfterRev],
         }),
         disclosedAttributes,
-        dateOfRev,
+        new Date(),
         accAfterRev
       )
     })
@@ -510,8 +482,7 @@ describe('Test verifier functionality', () => {
         accumulator,
         witnesses: [witness],
       })
-      const dateOfRev = await accAfterRev.getDate(attester.publicKey)
-      // expect success when not requesting a revocation-proof by not sending reqUpdatedAfter
+      // expect success when not sending requesting a revocation-proof by not sending reqUpdatedAfte
       await expectVerificationSucceeded(
         claimer,
         attester,
@@ -519,35 +490,26 @@ describe('Test verifier functionality', () => {
         disclosedAttributes,
         undefined
       )
-      // expect success when not sending reqUpdatedAfter but new accumulator
       await expectVerificationSucceeded(
         claimer,
         attester,
         credential,
         disclosedAttributes,
         undefined,
-        accAfterRev
+        accumulator
       )
       // expect failure when sending reqUpdatedAfter
-      await expectVerificationThrows(
-        'updateCredential',
+      await expectVerificationFailed(
         claimer,
         attester,
         credential,
         disclosedAttributes,
-        dateOfRev,
+        new Date(),
         accAfterRev
       )
     })
   })
   describe('Negative tests', () => {
-    it('Should throw when requesting date from invalid presentationReq', async () => {
-      try {
-        new PresentationRequest('dummy').getDate()
-      } catch (e) {
-        expect(e.message).toContain('Invalid presentation request')
-      }
-    })
     it('Should throw error and not "panic" when verifier requires revocation proof but does not use accumulator', async () => {
       await expect(
         presentationSetup({
@@ -555,7 +517,7 @@ describe('Test verifier functionality', () => {
           attester,
           credential,
           requestedAttributes: disclosedAttributes,
-          reqUpdatedAfter: dateBeforeRev,
+          reqUpdatedAfter: new Date(),
         })
       ).rejects.toThrowError(
         'Missing accumulator for requested revocation proof'
@@ -591,7 +553,7 @@ describe('Test verifier functionality', () => {
         attester,
         uCred,
         disclosedAttributes,
-        dateBeforeRev,
+        new Date(),
         accumulator
       )
     })
@@ -620,7 +582,7 @@ describe('Test verifier functionality', () => {
           attester,
           uCred,
           disclosedAttributes,
-          dateBeforeRev,
+          new Date(),
           accumulator
         )
       ).rejects.toThrow('missing magic byte')
@@ -632,7 +594,7 @@ describe('Test verifier functionality', () => {
         session: verifierSession2,
       } = await Verifier.requestPresentation({
         requestedAttributes: disclosedAttributes,
-        reqUpdatedAfter: dateBeforeRev,
+        reqUpdatedAfter: new Date(),
       })
       const proof2 = await claimer.buildPresentation({
         credential,
@@ -670,7 +632,7 @@ describe('Test verifier functionality', () => {
           credential,
           requestedAttributes: disclosedAttributes,
           accumulator,
-          reqUpdatedAfter: dateBeforeRev,
+          reqUpdatedAfter: new Date(),
         })
       ).rejects.toThrow('ecdsa signature was invalid')
       // use use attester2's pk instead of attester's one
@@ -719,7 +681,7 @@ describe('Test verifier functionality', () => {
         attester,
         new Credential(JSON.stringify(credObj)),
         disclosedAttributes,
-        dateBeforeRev,
+        new Date(),
         accumulator
       )
       credObj2.claim = {
@@ -738,7 +700,7 @@ describe('Test verifier functionality', () => {
         attester,
         new Credential(JSON.stringify(credObj2)),
         disclosedAttributes,
-        dateBeforeRev,
+        new Date(),
         accumulator
       )
     })

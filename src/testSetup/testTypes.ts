@@ -15,6 +15,28 @@ export interface IAttestationRequest {
 }
 
 export interface IAttesterSignSession {
+  //   GabiIssuer: {
+  //     Sk: {
+  //       XMLName: { Space: string; Local: string }
+  //       Counter: number
+  //       ExpiryDate: number
+  //       P: string
+  //       Q: string
+  //       PPrime: string
+  //       QPrime: string
+  //     }
+  //     Pk: {
+  //       XMLName: { Space: string; Local: string }
+  //       Counter: number
+  //       ExpiryDate: number
+  //       N: string
+  //       Z: string
+  //       S: string
+  //       R: string[]
+  //       EpochLength: number
+  //       Params: { [publicParam: string]: number }
+  //       Issuer: string
+  //     }
   context: string
 }
 
@@ -46,6 +68,35 @@ export interface IClaimerSession {
   claim: {
     ctype: string
     contents: any
+  }
+}
+
+export interface IIssueAttestation {
+  nonrev: {
+    Updated: string
+    e: string
+    sacc: {
+      data: string
+      pk: number
+    }
+  }
+  proof: {
+    c: string
+    e_response: string
+  }
+  signature: {
+    A: 'string'
+    KeyShareP: string | null
+    e: string
+    v: string
+  }
+}
+export interface ICredential<Claim> {
+  claim: Claim
+  credential: {
+    attributes: string[]
+    nonrevWitness: IIssueAttestation['nonrev']
+    signature: IIssueAttestation['signature']
   }
 }
 
