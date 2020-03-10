@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"syscall/js"
 
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
@@ -85,7 +86,7 @@ func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[3].String()), issuerPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	session, msg, err := claimer.RequestAttestationForClaim(issuerPubKey, handshakeMsg, claim)
@@ -127,7 +128,7 @@ func BuildCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	return credential, nil
 }
 
-// BuildPresentation creates a proof that the claimer posseses the requested
+// BuildPresentation creates a proof that the claimer possesses the requested
 // attributes. This method takes as input the private key of the claimer, the
 // credential which contains the requested attributes, a json encoded list
 // containing the requested attributes and the public key of the attester.
@@ -151,7 +152,7 @@ func BuildPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[3].String()), issuerPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	disclosedAttr, err := claimer.BuildPresentation(issuerPubKey, credential, request)
@@ -180,7 +181,7 @@ func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, e
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[3].String()), &attesterPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	disclosedAttr, err := claimer.BuildCombinedPresentation(attesterPubKey, creds, request)
@@ -206,7 +207,7 @@ func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), issuerPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	if err := credential.Update(issuerPubKey, update); err != nil {
@@ -231,7 +232,7 @@ func UpdateAllCredential(this js.Value, inputs []js.Value) (interface{}, error) 
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), issuerPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	if err := credential.UpdateAll(issuerPubKey, updates); err != nil {
