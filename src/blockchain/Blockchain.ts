@@ -145,7 +145,7 @@ export default class Blockchain implements IBlockchainApi {
     }
     const endIndex = _endIndex || (await this.getMaxIndex(address))
     // create [[address, startIndex], ..., [address, endIndex]] for multi query
-    const multiQuery = new Array(endIndex - startIndex)
+    const multiQuery = new Array(endIndex - startIndex + 1)
       .fill(startIndex)
       .map((x, i) => [address, x + i])
 
