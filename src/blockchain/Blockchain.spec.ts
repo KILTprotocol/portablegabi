@@ -75,7 +75,7 @@ describe('chain mocks', () => {
     })
   })
   describe('Negative tests', () => {
-    it('Should throw error for swapped indices', async () => {
+    it('Should throw error for swapped indices when requesting accumulator array', async () => {
       api.query.portablegabi.accumulatorList.mockResolvedValue(
         (stringToHex('currAccumulator') as unknown) as Promise<Codec>
       )
@@ -83,7 +83,7 @@ describe('chain mocks', () => {
         BlockchainMock.getAccumulatorArray(dummyAddress, 4, 1)
       ).rejects.toThrowError()
     })
-    it('Should throw error when out of range', async () => {
+    it('Should throw error when accumulator array index out is of range', async () => {
       api.query.portablegabi.accumulatorList.mockResolvedValue(
         (stringToHex('currAccumulator') as unknown) as Promise<Codec>
       )
