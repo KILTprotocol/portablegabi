@@ -61,8 +61,36 @@ describe('chain mocks', () => {
       )
       expect(latestAccumulator.valueOf()).toBe(newAccumulator.valueOf())
     })
+    it('Should getAccumulatorArray', async () => {
+      api.query.portablegabi.accumulatorList.mockResolvedValue(
+        (stringToHex('currAccumulator') as unknown) as Promise<Codec>
+      )
+      const currAccumulators = await BlockchainMock.getAccumulatorArray(
+        dummyAddress,
+        1,
+        4
+      )
+      expect(Array.isArray(currAccumulators)).toBeTruthy()
+      expect(currAccumulators.length).toEqual(4)
+    })
   })
   describe('Negative tests', () => {
+    it('Should throw error for swapped indices', async () => {
+      api.query.portablegabi.accumulatorList.mockResolvedValue(
+        (stringToHex('currAccumulator') as unknown) as Promise<Codec>
+      )
+      expect(
+        BlockchainMock.getAccumulatorArray(dummyAddress, 4, 1)
+      ).rejects.toThrowError()
+    })
+    it('Should throw error when out of range', async () => {
+      api.query.portablegabi.accumulatorList.mockResolvedValue(
+        (stringToHex('currAccumulator') as unknown) as Promise<Codec>
+      )
+      expect(
+        BlockchainMock.getAccumulatorArray(dummyAddress, 999999999)
+      ).rejects.toThrowError()
+    })
     it('Should throw for empty accumulatorList (maxIndex === -1)', async () => {
       const accCount = 0
       const requestedIndex = 1
