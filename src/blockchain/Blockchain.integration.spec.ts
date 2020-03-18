@@ -11,7 +11,7 @@ import { pubKey, privKey, pubKey2, privKey2 } from '../testSetup/testConfig'
 import Attester from '../attestation/Attester.chain'
 import Accumulator from '../attestation/Accumulator'
 
-describe('when I have a brand new Portable Gabi', async () => {
+describe('when I have a brand new Portable Gabi', () => {
   const bcProm = getCached({ pgabiModName: 'portablegabiPallet' })
 
   const aliceProm = Attester.buildFromURI(pubKey, privKey, '//Alice')
