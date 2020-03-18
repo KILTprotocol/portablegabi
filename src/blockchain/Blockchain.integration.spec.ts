@@ -10,21 +10,26 @@ import { getCached } from '../blockchainApiConnection/BlockchainApiConnection'
 import { pubKey, privKey, pubKey2, privKey2 } from '../testSetup/testConfig'
 import Attester from '../attestation/Attester.chain'
 import Accumulator from '../attestation/Accumulator'
+import Blockchain from './Blockchain'
+
+let bc: Blockchain
+let alice: Attester
+let bob: Attester
+
+beforeAll(async () => {
+  alice = await Attester.buildFromURI(pubKey, privKey, '//Alice')
+  bob = await Attester.buildFromURI(pubKey2, privKey2, '//Bob')
+})
 
 describe('when I have a brand new Portable Gabi', () => {
-  const bcProm = getCached({ pgabiModName: 'portablegabiPallet' })
-
-  const aliceProm = Attester.buildFromURI(pubKey, privKey, '//Alice')
-
-  const bobProm = Attester.buildFromURI(pubKey2, privKey2, '//Bob')
-
   test('it connects', async () => {
-    expect((await bcProm).api.isReady).toBeTruthy()
+    bc = await getCached({ pgabiModName: 'portablegabiPallet' })
+    expect(bc.api.isReady).toBeTruthy()
   })
 
   describe('positive tests', () => {
     test('I can put stuff in it', async () => {
-      const [att1, bc] = await Promise.all([aliceProm, bcProm])
+      const att1 = alice
 
       const acc = await att1.createAccumulator()
       await att1.updateAccumulator(acc)
@@ -38,7 +43,7 @@ describe('when I have a brand new Portable Gabi', () => {
     }, 10_000)
 
     test('another can put their stuff in it at the same time', async () => {
-      const [att2, bc] = await Promise.all([bobProm, bcProm])
+      const att2 = bob
 
       const acc = await att2.createAccumulator()
       await att2.updateAccumulator(acc)
@@ -50,7 +55,7 @@ describe('when I have a brand new Portable Gabi', () => {
     }, 10_000)
 
     test('if you put a lot of stuff in, it accumulates', async () => {
-      const [att1, bc] = await Promise.all([aliceProm, bcProm])
+      const att1 = alice
 
       const baseline = await bc.getAccumulatorCount(att1.address)
       let acc = await bc.getLatestAccumulator(att1.address)
@@ -73,7 +78,7 @@ describe('when I have a brand new Portable Gabi', () => {
     }, 30_000)
 
     test('you can even find the stuff you put in earlier', async () => {
-      const [att1, bc] = await Promise.all([aliceProm, bcProm])
+      const att1 = alice
 
       const baseline = await bc.getAccumulatorCount(att1.address)
 
@@ -104,8 +109,6 @@ describe('when I have a brand new Portable Gabi', () => {
 
   describe('negative tests', () => {
     test('query from unknown attester', async () => {
-      const bc = await bcProm
-
       const att = await Attester.buildFromMnemonic(
         pubKey,
         privKey,
@@ -121,8 +124,6 @@ describe('when I have a brand new Portable Gabi', () => {
     })
 
     test('throws when querying index out of range', async () => {
-      const [alice, bc] = await Promise.all([aliceProm, bcProm])
-
       const AccNum = await bc.getAccumulatorCount(alice.address)
 
       await Promise.all([
@@ -134,6 +135,6 @@ describe('when I have a brand new Portable Gabi', () => {
   })
 
   test('it disconnects', async () => {
-    await getCached().then(bc => bc.api.disconnect())
+    await getCached().then(bch => bch.api.disconnect())
   })
 })
