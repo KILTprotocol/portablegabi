@@ -10,6 +10,10 @@ Note that due to the usage of a Go WASM via callbacks, all functions are asynchr
 
 This module can be used with and without a substrate based blockchain. However, it was designed to be used with a chain acting as a decentralised storage of each attester's accumulator versions. All processes tied to chain activity can be found in files with `chain` suffix. In order to use them, you are required to have an active [substrate](https://www.parity.io/substrate/) blockchain implementing the [`portablegabi-pallet`](https://github.com/KILTprotocol/portablegabi-pallet). You could clone and set up this [`portablegabi-node`](https://github.com/KILTprotocol/portablegabi-node) basic substrate template implementing the portablegabi-pallet.
 
+## Tutorial
+
+We recommend visiting our [Portablegabi tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/) to explore the library with the best possible experience.
+
 ## Installing
 
 To build the package, you need to have [GO](https://golang.org/) and [dep](https://github.com/golang/dep) installed.
@@ -141,3 +145,5 @@ credential = await claimer.updateCredential({
 
 - all numbers inside a claim are handled as `float64`
 - arrays are handled as a single attribute. Disclosing a value inside an array is only possible if the whole array is disclosed.
+
+![](./web3_foundation_grants_badge_black.svg)

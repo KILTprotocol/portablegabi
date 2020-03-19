@@ -12,8 +12,6 @@ We split both types of examples into the following three processes:
 
 ### On-chain processes
 
-TODO: Publish portable-gabi pallet and node?
-
 You are required to have an active [substrate](https://www.parity.io/substrate/) blockchain implementing the [`portablegabi-pallet`](https://github.com/KILTprotocol/portablegabi-pallet). You could clone and set up this [`portablegabi-node`](https://github.com/KILTprotocol/portablegabi-node) basic substrate template implementing the portablegabi-pallet.
 
 1. [actorProcess](./onchain/1_actorProcess.ts) - Creation of claimer, attester(s) and accumulator retrieval of chain or storage if missing
