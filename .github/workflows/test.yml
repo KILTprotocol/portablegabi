@@ -101,7 +101,7 @@ jobs:
         ls
         mv wasm build/wasm
         yarn install --frozen-lockfile
-        docker run -d --rm -p 9944:9944 kiltprotocol/portablegabi-node ./target/release/mashnet-node --dev --ws-port 9944 --ws-external
+        docker run -d --rm -p 9944:9944 kiltprotocol/portablegabi-node --dev --ws-port 9944 --ws-external
         sleep 5s
         yarn test:integration
         docker stop $(docker ps -f ancestor=kiltprotocol/portablegabi-node -q)
