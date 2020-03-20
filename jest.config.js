@@ -15,4 +15,5 @@ module.exports = {
   coverageDirectory: '../coverage',
   globalTeardown: './testSetup/jest.teardown.js',
   testTimeout: 10000,
+  runner: "groups",
 }

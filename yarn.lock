@@ -2757,6 +2757,14 @@ jest-resolve@^25.1.0:
     jest-pnp-resolver "^1.2.1"
     realpath-native "^1.1.0"
 
+jest-runner-groups@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/jest-runner-groups/-/jest-runner-groups-1.1.1.tgz#14618a1b6de312abbcc92b5aa42fcb36332acc20"
+  integrity sha512-6EkoCbZxkI6WVTUHPIK29nepLINkcvnIagsjtyjlWaFarcwpv0vkrPpvU2Gy+4F8L7akcDcysZ436eaDjXwsDw==
+  dependencies:
+    jest-docblock "^25.1.0"
+    jest-runner "^25.1.0"
+
 jest-runner@^25.1.0:
   version "25.1.0"
   resolved "https://registry.yarnpkg.com/jest-runner/-/jest-runner-25.1.0.tgz#fef433a4d42c89ab0a6b6b268e4a4fbe6b26e812"

@@ -6,11 +6,12 @@
   "typings": "./build/index.d.ts",
   "scripts": {
     "_comment": "NODE_ENV=custom is set because otherwise tests won't compile (see https://github.com/polkadot-js/common/issues/321)",
-    "test": "yarn build && export NODE_ENV=custom; jest",
+    "test": "yarn build && export NODE_ENV=custom; jest --group=-integration",
     "test -c": "yarn test --coverage",
-    "testf": "export NODE_ENV=custom; jest",
+    "testf": "export NODE_ENV=custom; jest --group=-integration",
     "testf -c": "yarn test quick --coverage",
-    "testWatch": "jest --watch --coverage",
+    "testWatch": "jest --watch --coverage --group=-integration",
+    "test:integration": "export NODE_ENV=custom;jest --bail --runInBand --group=integration",
     "lint": "eslint 'src/**'",
     "lint:fix": "yarn lint --fix",
     "style": "prettier -l src/**/*.ts",
@@ -59,6 +60,7 @@
     "@polkadot/rpc-provider": "^1.1.1",
     "@polkadot/types": "^1.1.1",
     "@polkadot/util": "^2.2.1",
-    "@polkadot/util-crypto": "^2.2.1"
+    "@polkadot/util-crypto": "^2.2.1",
+    "jest-runner-groups": "^1.1.1"
   }
 }
