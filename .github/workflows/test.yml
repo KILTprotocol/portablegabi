@@ -1,45 +1,43 @@
 name: Test
 on: [push]
 jobs:
-
   testgo:
     name: Go Tests
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.14
+        id: go
 
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.13
-      id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
+      - shell: bash
+        run: |
+          export GOPATH=$HOME/go
+          export GOBIN=$(go env GOPATH)/bin
+          export PATH=$PATH:$GOPATH
+          export PATH=$PATH:$GOBIN
+          mkdir -p $GOPATH/pkg
+          mkdir -p $GOBIN
+          mkdir -p $GOPATH/src/github.com/$GITHUB_REPOSITORY
+          mv ./* $GOPATH/src/github.com/$GITHUB_REPOSITORY
+          cd $GOPATH/src/github.com/$GITHUB_REPOSITORY/go-wasm
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              dep ensure
+          fi
+          go test -v ./...
+          env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go
+          realpath ../build/wasm/main.wasm
 
-    - shell: bash
-      run: |
-        export GOPATH=$HOME/go
-        export GOBIN=$(go env GOPATH)/bin
-        export PATH=$PATH:$GOPATH
-        export PATH=$PATH:$GOBIN
-        mkdir -p $GOPATH/pkg
-        mkdir -p $GOBIN
-        mkdir -p $GOPATH/src/github.com/$GITHUB_REPOSITORY
-        mv ./* $GOPATH/src/github.com/$GITHUB_REPOSITORY
-        cd $GOPATH/src/github.com/$GITHUB_REPOSITORY/go-wasm
-        if [ -f Gopkg.toml ]; then
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
-        fi
-        go test -v ./...
-        env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go
-        realpath ../build/wasm/main.wasm
-
-    - name: Upload WASM
-      uses: actions/upload-artifact@v1
-      with:
-        name: wasm
-        path: ../../../go/src/github.com/${{ github.repository }}/build/wasm/main.wasm
+      - name: Upload WASM
+        uses: actions/upload-artifact@v1
+        with:
+          name: wasm
+          path: ../../../go/src/github.com/${{ github.repository }}/build/wasm/main.wasm
 
   testts:
     runs-on: ubuntu-latest
@@ -51,30 +49,30 @@ jobs:
         node-version: [10.x, 12.x]
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v1
+      - name: Check out code
+        uses: actions/checkout@v1
 
-    - name: Download wasm for Go Tests
-      uses: actions/download-artifact@v1
-      with:
-        name: wasm
+      - name: Download wasm for Go Tests
+        uses: actions/download-artifact@v1
+        with:
+          name: wasm
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-  
-    - name: yarn install, build, and test
-      run: |
-        mkdir -p build
-        ls
-        mv wasm build/wasm
-        yarn install --frozen-lockfile
-        yarn lint
-        yarn build:typescript
-        yarn testf
-      env:
-        CI: true
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: yarn install, build, and test
+        run: |
+          mkdir -p build
+          ls
+          mv wasm build/wasm
+          yarn install --frozen-lockfile
+          yarn lint
+          yarn build:typescript
+          yarn testf
+        env:
+          CI: true
 
   testintegration:
     runs-on: ubuntu-latest
@@ -82,28 +80,28 @@ jobs:
     needs: testgo
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v1
+      - name: Check out code
+        uses: actions/checkout@v1
 
-    - name: Download wasm for Go Tests
-      uses: actions/download-artifact@v1
-      with:
-        name: wasm
+      - name: Download wasm for Go Tests
+        uses: actions/download-artifact@v1
+        with:
+          name: wasm
 
-    - name: Use Node.js 10.x
-      uses: actions/setup-node@v1
-      with:
-        node-version: 10
-  
-    - name: yarn install and test
-      run: |
-        mkdir -p build
-        ls
-        mv wasm build/wasm
-        yarn install --frozen-lockfile
-        docker run -d --rm -p 9944:9944 kiltprotocol/portablegabi-node --dev --ws-port 9944 --ws-external
-        sleep 5s
-        yarn test:integration
-        docker stop $(docker ps -f ancestor=kiltprotocol/portablegabi-node -q)
-      env:
-        CI: true
+      - name: Use Node.js 10.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+
+      - name: yarn install and test
+        run: |
+          mkdir -p build
+          ls
+          mv wasm build/wasm
+          yarn install --frozen-lockfile
+          docker run -d --rm -p 9944:9944 kiltprotocol/portablegabi-node --dev --ws-port 9944 --ws-external
+          sleep 5s
+          yarn test:integration
+          docker stop $(docker ps -f ancestor=kiltprotocol/portablegabi-node -q)
+        env:
+          CI: true
