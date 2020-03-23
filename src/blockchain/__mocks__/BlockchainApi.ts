@@ -9,7 +9,7 @@ const api = {
       updateAccumulator: jest.fn(
         async (accumulator: Accumulator): Promise<void> => {
           // mock new accumulator list
-          await api.query.portablegabi.accumulatorList.mockReturnValue(
+          api.query.portablegabi.accumulatorList.mockReturnValue(
             (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
           )
         }

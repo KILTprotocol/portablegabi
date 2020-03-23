@@ -100,7 +100,8 @@ export function clearCache(): void {
 export async function disconnect(
   host: string = DEFAULT_WS_ADDRESS
 ): Promise<void> {
-  await (await getCached({ host })).api.disconnect()
+  const bc = await getCached({ host })
+  bc.api.disconnect()
   clearCache()
 }
 

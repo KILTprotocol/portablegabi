@@ -21,7 +21,7 @@ describe('Test accumulator', () => {
   it('Should return the accumulators timestamp', async () => {
     const compTimestamp = new Date().getTime()
     const accumulator2 = await attester.createAccumulator()
-    const accTimestamp = await (
+    const accTimestamp = (
       await accumulator2.getDate(attester.publicKey)
     ).getTime()
     expect(Math.abs(accTimestamp - compTimestamp)).toBeLessThanOrEqual(1000)
