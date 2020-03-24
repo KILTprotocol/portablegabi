@@ -30,7 +30,7 @@ async function completeProcessCombined({
   reqNonRevocationProofArr = [true, true],
 }: {
   blockchain: Blockchain
-  expectedVerificationOutcome: boolean | 'error'
+  expectedVerificationOutcome: boolean
   doRevocation: boolean
   reqUpdatedAfter: [Date, Date]
   reqNonRevocationProofArr: [boolean, boolean]
@@ -88,24 +88,18 @@ async function completeProcessCombined({
       await blockchain.getAccumulatorCount(attester1.address)
     )
   }
-  let achievedExpectedOutcome = false
-  // we need to try and catch since we expect an error throw when we set reqUpdatedAfter to some future date
-  try {
-    const { verified } = await verificationProcessCombinedChain({
-      claimer,
-      attesters: [attester1, attester2],
-      credentials: [credential1, credential2],
-      requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
-      reqUpdatedAfter,
-      reqNonRevocationProofArr, // check revocation status
-    })
-    achievedExpectedOutcome = expectedVerificationOutcome === verified
-  } catch (e) {
-    console.log('Error was thrown')
-    achievedExpectedOutcome =
-      expectedVerificationOutcome === 'error' &&
-      e.message.includes('Credential is outdated')
-  }
+  // verify credential with revocation check
+  const { verified } = await verificationProcessCombinedChain({
+    claimer,
+    attesters: [attester1, attester2],
+    credentials: [credential1, credential2],
+    requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
+    reqUpdatedAfter,
+    reqNonRevocationProofArr, // check revocation status
+  })
+
+  // check outcome
+  const achievedExpectedOutcome = expectedVerificationOutcome === verified
   console.groupEnd()
   console.log(`Expected outcome achieved? ${achievedExpectedOutcome}`)
   return achievedExpectedOutcome
@@ -132,29 +126,29 @@ async function completeProcessCombinedExamples(): Promise<void> {
     reqNonRevocationProofArr: [true, true],
   })
 
-  // without credential revocation but required dates in future => should throw
+  // without credential revocation but required dates in future => should verify
   await completeProcessCombined({
     blockchain,
-    expectedVerificationOutcome: 'error',
+    expectedVerificationOutcome: true,
     doRevocation: false,
     reqUpdatedAfter: [future, past],
     reqNonRevocationProofArr: [true, false],
   })
   await completeProcessCombined({
     blockchain,
-    expectedVerificationOutcome: 'error',
+    expectedVerificationOutcome: true,
     doRevocation: false,
     reqUpdatedAfter: [past, future],
     reqNonRevocationProofArr: [false, true],
   })
 
-  // with revocation of 2nd credential and required date in future => should throw
+  // with revocation of 2nd credential and required date in future => should not verify
   await completeProcessCombined({
     blockchain,
-    expectedVerificationOutcome: 'error',
+    expectedVerificationOutcome: false,
     doRevocation: true,
     reqUpdatedAfter: [future, future],
-    reqNonRevocationProofArr: [false, true],
+    reqNonRevocationProofArr: [true, true],
   })
 
   // with revocation of 2nd credential but required date in past => should verify
