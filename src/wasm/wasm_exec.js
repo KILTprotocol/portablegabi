@@ -13,13 +13,15 @@ if (typeof global !== 'undefined') {
   )
 }
 
-if (!global.require && typeof require !== 'undefined') {
-  global.require = require
-}
+try {
+  if (!global.require && typeof require !== 'undefined') {
+    global.require = require
+  }
 
-if (!global.fs && global.require) {
-  global.fs = require('fs')
-}
+  if (!global.fs && global.require) {
+    global.fs = require('fs')
+  }
+} catch (e) {}
 
 const enosys = () => {
   const err = new Error('not implemented')
@@ -633,14 +635,29 @@ class Go {
 
 class WasmError extends Error {}
 
+async function getWasmBuffer(
+  source = path.resolve(__dirname, '../../build/wasm/main.wasm')
+) {
+  let buffer
+  // creater buffer from WASM file
+  try {
+    buffer = fs.readFileSync(source)
+    return buffer
+  } catch (e) {
+    // need to fetch in case of browser usage
+    console.log('Caught error', e)
+    if (e.message.includes('fs.readFileSync is not a function')) {
+      return fetch(source).then(response => response.arrayBuffer())
+    }
+  }
+  throw new Error(`Unable to create buffer from source file ${source}`)
+}
+
 class GoWasm extends Go {
   static async init() {
     const go = new Go()
     // instantiate WASM
-    await WebAssembly.instantiate(
-      fs.readFileSync(path.resolve(__dirname, '../../build/wasm/main.wasm')),
-      go.importObject
-    )
+    await WebAssembly.instantiate(await getWasmBuffer(), go.importObject)
       .then(result => {
         process.on('exit', code => {
           // Node.js exits if no event handler is pending
