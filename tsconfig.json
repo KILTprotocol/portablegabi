@@ -4,7 +4,7 @@
     "outDir": "build",
     "module": "commonjs",
     "target": "es2017",
-    "lib": ["es6"],
+    "lib": ["es6", "dom"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -30,7 +30,8 @@
     "src/attestation/Attester.ts",
     "src/claim/Claimer.ts",
     "src/verification/Verifier.ts",
-    "src/Teardown.js"
+    "src/Teardown.js",
+    "src/browser/browser.ts"
   ],
   "exclude": ["node_modules", "build"]
 }
