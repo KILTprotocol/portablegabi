@@ -36,6 +36,7 @@ import {
 } from '../types/Verification'
 import goWasmClose from '../wasm/wasm_exec_wrapper'
 
+/* eslint-disable dot-notation */
 global['portablegabi'] = {
   Claimer,
   ClaimError,

@@ -30,8 +30,7 @@
     "src/attestation/Attester.ts",
     "src/claim/Claimer.ts",
     "src/verification/Verifier.ts",
-    "src/Teardown.js",
-    "src/browser/browser.ts"
+    "src/Teardown.js"
   ],
-  "exclude": ["node_modules", "build"]
+  "exclude": ["node_modules", "build", "src/browser"]
 }
