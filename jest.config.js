@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'ts-jest',
+  rootDir: 'src',
   testEnvironment: '../jest.env.js',
   clearMocks: true,
   coverageThreshold: {
@@ -10,10 +11,14 @@ module.exports = {
       statements: 90,
     },
   },
-  collectCoverageFrom: ['**/*.ts', '!index.ts'],
-  rootDir: 'src',
+  collectCoverageFrom: [
+    '**/*.ts',
+    '!index.ts',
+    '!<rootDir>/browser/browser.ts',
+  ],
+  testPathIgnorePatterns: ['<rootDir>/browser/browser.ts'],
   coverageDirectory: '../coverage',
   globalTeardown: './testSetup/jest.teardown.js',
   testTimeout: 10000,
-  runner: "groups",
+  runner: 'groups',
 }
