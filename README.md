@@ -144,6 +144,22 @@ const {
   latestAccumulator: accumulator, // the newest available accumulator
 })
 console.log('Verifier verifiers proof:\n\t', verified, verifiedClaim)
+
+/* (5) Revocation */
+
+// Revoke the witness of a credential.
+const accumulatorAfterRevocation = await attester.revokeAttestation({
+  accumulator,
+  witnesses: [other_witness, ...],
+})
+
+// All claimers have to update their own credential with the new update.
+// This will only work for non revoked credentials.
+credential = await claimer.updateCredential({
+  credential,
+  attesterPubKey: attester.publicKey,
+  accumulator: accumulatorAfterRevocation,
+})
 ```
 
 # Troubleshooting
