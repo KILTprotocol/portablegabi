@@ -37,7 +37,15 @@ pushd go-wasm && go test ./... && popd
 
 ## Run in the browser
 
-It is also possible to use the Portablegabi API in the browser. Just include our [`browserBundle.js`](docs/examples/browser/browserBundle.js) and call methods from the `portablegabi` endpoint. See our [browser example](docs/examples/README.md#run-in-the-browser) for more information.
+It is also possible to use the Portablegabi API in the browser.
+For that, you first need to bundle the library with webpack
+
+```bash
+yarn webpack
+```
+
+Then, you can include the created [`browserBundle.js`](docs/examples/browser/browserBundle.js) and call methods from the `portablegabi` endpoint.
+See our [browser example section](docs/examples/README.md#run-in-the-browser) for more information.
 
 ```html
 <script src="browserBundle.js"></script>
