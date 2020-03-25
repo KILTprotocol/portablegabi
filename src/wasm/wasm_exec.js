@@ -13,15 +13,13 @@ if (typeof global !== 'undefined') {
   )
 }
 
-try {
-  if (!global.require && typeof require !== 'undefined') {
-    global.require = require
-  }
+if (!global.require && typeof require !== 'undefined') {
+  global.require = require
+}
 
-  if (!global.fs && global.require) {
-    global.fs = require('fs')
-  }
-} catch (e) {}
+if (!global.fs && global.require) {
+  global.fs = require('fs')
+}
 
 const enosys = () => {
   const err = new Error('not implemented')
@@ -645,7 +643,6 @@ async function getWasmBuffer(
     return buffer
   } catch (e) {
     // need to fetch in case of browser usage
-    console.log('Caught error', e)
     if (e.message.includes('fs.readFileSync is not a function')) {
       return fetch(source).then(response => response.arrayBuffer())
     }

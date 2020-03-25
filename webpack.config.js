@@ -13,7 +13,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: ['.ts', '.ts', '.js'],
+    extensions: ['.ts', '.js'],
   },
   output: {
     filename: 'browserBundle.js',
@@ -22,5 +22,8 @@ module.exports = {
   stats: {
     // suppressing warnings from `wasm_exec.js`
     warnings: false,
+  },
+  node: {
+    fs: 'empty',
   },
 }
