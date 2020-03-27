@@ -2,12 +2,12 @@ const path = require('path')
 
 module.exports = {
   mode: 'production',
-  entry: './src/browser/browser.ts',
+  entry: './docs/examples/browser/browserExample.js',
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
+        // test: /\.tsx?$/,
+        // use: 'ts-loader',
         exclude: /node_modules/,
       },
     ],
@@ -18,10 +18,6 @@ module.exports = {
   output: {
     filename: 'browserBundle.js',
     path: path.resolve(__dirname, 'docs/examples/browser'),
-  },
-  stats: {
-    // suppressing warnings from `wasm_exec.js`
-    warnings: false,
   },
   node: {
     fs: 'empty',
