@@ -11,12 +11,7 @@ module.exports = {
       statements: 90,
     },
   },
-  collectCoverageFrom: [
-    '**/*.ts',
-    '!index.ts',
-    '!<rootDir>/browser/browser.ts',
-  ],
-  testPathIgnorePatterns: ['<rootDir>/browser/browser.ts'],
+  collectCoverageFrom: ['**/*.ts', '!index.ts'],
   coverageDirectory: '../coverage',
   globalTeardown: './testSetup/jest.teardown.js',
   testTimeout: 10000,
