@@ -23,16 +23,17 @@ Note that we are using `Alice` and `Bob` nodes in the examples to retrieve and s
 ## Run in the browser
 
 It is also possible to use the Portablegabi API in the browser, see [here](browser/index.html).
-First, you need to bundle the library using webpack
+First, you need to bundle the library using webpack.
+By default, we bundle our [`browserExample.js`](./browser/browserExample.js), but you can change this easily with the `--entry` option:
 
 ```bash
-yarn webpack
+yarn build:webpack --entry <your_script_file> --out <desired_output_file>
 ```
 
-This will create the [`browserBundle.js`](./browser/browserBundle.js) file inside `docs/examples/browser`.
+Without defining `out`, this will create the [`browserBundle.js`](./browser/browserBundle.js) file inside `docs/examples/browser`.
 
 Obviously, you need to serve the files from a server. For development, you could use [goexec](https://github.com/shurcooL/goexec) since you already have Go installed.
-Just include `browserBundle.js` and call methods from the `portablegabi` endpoint.
+Then, just include the `browserBundle.js` as script:
 
 ```html
 <script src="browserBundle.js"></script>
