@@ -19,7 +19,8 @@
     "build": "yarn build:typescript && yarn build:wasm",
     "build:typescript": "tsc --declaration",
     "build:wasm": "cd go-wasm && dep ensure && env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go",
-    "publish": "npm publish --access public"
+    "publish": "npm publish --access public",
+    "build:webpack": "yarn build && yarn webpack"
   },
   "author": "KILT Protocol",
   "files": [
@@ -46,6 +47,7 @@
     "jest": "^25.1.0",
     "prettier": "^1.19.1",
     "ts-jest": "^25.2.0",
+    "ts-loader": "^6.2.2",
     "ts-node": "^8.6.2",
     "typedoc": "^0.16.10",
     "typescript": "^3.7.5",
