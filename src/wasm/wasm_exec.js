@@ -17,7 +17,7 @@ if (!global.require && typeof require !== 'undefined') {
   global.require = require
 }
 
-if (!global.fs && global.require) {
+if (!fetch && !global.fs && global.require) {
   global.fs = require('fs')
 }
 
@@ -636,16 +636,11 @@ class WasmError extends Error {}
 async function getWasmBuffer(
   source = path.resolve(__dirname, '../../build/wasm/main.wasm')
 ) {
-  let buffer
-  // creater buffer from WASM file
-  try {
-    buffer = fs.readFileSync(source)
-    return buffer
-  } catch (e) {
-    // need to fetch in case of browser usage
-    if (e.message.includes('fs.readFileSync is not a function')) {
-      return fetch(source).then(response => response.arrayBuffer())
-    }
+  if (global.fs && fs.readFileSync) {
+    return fs.readFileSync(source)
+  }
+  if (fetch) {
+    return fetch(source).then(response => response.arrayBuffer())
   }
   throw new Error(`Unable to create buffer from source file ${source}`)
 }
