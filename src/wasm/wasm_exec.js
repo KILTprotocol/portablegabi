@@ -1,6 +1,6 @@
 /* eslint-disable */
 const path = require('path')
-
+const isBrowser = typeof window !== 'undefined'
 if (typeof global !== 'undefined') {
   // global already exists
 } else if (typeof window !== 'undefined') {
@@ -17,7 +17,7 @@ if (!global.require && typeof require !== 'undefined') {
   global.require = require
 }
 
-if (!fetch && !global.fs && global.require) {
+if (!global.fs && global.require) {
   global.fs = require('fs')
 }
 
@@ -27,7 +27,7 @@ const enosys = () => {
   return err
 }
 
-if (!global.fs) {
+if (!global.fs || (isBrowser && global.fetch)) {
   let outputBuf = ''
   global.fs = {
     constants: {
@@ -638,8 +638,7 @@ async function getWasmBuffer(
 ) {
   if (global.fs && fs.readFileSync) {
     return fs.readFileSync(source)
-  }
-  if (fetch) {
+  } else if (isBrowser && global.fetch) {
     return fetch(source).then(response => response.arrayBuffer())
   }
   throw new Error(`Unable to create buffer from source file ${source}`)
