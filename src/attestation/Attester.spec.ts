@@ -154,8 +154,8 @@ describe('Test attester', () => {
               })
             ).rejects.toThrow('commit message could not be verified')
         )
-      ).then(response =>
-        response.map(item => expect(item).not.toEqual(expect.anything()))
+      ).then((response) =>
+        response.map((item) => expect(item).not.toEqual(expect.anything()))
       )
     })
     it('Should not throw when revoking with missing witnesses array', async () => {

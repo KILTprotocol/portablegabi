@@ -6,7 +6,7 @@ import { WasmError } from './wasm_exec'
 describe('Test WASM wrapper', () => {
   let spy: Spy<''>
   const hooksArr: string[] = Object.keys(WasmHooks).filter(
-    x => x !== WasmHooks.genKeypair && x !== WasmHooks.genKey // # 1 takes too much time, #2 works w/o input
+    (x) => x !== WasmHooks.genKeypair && x !== WasmHooks.genKey // # 1 takes too much time, #2 works w/o input
   )
   beforeEach(() => {
     spy = {
@@ -25,7 +25,7 @@ describe('Test WASM wrapper', () => {
   })
   it.each(hooksArr)(
     'Should throw calling %s without input',
-    async wasmHook =>
+    async (wasmHook) =>
       expect(goWasmExec(wasmHook as WasmHooks)).rejects.toThrow(WasmError),
     5000
   )

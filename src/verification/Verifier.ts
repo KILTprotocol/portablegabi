@@ -76,7 +76,7 @@ export default class Verifier {
       WasmHooks.requestCombinedPresentation,
       [
         JSON.stringify(
-          presentationReqs.map(req => ({
+          presentationReqs.map((req) => ({
             // check if we want to request a revocation proof
             reqNonRevocationProof: typeof req.reqUpdatedAfter !== 'undefined',
             ...req,
@@ -161,7 +161,9 @@ export default class Verifier {
       verifierSession.valueOf(),
       `[${attesterPubKeys.join(',')}]`,
       `[${latestAccumulators
-        .map(accumulator => (accumulator || new Accumulator('null')).valueOf())
+        .map((accumulator) =>
+          (accumulator || new Accumulator('null')).valueOf()
+        )
         .join(',')}]`,
     ])
     return {

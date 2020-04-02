@@ -9,6 +9,7 @@ import connect from '../blockchainApiConnection/BlockchainApiConnection'
  * It must be kept secret.
  */
 export default class Credential extends String {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parseCache: any | undefined
 
   /**

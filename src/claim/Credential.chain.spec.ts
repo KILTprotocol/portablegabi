@@ -34,7 +34,7 @@ describe('Test Credential on chain functionality', () => {
       address: attesterChainAddress,
       publicKey: attesterPubKey,
     } = attesterChain)
-    await attesterChain.updateAccumulator(accumulator).catch(e => {
+    await attesterChain.updateAccumulator(accumulator).catch((e) => {
       expect(e.message).toBe("Cannot read property 'signAndSend' of undefined")
     })
     // off chain attester to prevent error after revocation due to accumulator update
@@ -52,7 +52,7 @@ describe('Test Credential on chain functionality', () => {
       [0, 1, 2].map(() => attestationSetup({ claimer, attester, accumulator }))
     )
     // get witnesses for revocation
-    const witnesses = attestations.map(a => a.witness)
+    const witnesses = attestations.map((a) => a.witness)
     // revoke
     const accAfterRev1 = await attester.revokeAttestation({
       accumulator,

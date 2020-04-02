@@ -181,7 +181,7 @@ export default class Attester implements IAttester {
         this.publicKey.valueOf(),
         accumulator.valueOf(),
         JSON.stringify(
-          (witnesses || []).map(witness => JSON.parse(witness.valueOf()))
+          (witnesses || []).map((witness) => JSON.parse(witness.valueOf()))
         ),
       ])
     )
