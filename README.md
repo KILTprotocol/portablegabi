@@ -7,11 +7,11 @@ This TypeScript module of Portable Gabi enables the use of [Idemix](http://www.r
 A user (in the following referred to as _claimer_) claiming something in JSON format (e.g. citizenship in a specific country, ownership of a valid driver's license) can request an attestation from a trusted entity (_attester_) and present these claims to multiple _verifiers_ without revealing their identity or sensitive information (**multi-show unlinkability**).
 The claimer can chose which attributes of the claim to disclose to a verifier (**selective disclosure**).
 
-## Tutorial
+## Tutorialå
 
 We recommend visiting our [Portablegabi tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/) to better understand how to use our anonymous credentials and the API.
 
-## Revocation and Substraze
+## Revocation and Substrate
 
 This module can be used with and without a [Substrate](https://www.parity.io/substrate/)-based blockchain.
 However, it was designed to be used with a chain acting as a decentralised storage of each attester's accumulator versions to enable revocation.
@@ -21,19 +21,22 @@ In order to use that, just clone and set up the [`portablegabi-node`](https://gi
 
 ## Installing
 
-To build the package, you need to have [Go 1.14+](https://golang.org/) and [dep](https://github.com/golang/dep) installed. We also recommend installing [yarn](https://yarnpkg.com/getting-started), so you can easily build the WASM.
-
-```bash
+npm
+```
 npm i @kiltprotocol/portablegabi
-yarn build:wasm
 ```
 
-## Tests
-
-```bash
-yarn test
-pushd go-wasm && go test ./... && popd
+yarn
 ```
+yarn add @kiltprotocol/portablegabi
+```
+
+
+## Building + Testing
+
+If you want to help develop portablegabi, we would be glad to merge your pull request.
+But first, you need to set up a development environment for our project.
+See [our tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/6_development.html) for more information.
 
 ## Example
 
