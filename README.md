@@ -40,118 +40,129 @@ pushd go-wasm && go test ./... && popd
 Please see the [example files](docs/examples/) for a showcase of on- and off-chain usage with single or combined credentials.
 
 ```typescript
-const portablegabi = require('@kiltprotocol/portablegabi')
+const portablegabi = require('@KILTprotocol/portablegabi')
+async function exec() {
+  /* (1) Claimer Setup */
 
-/* (1) Claimer Setup */
+  // (1.1) Example claim
+  const claim = {
+    contents: {
+      name: 'Jasper',
+      age: '42',
+      city: 'Berlin',
+      id: 'ed638ndke92902n29',
+    },
+  }
 
-// (1.1) Example claim
-const claim = {
-  contents: {
-    name: 'Jasper',
-    age: '42',
-    city: 'Berlin',
-    id: 'ed638ndke92902n29',
-  },
+  // (1.2) Create the claimer identity (either from scratch or mnemonic seed).
+  const claimer = await portablegabi.Claimer.create()
+
+  /* (2) Attester Setup */
+
+  // (2.1) Create a key pair and attester entity.
+  const attester = await portablegabi.Attester.create(
+    365 * 24 * 60 * 60 * 1000,
+    70
+  ) // takes very long due to finding safe prime numbers (~10-20 minutes)
+
+  // (2.1.b) Alternatively, use a pre-compiled key pair from src/testSetup/testConfig.ts
+  // const attester = new portablegabi.Attester(pubKey, privKey);
+  console.log('Public key:\n\t', attester.privateKey.valueOf())
+  console.log('Private key:\n\t', attester.privateKey.valueOf())
+
+  // (2.1) Create accumulator (for revocation)
+  const accumulator = await attester.createAccumulator()
+
+  /* (3) Attestation */
+
+  // (3.1) Attester sends two nonces to claimer
+  const {
+    message: startAttestationMsg,
+    session: attestationSession,
+  } = await attester.startAttestation()
+
+  // (3.2) Claimer requests attestation
+  const {
+    message: attestationRequest,
+    session: claimerSession,
+  } = await claimer.requestAttestation({
+    startAttestationMsg,
+    claim,
+    attesterPubKey: attester.publicKey,
+  })
+  console.log('Claimer requests attestation:\n\t', attestationRequest)
+
+  // (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
+  // the attester might want to inspect the attributes he is about to sign
+  const checkClaim = attestationRequest.getClaim()
+
+  const { attestation, witness } = await attester.issueAttestation({
+    attestationSession,
+    attestationRequest,
+    accumulator,
+  })
+  console.log('Attester issues attestion:\n\t', attestation)
+
+  // (3.4) Claimer builds credential from attester's signature
+  const credential = await claimer.buildCredential({
+    claimerSession,
+    attestation,
+  })
+  console.log('Claimer builds credential:\n\t', credential)
+
+  /* (4) Verification */
+
+  // (4.1) Verifier sends two nonces to claimer
+  const {
+    session: verifierSession,
+    message: presentationReq,
+  } = await portablegabi.Verifier.requestPresentation({
+    requestedAttributes: ['contents.age', 'contents.city'],
+    reqUpdatedAfter: new Date(), // request that the nonrevocation proof contains an accumulator which was created after this date or that the accumulator is the newest available
+  })
+  console.log('Verifier starts verification session:\n\t', presentationReq)
+
+  // (4.2) Claimer reveals attributes
+  const proof = await claimer.buildPresentation({
+    credential,
+    presentationReq,
+    attesterPubKey: attester.publicKey,
+  })
+  console.log('Claimer builds zk-proof on requested attributes:\n\t', proof)
+
+  // (4.3) Verifier verifies attributes
+  const {
+    verified,
+    claim: verifiedClaim,
+  } = await portablegabi.Verifier.verifyPresentation({
+    proof,
+    verifierSession,
+    attesterPubKey: attester.publicKey,
+    latestAccumulator: accumulator, // the newest available accumulator
+  })
+  console.log('Verifier verifiers proof:\n\t', verified, verifiedClaim)
+
+  /* (5) Revocation */
+
+  // Revoke the witness of a credential.
+  const accumulatorAfterRevocation = await attester.revokeAttestation({
+    accumulator,
+    witnesses: [witness],
+  })
+
+  // Expect failure here due to prior revocation.
+  await credential
+    .updateSingle({
+      attesterPubKey: attester.publicKey,
+      accumulator: accumulatorAfterRevocation,
+    })
+    .catch(e => {
+      if (e.message.includes('revoked')) {
+        console.log('Credential was revoked and cannot be updated')
+      } else throw e
+    })
 }
-
-// (1.2) Create the claimer identity (either from scratch or mnemonic seed).
-const claimer = await portablegabi.claimer.create()
-
-/* (2) Attester Setup */
-
-// (2.1) Create a key pair and attester entity.
-const attester = await portablegabi.Attester.create(365 * 24 * 60 * 60 * 1000, 70) // takes very long due to finding safe prime numbers (~10-20 minutes)
-
-// (2.1.b) Alternatively, use a pre-compiled key pair (see docs/examples)
-// const attester = new portablegabi.Attester(privKey, pubKey)
-
-// (2.1) Create accumulator (for revocation)
-const accumulator = await attester.createAccumulator()
-
-/* (3) Attestation */
-
-// (3.1) Attester sends two nonces to claimer
-const {
-  message: startAttestationMsg,
-  session: attestationSession,
-} = await attester.startAttestation()
-
-// (3.2) Claimer requests attestation
-const {
-  message: attestationRequest,
-  session: claimerSession,
-} = await claimer.requestAttestation({
-  startAttestationMsg,
-  claim,
-  attesterPubKey: attester.publicKey,
-})
-console.log('Claimer requests attestation:\n\t', attestationRequest)
-
-// (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
-// the attester might want to inspect the attributes he is about to sign
-const checkClaim = attestationRequest.getClaim()
-
-const { attestation, witness } = await attester.issueAttestation({
-  attestationSession,
-  attestationRequest,
-  accumulator,
-})
-console.log('Attester issues attestion:\n\t', attestation)
-
-// (3.4) Claimer builds credential from attester's signature
-const credential = await claimer.buildCredential({
-  claimerSession,
-  attestation,
-})
-console.log('Claimer builds credential:\n\t', credential)
-
-/* (4) Verification */
-
-// (4.1) Verifier sends two nonces to claimer
-const {
-  session: verifierSession,
-  message: presentationReq,
-} = await portablegabi.Verifier.requestPresentation({
-  requestedAttributes: ['contents.age', 'contents.city'],
-  reqUpdatedAfter: new Date(), // request that the nonrevocation proof contains an accumulator which was created after this date or that the accumulator is the newest available
-})
-console.log('Verifier starts verification session:\n\t', presentationReq)
-
-// (4.2) Claimer reveals attributes
-const proof = await claimer.buildPresentation({
-  credential,
-  presentationReq,
-  attesterPubKey: attester.publicKey,
-})
-console.log('Claimer builds zk-proof on requested attributes:\n\t', proof)
-
-// (4.3) Verifier verifies attributes
-const {
-  verified,
-  claim: verifiedClaim,
-} = await portablegabi.Verifier.verifyPresentation({
-  proof,
-  verifierSession,
-  attesterPubKey: attester.publicKey,
-  latestAccumulator: accumulator, // the newest available accumulator
-})
-console.log('Verifier verifiers proof:\n\t', verified, verifiedClaim)
-
-/* (5) Revocation */
-
-// Revoke the witness of a credential.
-const accumulatorAfterRevocation = await attester.revokeAttestation({
-  accumulator,
-  witnesses: [other_witness, ...],
-})
-
-// All claimers have to update their own credential with the new update.
-// This will only work for non revoked credentials.
-credential = await claimer.updateCredential({
-  credential,
-  attesterPubKey: attester.publicKey,
-  accumulator: accumulatorAfterRevocation,
-})
+exec()
 ```
 
 # Troubleshooting
