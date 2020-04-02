@@ -6,14 +6,42 @@ on:
 
 jobs:
   build:
+    name: Go Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v1
         with:
-          node-version: 10
-      - run: yarn install --frozen-lockfile
-      - run: yarn test:ci
+          go-version: 1.14
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+
+      - shell: bash
+        run: |
+          export GOPATH=$HOME/go
+          export GOBIN=$(go env GOPATH)/bin
+          export PATH=$PATH:$GOPATH
+          export PATH=$PATH:$GOBIN
+          mkdir -p $GOPATH/pkg
+          mkdir -p $GOBIN
+          mkdir -p $GOPATH/src/github.com/$GITHUB_REPOSITORY
+          mv ./* $GOPATH/src/github.com/$GITHUB_REPOSITORY
+          cd $GOPATH/src/github.com/$GITHUB_REPOSITORY/go-wasm
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              dep ensure
+          fi
+          go test -v ./...
+          env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go
+          realpath ../build/wasm/main.wasm
+
+      - name: Upload WASM
+        uses: actions/upload-artifact@v1
+        with:
+          name: wasm
+          path: ../../../go/src/github.com/${{ github.repository }}/build/wasm/main.wasm
 
   publish-npm:
     needs: build
@@ -24,7 +52,25 @@ jobs:
         with:
           node-version: 10
           registry-url: https://registry.npmjs.org/
-      - run: yarn install --frozen-lockfile
-      - run: yarn buildAndPublish
+
+      - name: Download wasm for Go Tests
+        uses: actions/download-artifact@v1
+        with:
+          name: wasm
+
+      - name: yarn install, build, test
+        run: |
+          mkdir -p build
+          ls
+          mv wasm build/wasm
+          yarn install --frozen-lockfile
+          yarn lint
+          yarn build:typescript
+          yarn testf
+
+        env:
+          CI: true
+
+      - run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
