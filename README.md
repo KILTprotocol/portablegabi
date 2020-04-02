@@ -43,7 +43,7 @@ See [our tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/6_develo
 Please see the [example files](docs/examples/) for a showcase of on- and off-chain usage with single or combined credentials.
 
 ```typescript
-const portablegabi = require('@KILTprotocol/portablegabi')
+const portablegabi = require('@kiltprotocol/portablegabi')
 async function exec() {
   /* (1) Claimer Setup */
 
