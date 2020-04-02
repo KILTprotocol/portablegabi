@@ -7,7 +7,7 @@ This TypeScript module of Portable Gabi enables the use of [Idemix](http://www.r
 A user (in the following referred to as _claimer_) claiming something in JSON format (e.g. citizenship in a specific country, ownership of a valid driver's license) can request an attestation from a trusted entity (_attester_) and present these claims to multiple _verifiers_ without revealing their identity or sensitive information (**multi-show unlinkability**).
 The claimer can chose which attributes of the claim to disclose to a verifier (**selective disclosure**).
 
-## Tutorialå
+## Tutorial
 
 We recommend visiting our [Portablegabi tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/) to better understand how to use our anonymous credentials and the API.
 
