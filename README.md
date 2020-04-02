@@ -1,23 +1,48 @@
-# Portable Gabi
+[![Test](https://github.com/KILTprotocol/portablegabi/workflows/Test/badge.svg)](https://github.com/KILTprotocol/portablegabi/actions)
 
-This TypeScript module of Portable Gabi enables the use of [Idemix](http://www.research.ibm.com/labs/zurich/idemix/) attribute based anonymous credentials via NPM. It is based on the [Gabi Go](https://github.com/privacybydesign/gabi) implementation by the [Privacy By Design Foundation](https://privacybydesign.foundation/) but does not use the same API does.
+# Portablegabi
 
-A user (in the following referred to as "claimer") claiming something (e.g. citizenship in a specific country, ownership of a valid driver's license) can request an attestation from a trusted entity ("attester") and present these claims to multiple verifiers without revealing sensitive information uniquely tied to the claimer. The claimer can chose which attributes of the claim to disclose to a verifier.
+This TypeScript module of Portable Gabi enables the use of [Idemix](http://www.research.ibm.com/labs/zurich/idemix/) attribute based anonymous credentials via NPM. It is based on the [Gabi Go](https://github.com/privacybydesign/gabi) implementation by the [Privacy By Design Foundation](https://privacybydesign.foundation/) but does not use the same API.
 
-Note that due to the usage of a Go WASM all functions are asynchronous.
+A user (in the following referred to as _claimer_) claiming something in JSON format (e.g. citizenship in a specific country, ownership of a valid driver's license) can request an attestation from a trusted entity (_attester_) and present these claims to multiple _verifiers_ without revealing their identity or sensitive information (**multi-show unlinkability**).
+The claimer can chose which attributes of the claim to disclose to a verifier (**selective disclosure**).
+
+## Tutorial
+
+We recommend visiting our [Portablegabi tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/) to better understand how to use our anonymous credentials and the API.
+
+## Revocation and Substraze
+
+This module can be used with and without a [Substrate](https://www.parity.io/substrate/)-based blockchain.
+However, it was designed to be used with a chain acting as a decentralised storage of each attester's accumulator versions to enable revocation.
+All processes tied to chain activity can be found in files with `chain` suffix. In order to use them, you are required to have an active Substrate blockchain implementing our [`portablegabi-pallet`](https://github.com/KILTprotocol/portablegabi-pallet).
+We also provide a blockchain template which includes our pallet and can be used to store accumulators.
+In order to use that, just clone and set up the [`portablegabi-node`](https://github.com/KILTprotocol/portablegabi-node) or use the template to create your own project. Please see our tutorial for more information.
 
 ## Installing
 
+To build the package, you need to have [Go 1.14+](https://golang.org/) and [dep](https://github.com/golang/dep) installed. We also recommend installing [yarn](https://yarnpkg.com/getting-started), so you can easily build the WASM.
+
 ```bash
-npm install portablegabi
+npm i @kiltprotocol/portablegabi
+yarn build:wasm
+```
+
+## Tests
+
+```bash
+yarn test
+pushd go-wasm && go test ./... && popd
 ```
 
 ## Example
 
-The complete process is showcased in the [example file](docs/example.ts).
+Please see the [example files](docs/examples/) for a showcase of on- and off-chain usage with single or combined credentials.
 
-```javascript
-/** (1) Claim **/
+```typescript
+const portablegabi = require('@kiltprotocol/portablegabi')
+
+/* (1) Claimer Setup */
 
 // (1.1) Example claim
 const claim = {
@@ -28,74 +53,125 @@ const claim = {
     id: 'ed638ndke92902n29',
   },
 }
-const disclosedAttribues = ['contents.age', 'contents.city']
 
-// (1.2) Create claimer identity: Either from scratch or mnemonic seed
-const claimer = await GabiClaimer.buildFromScratch()
-const claimer = await GabiClaimer.buildFromMnemonic(
-  'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken'
-)
+// (1.2) Create the claimer identity (either from scratch or mnemonic seed).
+const claimer = await portablegabi.claimer.create()
 
-/** (2) Attestation **/
+/* (2) Attester Setup */
 
-// (2.1) Create attester: Either from scratch or a keypair
-const attester = new GabiAttester.buildFromKeyPair(privKey, pubKey)
-const attester = new GabiAttester.buildFromScratch() // Takes very long due to finding huge prime numbers, ~10 minutes
+// (2.1) Create a key pair and attester entity.
+const attester = await portablegabi.Attester.create(365 * 24 * 60 * 60 * 1000, 70) // takes very long due to finding safe prime numbers (~10-20 minutes)
 
-// (2.2) Attester sends two nonces to claimer
+// (2.1.b) Alternatively, use a pre-compiled key pair (see docs/examples)
+// const attester = new portablegabi.Attester(privKey, pubKey)
+
+// (2.1) Create accumulator (for revocation)
+const accumulator = await attester.createAccumulator()
+
+/* (3) Attestation */
+
+// (3.1) Attester sends two nonces to claimer
 const {
   message: startAttestationMsg,
-  session: attesterSignSession,
-} = await gabiAttester.startAttestation()
+  session: attestationSession,
+} = await attester.startAttestation()
 
-// (2.3) Claimer requests attestaion
+// (3.2) Claimer requests attestation
 const {
-  message: reqSignMsg,
-  session: claimerSignSession,
-} = await gabiClaimer.requestAttestation({
+  message: attestationRequest,
+  session: claimerSession,
+} = await claimer.requestAttestation({
   startAttestationMsg,
   claim,
-  attesterPubKey: attester.getPubKey(),
+  attesterPubKey: attester.publicKey,
 })
+console.log('Claimer requests attestation:\n\t', attestationRequest)
 
-// (2.4) Attester issues requested attestation
-const aSignature = await gabiAttester.issueAttestation({
-  attesterSignSession,
-  reqSignMsg,
+// (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
+// the attester might want to inspect the attributes he is about to sign
+const checkClaim = attestationRequest.getClaim()
+
+const { attestation, witness } = await attester.issueAttestation({
+  attestationSession,
+  attestationRequest,
+  accumulator,
 })
+console.log('Attester issues attestion:\n\t', attestation)
 
-// (2.5) Claimer builds credential from attester's signature
-const credential = await gabiClaimer.buildCredential({
-  claimerSignSession,
-  signature: aSignature,
+// (3.4) Claimer builds credential from attester's signature
+const credential = await claimer.buildCredential({
+  claimerSession,
+  attestation,
 })
+console.log('Claimer builds credential:\n\t', credential)
 
-/** (3) Verification **/
+/* (4) Verification */
 
-// (3.1) Verifier sends two nonces to claimer
+// (4.1) Verifier sends two nonces to claimer
 const {
   session: verifierSession,
-  message: reqRevealedAttrMsg,
-} = await GabiVerifier.startVerificationSession({ disclosedAttributes })
-
-// (3.2) Claimer reveals attributes
-const proof = await gabiClaimer.revealAttributes({
-  credential,
-  reqRevealedAttrMsg,
-  attesterPubKey,
+  message: presentationReq,
+} = await portablegabi.Verifier.requestPresentation({
+  requestedAttributes: ['contents.age', 'contents.city'],
+  reqUpdatedAfter: new Date(), // request that the nonrevocation proof contains an accumulator which was created after this date or that the accumulator is the newest available
 })
+console.log('Verifier starts verification session:\n\t', presentationReq)
 
-// (3.3) Verifier verifies attributes
-const { claim: verifiedClaim, verified } = await GabiVerifier.verifyAttributes({
+// (4.2) Claimer reveals attributes
+const proof = await claimer.buildPresentation({
+  credential,
+  presentationReq,
+  attesterPubKey: attester.publicKey,
+})
+console.log('Claimer builds zk-proof on requested attributes:\n\t', proof)
+
+// (4.3) Verifier verifies attributes
+const {
+  verified,
+  claim: verifiedClaim,
+} = await portablegabi.Verifier.verifyPresentation({
   proof,
   verifierSession,
-  attesterPubKey,
+  attesterPubKey: attester.publicKey,
+  latestAccumulator: accumulator, // the newest available accumulator
+})
+console.log('Verifier verifiers proof:\n\t', verified, verifiedClaim)
+
+/* (5) Revocation */
+
+// Revoke the witness of a credential.
+const accumulatorAfterRevocation = await attester.revokeAttestation({
+  accumulator,
+  witnesses: [other_witness, ...],
 })
 
-/** (4) Revocation **/
-// TODO
+// All claimers have to update their own credential with the new update.
+// This will only work for non revoked credentials.
+credential = await claimer.updateCredential({
+  credential,
+  attesterPubKey: attester.publicKey,
+  accumulator: accumulatorAfterRevocation,
+})
 ```
 
-## Development
+# Troubleshooting
 
-To build the package, you have to have [GO](https://golang.org/) installed.
+## Node process did not exit automatically
+
+Note that due to the usage of a Go WASM via callbacks, all functions are asynchronous. It can happen that NodeJS does not exit automatically since we keep the WASM instance open. We recommend calling `goWasmClose()` from [wasm_exec_wrapper](src/wasm/wasm_exec_wrapper.ts) at the end of your process.
+
+## Go version below 1.14.1
+
+```bash
+  [LinkError: WebAssembly Instantiation: Import #3 module="go" function="runtime.nanotime" error: function import requires a callable]
+  (node:6909) UnhandledPromiseRejectionWarning: Error: Function genKey missing in WASM
+```
+
+Please check your Go version, it should be at least `1.14.1`. If this is the case for you, and you still encounter this problem without having modified our code, [please open a ticket](https://github.com/KILTprotocol/portablegabi/issues/new).
+
+## Limitations
+
+- all numbers inside a claim are handled as `float64`
+- arrays are handled as a single attribute. Disclosing a value inside an array is only possible if the whole array is disclosed.
+
+![](./web3_foundation_grants_badge_black.svg)

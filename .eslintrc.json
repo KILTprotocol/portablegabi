@@ -36,7 +36,6 @@
       }
     ],
     "@typescript-eslint/interface-name-prefix": ["error", "always"],
-    "@typescript-eslint/prefer-interface": "off",
     "@typescript-eslint/array-type": [
       "error",
       {
@@ -44,12 +43,14 @@
       }
     ],
     "@typescript-eslint/ban-ts-ignore": "warn",
-    "jsdoc/require-description": "warn",
+    "jsdoc/require-description": "error",
+    "jsdoc/require-returns": "error",
+    "jsdoc/require-param-description": "error",
     "jsdoc/require-description-complete-sentence": "warn",
-    "jsdoc/no-types": "warn",
+    "jsdoc/no-types": "off",
     "jsdoc/require-param-type": "off",
     "jsdoc/require-returns-type": "off",
-    "jsdoc/require-jsdoc": "off",
+    "jsdoc/require-jsdoc": "error",
     "jsdoc/check-examples": [
       "warn",
       {
@@ -60,7 +61,7 @@
   },
   "overrides": [
     {
-      "files": ["**/*.spec.ts"],
+      "files": ["**/*.spec.ts", "**/testSetup/*", "**/examples/**"],
       "env": {
         "jest": true
       },
@@ -68,7 +69,15 @@
         "@typescript-eslint/no-object-literal-type-assertion": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "no-underscore-dangle": "off",
-        "global-require": "off"
+        "global-require": "off",
+        "jsdoc/require-description": "off",
+        "jsdoc/require-returns": "off",
+        "jsdoc/require-param-description": "off",
+        "jsdoc/require-description-complete-sentence": "off",
+        "jsdoc/no-types": "off",
+        "jsdoc/require-param-type": "off",
+        "jsdoc/require-returns-type": "off",
+        "jsdoc/require-jsdoc": "off"
       }
     }
   ],
