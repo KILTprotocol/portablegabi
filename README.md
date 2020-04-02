@@ -9,7 +9,7 @@ The claimer can chose which attributes of the claim to disclose to a verifier (*
 
 ## Tutorial
 
-We recommend visiting our [Portablegabi tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/) to better und
+We recommend visiting our [Portablegabi tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/) to better understand how to use our anonymous credentials and the API.
 
 ## Revocation and Substraze
 
@@ -40,6 +40,8 @@ pushd go-wasm && go test ./... && popd
 Please see the [example files](docs/examples/) for a showcase of on- and off-chain usage with single or combined credentials.
 
 ```typescript
+const portablegabi = require('@kiltprotocol/portablegabi')
+
 /* (1) Claimer Setup */
 
 // (1.1) Example claim
@@ -53,15 +55,15 @@ const claim = {
 }
 
 // (1.2) Create the claimer identity (either from scratch or mnemonic seed).
-const claimer = await GabiClaimer.create()
+const claimer = await portablegabi.claimer.create()
 
 /* (2) Attester Setup */
 
 // (2.1) Create a key pair and attester entity.
-const attester = await GabiAttester.create(
-  365 * 24 * 60 * 60 * 1000,
-  70
-) // takes very long due to finding safe prime numbers (~10-20 minutes)
+const attester = await portablegabi.Attester.create(365 * 24 * 60 * 60 * 1000, 70) // takes very long due to finding safe prime numbers (~10-20 minutes)
+
+// (2.1.b) Alternatively, use a pre-compiled key pair (see docs/examples)
+// const attester = new portablegabi.Attester(privKey, pubKey)
 
 // (2.1) Create accumulator (for revocation)
 const accumulator = await attester.createAccumulator()
@@ -83,9 +85,10 @@ const {
   claim,
   attesterPubKey: attester.publicKey,
 })
+console.log('Claimer requests attestation:\n\t', attestationRequest)
 
-// (3.3) The Attester issues a requested attestation and generates a witness which can be used to revoke the attestation.
-// The attester might want to inspect the attributes he is about to sign.
+// (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
+// the attester might want to inspect the attributes he is about to sign
 const checkClaim = attestationRequest.getClaim()
 
 const { attestation, witness } = await attester.issueAttestation({
@@ -93,41 +96,46 @@ const { attestation, witness } = await attester.issueAttestation({
   attestationRequest,
   accumulator,
 })
+console.log('Attester issues attestion:\n\t', attestation)
 
-// (3.4) The Claimer builds credential from attester's signature.
+// (3.4) Claimer builds credential from attester's signature
 const credential = await claimer.buildCredential({
   claimerSession,
   attestation,
 })
+console.log('Claimer builds credential:\n\t', credential)
 
 /* (4) Verification */
 
-// (4.1) The verifier sends two nonces to claimer.
+// (4.1) Verifier sends two nonces to claimer
 const {
   session: verifierSession,
   message: presentationReq,
-} = await GabiVerifier.requestPresentation({
+} = await portablegabi.Verifier.requestPresentation({
   requestedAttributes: ['contents.age', 'contents.city'],
   reqUpdatedAfter: new Date(), // request that the nonrevocation proof contains an accumulator which was created after this date or that the accumulator is the newest available
 })
+console.log('Verifier starts verification session:\n\t', presentationReq)
 
-// (4.2) The Claimer reveals attributes.
+// (4.2) Claimer reveals attributes
 const proof = await claimer.buildPresentation({
   credential,
   presentationReq,
   attesterPubKey: attester.publicKey,
 })
+console.log('Claimer builds zk-proof on requested attributes:\n\t', proof)
 
-// (4.3) The Verifier verifies attributes.
+// (4.3) Verifier verifies attributes
 const {
   verified,
   claim: verifiedClaim,
-} = await GabiVerifier.verifyPresentation({
+} = await portablegabi.Verifier.verifyPresentation({
   proof,
   verifierSession,
   attesterPubKey: attester.publicKey,
   latestAccumulator: accumulator, // the newest available accumulator
 })
+console.log('Verifier verifiers proof:\n\t', verified, verifiedClaim)
 
 /* (5) Revocation */
 
