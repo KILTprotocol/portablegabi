@@ -97,8 +97,8 @@ describe('Test combined requests', () => {
           accumulator: accumulators[idx],
         })
       )
-    ).then(attestations =>
-      attestations.map(attestation => attestation.credential)
+    ).then((attestations) =>
+      attestations.map((attestation) => attestation.credential)
     )
     const {
       message: combinedPresentationReq,
@@ -126,7 +126,7 @@ describe('Test combined requests', () => {
     const combPresentation = await claimer.buildCombinedPresentation({
       credentials,
       combinedPresentationReq,
-      attesterPubKeys: attesters.map(attester => attester.publicKey),
+      attesterPubKeys: attesters.map((attester) => attester.publicKey),
     })
     const { verified, claims } = await Verifier.verifyCombinedPresentation({
       proof: combPresentation,
@@ -204,7 +204,7 @@ describe('Test combined requests', () => {
   it('Should work for any number of combinations', async () => {
     // to keep the runtime small, we test only 5 combinations, but this can be set to any number
     const n = 5
-    const dates = new Array(n).fill(0).map(d => new Date(d))
+    const dates = new Array(n).fill(0).map((d) => new Date(d))
     await expectCombinedSetupToBe(true, {
       claimer,
       attesters: dates.map((_, idx) => attesters[idx % 2]),
@@ -228,7 +228,7 @@ describe('Test combined requests', () => {
           })
         )
       )
-      credentials = attestations.map(a => a.credential)
+      credentials = attestations.map((a) => a.credential)
       // revoke 2nd credential
       accAfterRev = await attesters[revCredIdx].revokeAttestation({
         accumulator: accumulators[revCredIdx],

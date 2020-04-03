@@ -35,8 +35,8 @@ export default class Blockchain implements IBlockchainApi {
    */
   public async waitForNextBlock(): Promise<void> {
     const currBlock = (await this.api.rpc.chain.getHeader()).number.toNumber()
-    return new Promise(resolve =>
-      this.api.rpc.chain.subscribeNewHeads(header => {
+    return new Promise((resolve) =>
+      this.api.rpc.chain.subscribeNewHeads((header) => {
         if (header.number.toNumber() > currBlock) resolve()
       })
     )

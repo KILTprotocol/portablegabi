@@ -45,7 +45,7 @@ export async function actorSetupChain({
   } catch (e) {
     accumulator1 = await attester1.createAccumulator()
     await Promise.resolve(attester1.updateAccumulator(accumulator1)).catch(
-      err => err
+      (err) => err
     )
   }
   try {
@@ -53,7 +53,7 @@ export async function actorSetupChain({
   } catch (e) {
     accumulator2 = await attester1.createAccumulator()
     await Promise.resolve(attester2.updateAccumulator(accumulator2)).catch(
-      err => err
+      (err) => err
     )
   }
   return {

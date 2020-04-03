@@ -332,12 +332,12 @@ export async function combinedSetup({
   if (attesters.length !== disclosedAttsArr.length) {
     throw new Error("Array lengths don't match up in combined setup")
   }
-  const attesterPubKeys = attesters.map(attester => attester.publicKey)
+  const attesterPubKeys = attesters.map((attester) => attester.publicKey)
   // build credentials if inputCredentials is missing
   let credentials: Credential[]
   if (
     inputCredentials &&
-    inputCredentials.filter(cred => cred instanceof Credential).length ===
+    inputCredentials.filter((cred) => cred instanceof Credential).length ===
       attesters.length
   ) {
     credentials = inputCredentials
@@ -351,8 +351,8 @@ export async function combinedSetup({
             accumulators[idx] || (await attester.createAccumulator()),
         })
       )
-    ).then(attestations =>
-      attestations.map(attestation => attestation.credential)
+    ).then((attestations) =>
+      attestations.map((attestation) => attestation.credential)
     )
   }
   // build combined requests
