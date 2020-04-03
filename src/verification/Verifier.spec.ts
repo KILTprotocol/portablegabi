@@ -82,7 +82,7 @@ function expectProofsNotToRevealData(proofA: IProof, proofB: IProof): boolean {
   expect(proofA.proof.a_disclosed).toStrictEqual(proofB.proof.a_disclosed)
   // proof.a_responses
   checkValues = Object.values(proofB.proof.a_responses)
-  Object.values(proofA.proof.a_responses).map(val =>
+  Object.values(proofA.proof.a_responses).map((val) =>
     expect(checkValues).not.toContain(val)
   )
   // proof.c
@@ -98,7 +98,7 @@ function expectProofsNotToRevealData(proofA: IProof, proofB: IProof): boolean {
   )
   // proof.nonrev_proof.responses
   checkValues = Object.values(proofB.proof.nonrev_proof.responses)
-  Object.values(proofA.proof.nonrev_proof.responses).map(val =>
+  Object.values(proofA.proof.nonrev_proof.responses).map((val) =>
     expect(checkValues).not.toContain(val)
   )
   // sacc = signed accumulator, i.e. this should equal
@@ -385,7 +385,7 @@ describe('Test verifier functionality', () => {
       expectSuccess(verified3, verifiedClaim3)
 
       // pairwise comparison
-      const proofArr: IProof[] = [presentation, proof2, proof3].map(proof =>
+      const proofArr: IProof[] = [presentation, proof2, proof3].map((proof) =>
         JSON.parse(proof.valueOf())
       )
       // start to compare prev = proofArr[2] with curr = proofArr[0], then set prev[i+1] to curr[i] and curr[i+1] to proofArr[i+1]
@@ -559,9 +559,9 @@ describe('Test verifier functionality', () => {
     })
     it('Should not verify after re-arrenging attributes of credential', async () => {
       const tamperedCredential: ICredential<typeof claim> = JSON.parse(
-          credential.valueOf()
-        )
-        // swap first two elements
+        credential.valueOf()
+      )
+      // swap first two elements
       ;[
         tamperedCredential.credential.attributes[0],
         tamperedCredential.credential.attributes[1],
