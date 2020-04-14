@@ -112,7 +112,7 @@ describe('Test claimer functionality', () => {
             })
           )
         )
-      ).map(x => x.witness)
+      ).map((x) => x.witness)
       // revoke witnesses
       const accRev1 = await attester.revokeAttestation({
         accumulator,

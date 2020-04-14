@@ -25,7 +25,7 @@ const {
 
 // Do all processes from attestation, to possibly revocation and final verification
 async function completeProcessCombined(
-  expectedVerificationOutcome: boolean | 'error',
+  expectedVerificationOutcome: boolean,
   doRevocation = false,
   reqUpdatesAfter: [Date?, Date?]
 ): Promise<boolean> {
@@ -71,25 +71,18 @@ async function completeProcessCombined(
     })
   }
 
-  let achievedExpectedOutcome = false
-  // we need to try and catch since we expect an error throw when we set reqUpdatedAfter to some future date
-  try {
-    // verify credential with revocation check
-    const { verified } = await verificationProcessCombined({
-      claimer,
-      attesters: [attester1, attester2],
-      credentials: [credential1, credential2],
-      requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
-      reqUpdatesAfter, // requires that witnesses are updates after specified date or using the latests available accumulator
-      accumulators: [accumulator1, accumulator2],
-    })
-    achievedExpectedOutcome = expectedVerificationOutcome === verified
-  } catch (e) {
-    console.log('Error was thrown')
-    achievedExpectedOutcome =
-      expectedVerificationOutcome === 'error' &&
-      e.message.includes('Credential is outdated')
-  }
+  // verify credential with revocation check
+  const { verified } = await verificationProcessCombined({
+    claimer,
+    attesters: [attester1, attester2],
+    credentials: [credential1, credential2],
+    requestedAttributesArr: [disclosedAttributes1, disclosedAttributes2],
+    reqUpdatesAfter, // requires that witnesses are updates after specified date or using the latests available accumulator
+    accumulators: [accumulator1, accumulator2],
+  })
+
+  // check outcome
+  const achievedExpectedOutcome = expectedVerificationOutcome === verified
   console.groupEnd()
   console.log(`Expected outcome achieved? ${achievedExpectedOutcome}`)
   return achievedExpectedOutcome
@@ -106,12 +99,12 @@ async function completeProcessCombinedExamples(): Promise<void> {
   // without credential revocation
   await completeProcessCombined(true, false, [undefined, undefined])
 
-  // without credential revocation but required dates in future => should throw
-  await completeProcessCombined('error', false, [future, undefined])
-  await completeProcessCombined('error', false, [undefined, future])
+  // without credential revocation but required dates in future => should verify
+  await completeProcessCombined(true, false, [future, undefined])
+  await completeProcessCombined(true, false, [undefined, future])
 
-  // with revocation of 2nd credential and required date in future => should throw
-  await completeProcessCombined('error', true, [future, future])
+  // with revocation of 2nd credential and required date in future => should not verify
+  await completeProcessCombined(false, true, [future, future])
 
   // with revocation of 2nd credential but required date in past => should verify
   await completeProcessCombined(true, true, [past, past])

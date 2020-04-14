@@ -9,7 +9,7 @@ const { pubKey, privKey, disclosedAttributes, claim } = testEnv1
 
 // all processes from attestation, to possibly revocation and final verification
 async function completeProcessSingle(
-  expectedVerificationOutcome: boolean | 'error',
+  expectedVerificationOutcome: boolean,
   doRevocation = false,
   reqUpdatedAfter?: Date
 ): Promise<boolean> {
@@ -39,25 +39,18 @@ async function completeProcessSingle(
     })
   }
 
-  let achievedExpectedOutcome = false
-  // we need to try and catch since we expect an error throw when we set reqUpdatedAfter to some future date
-  try {
-    // verify credential with revocation check
-    const { verified } = await verificationProcessSingle({
-      claimer,
-      attester,
-      credential,
-      requestedAttributes: disclosedAttributes,
-      reqUpdatedAfter, // require that the witness is not older than the provided date or updated to the latest accumulator
-      accumulator,
-    })
-    achievedExpectedOutcome = expectedVerificationOutcome === verified
-  } catch (e) {
-    console.log('Error was thrown')
-    achievedExpectedOutcome =
-      expectedVerificationOutcome === 'error' &&
-      e.message.includes('Credential is outdated')
-  }
+  // verify credential with revocation check
+  const { verified } = await verificationProcessSingle({
+    claimer,
+    attester,
+    credential,
+    requestedAttributes: disclosedAttributes,
+    reqUpdatedAfter, // require that the witness is not older than the provided date or updated to the latest accumulator
+    accumulator,
+  })
+
+  // check outcome
+  const achievedExpectedOutcome = expectedVerificationOutcome === verified
   console.groupEnd()
   console.log(`Expected outcome achieved? ${achievedExpectedOutcome}`)
   return achievedExpectedOutcome
@@ -74,11 +67,11 @@ async function completeProcessSingleExamples(): Promise<void> {
   // without credential revocation
   await completeProcessSingle(true, false, undefined)
 
-  // without revocation but required dates in future => should throw
-  await completeProcessSingle('error', false, future)
+  // without revocation but required dates in future => should verify
+  await completeProcessSingle(true, false, future)
 
-  // with revocation and required date in future => should throw
-  await completeProcessSingle('error', true, future)
+  // with revocation and required date in future => should not verify
+  await completeProcessSingle(false, true, future)
 
   // with revocation but required date in past => should verify
   await completeProcessSingle(true, true, past)

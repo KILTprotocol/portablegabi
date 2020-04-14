@@ -323,7 +323,7 @@ describe('Test claimer functionality', () => {
           claimerSessionE12,
         ]
         return Promise.all(
-          throwingSessions.map(session =>
+          throwingSessions.map((session) =>
             buildCredentialError(
               claimer,
               mixedAttestationsValid.issuance.attestation,

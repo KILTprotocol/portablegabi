@@ -18,7 +18,7 @@ async function completeProcessSingle({
   reqUpdatedAfter,
 }: {
   blockchain: Blockchain
-  expectedVerificationOutcome: boolean | 'error'
+  expectedVerificationOutcome: boolean
   doRevocation: boolean
   reqUpdatedAfter?: Date
 }): Promise<boolean> {
@@ -59,24 +59,18 @@ async function completeProcessSingle({
     )
   }
 
-  let achievedExpectedOutcome = false
-  // we need to try and catch since we expect an error throw when we set reqUpdatedAfter to some future date
-  try {
-    const { verified } = await verificationProcessSingleChain({
-      claimer,
-      attester,
-      credential,
-      requestedAttributes: disclosedAttributes,
-      reqUpdatedAfter,
-      accumulator,
-    })
-    achievedExpectedOutcome = expectedVerificationOutcome === verified
-  } catch (e) {
-    console.log('Error was thrown')
-    achievedExpectedOutcome =
-      expectedVerificationOutcome === 'error' &&
-      e.message.includes('Credential is outdated')
-  }
+  // verify credential with revocation check
+  const { verified } = await verificationProcessSingleChain({
+    claimer,
+    attester,
+    credential,
+    requestedAttributes: disclosedAttributes,
+    reqUpdatedAfter,
+    accumulator,
+  })
+
+  // check outcome
+  const achievedExpectedOutcome = expectedVerificationOutcome === verified
   console.groupEnd()
   console.log(`Expected outcome achieved? ${achievedExpectedOutcome}`)
   return achievedExpectedOutcome
@@ -101,18 +95,18 @@ async function completeProcessSingleExamples(): Promise<void> {
     reqUpdatedAfter: past,
   })
 
-  // without revocation but required date in future => should throw
+  // without revocation but required date in future => should verify
   await completeProcessSingle({
     blockchain,
-    expectedVerificationOutcome: 'error',
+    expectedVerificationOutcome: true,
     doRevocation: false,
     reqUpdatedAfter: future,
   })
 
-  // with revocation and required date in future => should throw
+  // with revocation and required date in future => should not verify
   await completeProcessSingle({
     blockchain,
-    expectedVerificationOutcome: 'error',
+    expectedVerificationOutcome: false,
     doRevocation: true,
     reqUpdatedAfter: future,
   })

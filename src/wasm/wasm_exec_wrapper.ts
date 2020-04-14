@@ -24,14 +24,14 @@ const goWasmExec = <T>(
   goHook: WasmHooks,
   args?: Array<string | number | boolean>
 ): Promise<T> =>
-  Promise.resolve(GoInstance).then(wasm => wasm.execWasmFn(goHook, args))
+  Promise.resolve(GoInstance).then((wasm) => wasm.execWasmFn(goHook, args))
 
 // eslint-disable-next-line jsdoc/require-returns
 /**
  * Closes the wasm instance.
  */
 export const goWasmClose = (): Promise<void> =>
-  Promise.resolve(GoInstance).then(wasm => {
+  Promise.resolve(GoInstance).then((wasm) => {
     return wasm.close()
   })
 
