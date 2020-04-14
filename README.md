@@ -37,20 +37,7 @@ pushd go-wasm && go test ./... && popd
 
 ## Run in the browser
 
-It is also possible to use the Portablegabi API in the browser. Just import your required functionality into a script and bundle it with webpack
-
-```bash
-yarn build:webpack --entry <your_script_file> --out <desired_output_file>
-```
-
-Note that you can just run `yarn build:webpack` which bundles our `browserExample.js` into [`browserBundle.js`](docs/examples/browser/browserBundle.js) inside `docs/examples/browser`.
-Then, just include your bundled script:
-
-```html
-<script src="browserBundle.js"></script>
-```
-
-You may have a look at our [browser example section](docs/examples/README.md#run-in-the-browser) for more information.
+It is also possible to use the Portablegabi API in the browser, see [here](browser/README.md) for more details.
 
 ## Example
 
