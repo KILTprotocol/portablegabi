@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const portablegabi = require('@kiltprotocol/portablegabi')
 
 const privKey = new portablegabi.AttesterPrivateKey(
@@ -116,7 +117,7 @@ async function exec() {
       attesterPubKey: attester.publicKey,
       accumulator: accumulatorAfterRevocation,
     })
-    .catch(e => {
+    .catch((e) => {
       if (e.message.includes('revoked')) {
         console.log('Credential was revoked and cannot be updated')
       } else throw e
