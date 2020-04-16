@@ -49,7 +49,7 @@ docs/api/*
 # browser example
 docs/examples/browser/bundle.js
 docs/examples/browser/node_modules
-docs/examples/browser/yarn.lock
+docs/examples/browser/dist
 
 # tooling setup
 .DS_Store
