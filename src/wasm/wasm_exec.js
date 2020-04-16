@@ -1,6 +1,12 @@
 /* eslint-disable */
 const path = require('path')
+
+const wasmFetchDir =
+  process && process.env && process.env.WASM_FETCH_DIR
+    ? process.env.WASM_FETCH_DIR
+    : './dist'
 const isBrowser = typeof window !== 'undefined'
+
 if (typeof global !== 'undefined') {
   // global already exists
 } else if (typeof window !== 'undefined') {
@@ -193,12 +199,12 @@ class Go {
   constructor() {
     this.argv = ['js']
     this.env = {}
-    this.exit = code => {
+    this.exit = (code) => {
       if (code !== 0) {
         console.warn('exit code:', code)
       }
     }
-    this._exitPromise = new Promise(resolve => {
+    this._exitPromise = new Promise((resolve) => {
       this._resolveExitPromise = resolve
     })
     this._pendingEvent = null
@@ -210,13 +216,13 @@ class Go {
       this.mem.setUint32(addr + 4, Math.floor(v / 4294967296), true)
     }
 
-    const getInt64 = addr => {
+    const getInt64 = (addr) => {
       const low = this.mem.getUint32(addr + 0, true)
       const high = this.mem.getInt32(addr + 4, true)
       return low + high * 4294967296
     }
 
-    const loadValue = addr => {
+    const loadValue = (addr) => {
       const f = this.mem.getFloat64(addr, true)
       if (f === 0) {
         return undefined
@@ -292,13 +298,13 @@ class Go {
       this.mem.setUint32(addr, id, true)
     }
 
-    const loadSlice = addr => {
+    const loadSlice = (addr) => {
       const array = getInt64(addr + 0)
       const len = getInt64(addr + 8)
       return new Uint8Array(this._inst.exports.mem.buffer, array, len)
     }
 
-    const loadSliceOfValues = addr => {
+    const loadSliceOfValues = (addr) => {
       const array = getInt64(addr + 0)
       const len = getInt64(addr + 8)
       const a = new Array(len)
@@ -308,7 +314,7 @@ class Go {
       return a
     }
 
-    const loadString = addr => {
+    const loadString = (addr) => {
       const saddr = getInt64(addr + 0)
       const len = getInt64(addr + 8)
       return decoder.decode(
@@ -325,7 +331,7 @@ class Go {
         // This changes the SP, thus we have to update the SP used by the imported function.
 
         // func wasmExit(code int32)
-        'runtime.wasmExit': sp => {
+        'runtime.wasmExit': (sp) => {
           const code = this.mem.getInt32(sp + 8, true)
           this.exited = true
           delete this._inst
@@ -337,7 +343,7 @@ class Go {
         },
 
         // func wasmWrite(fd uintptr, p unsafe.Pointer, n int32)
-        'runtime.wasmWrite': sp => {
+        'runtime.wasmWrite': (sp) => {
           const fd = getInt64(sp + 8)
           const p = getInt64(sp + 16)
           const n = this.mem.getInt32(sp + 24, true)
@@ -345,24 +351,24 @@ class Go {
         },
 
         // func resetMemoryDataView()
-        'runtime.resetMemoryDataView': sp => {
+        'runtime.resetMemoryDataView': (sp) => {
           this.mem = new DataView(this._inst.exports.mem.buffer)
         },
 
         // func nanotime1() int64
-        'runtime.nanotime1': sp => {
+        'runtime.nanotime1': (sp) => {
           setInt64(sp + 8, (timeOrigin + performance.now()) * 1000000)
         },
 
         // func walltime1() (sec int64, nsec int32)
-        'runtime.walltime1': sp => {
+        'runtime.walltime1': (sp) => {
           const msec = new Date().getTime()
           setInt64(sp + 8, msec / 1000)
           this.mem.setInt32(sp + 16, (msec % 1000) * 1000000, true)
         },
 
         // func scheduleTimeoutEvent(delay int64) int32
-        'runtime.scheduleTimeoutEvent': sp => {
+        'runtime.scheduleTimeoutEvent': (sp) => {
           const id = this._nextCallbackTimeoutID
           this._nextCallbackTimeoutID++
           this._scheduledTimeouts.set(
@@ -384,19 +390,19 @@ class Go {
         },
 
         // func clearTimeoutEvent(id int32)
-        'runtime.clearTimeoutEvent': sp => {
+        'runtime.clearTimeoutEvent': (sp) => {
           const id = this.mem.getInt32(sp + 8, true)
           clearTimeout(this._scheduledTimeouts.get(id))
           this._scheduledTimeouts.delete(id)
         },
 
         // func getRandomData(r []byte)
-        'runtime.getRandomData': sp => {
+        'runtime.getRandomData': (sp) => {
           crypto.getRandomValues(loadSlice(sp + 8))
         },
 
         // func finalizeRef(v ref)
-        'syscall/js.finalizeRef': sp => {
+        'syscall/js.finalizeRef': (sp) => {
           const id = this.mem.getUint32(sp + 8, true)
           this._goRefCounts[id]--
           if (this._goRefCounts[id] === 0) {
@@ -408,19 +414,19 @@ class Go {
         },
 
         // func stringVal(value string) ref
-        'syscall/js.stringVal': sp => {
+        'syscall/js.stringVal': (sp) => {
           storeValue(sp + 24, loadString(sp + 8))
         },
 
         // func valueGet(v ref, p string) ref
-        'syscall/js.valueGet': sp => {
+        'syscall/js.valueGet': (sp) => {
           const result = Reflect.get(loadValue(sp + 8), loadString(sp + 16))
           sp = this._inst.exports.getsp() // see comment above
           storeValue(sp + 32, result)
         },
 
         // func valueSet(v ref, p string, x ref)
-        'syscall/js.valueSet': sp => {
+        'syscall/js.valueSet': (sp) => {
           Reflect.set(
             loadValue(sp + 8),
             loadString(sp + 16),
@@ -429,22 +435,22 @@ class Go {
         },
 
         // func valueDelete(v ref, p string)
-        'syscall/js.valueDelete': sp => {
+        'syscall/js.valueDelete': (sp) => {
           Reflect.deleteProperty(loadValue(sp + 8), loadString(sp + 16))
         },
 
         // func valueIndex(v ref, i int) ref
-        'syscall/js.valueIndex': sp => {
+        'syscall/js.valueIndex': (sp) => {
           storeValue(sp + 24, Reflect.get(loadValue(sp + 8), getInt64(sp + 16)))
         },
 
         // valueSetIndex(v ref, i int, x ref)
-        'syscall/js.valueSetIndex': sp => {
+        'syscall/js.valueSetIndex': (sp) => {
           Reflect.set(loadValue(sp + 8), getInt64(sp + 16), loadValue(sp + 24))
         },
 
         // func valueCall(v ref, m string, args []ref) (ref, bool)
-        'syscall/js.valueCall': sp => {
+        'syscall/js.valueCall': (sp) => {
           try {
             const v = loadValue(sp + 8)
             const m = Reflect.get(v, loadString(sp + 16))
@@ -460,7 +466,7 @@ class Go {
         },
 
         // func valueInvoke(v ref, args []ref) (ref, bool)
-        'syscall/js.valueInvoke': sp => {
+        'syscall/js.valueInvoke': (sp) => {
           try {
             const v = loadValue(sp + 8)
             const args = loadSliceOfValues(sp + 16)
@@ -475,7 +481,7 @@ class Go {
         },
 
         // func valueNew(v ref, args []ref) (ref, bool)
-        'syscall/js.valueNew': sp => {
+        'syscall/js.valueNew': (sp) => {
           try {
             const v = loadValue(sp + 8)
             const args = loadSliceOfValues(sp + 16)
@@ -490,25 +496,25 @@ class Go {
         },
 
         // func valueLength(v ref) int
-        'syscall/js.valueLength': sp => {
+        'syscall/js.valueLength': (sp) => {
           setInt64(sp + 16, parseInt(loadValue(sp + 8).length))
         },
 
         // valuePrepareString(v ref) (ref, int)
-        'syscall/js.valuePrepareString': sp => {
+        'syscall/js.valuePrepareString': (sp) => {
           const str = encoder.encode(String(loadValue(sp + 8)))
           storeValue(sp + 16, str)
           setInt64(sp + 24, str.length)
         },
 
         // valueLoadString(v ref, b []byte)
-        'syscall/js.valueLoadString': sp => {
+        'syscall/js.valueLoadString': (sp) => {
           const str = loadValue(sp + 8)
           loadSlice(sp + 16).set(str)
         },
 
         // func valueInstanceOf(v ref, t ref) bool
-        'syscall/js.valueInstanceOf': sp => {
+        'syscall/js.valueInstanceOf': (sp) => {
           this.mem.setUint8(
             sp + 24,
             loadValue(sp + 8) instanceof loadValue(sp + 16)
@@ -516,7 +522,7 @@ class Go {
         },
 
         // func copyBytesToGo(dst []byte, src ref) (int, bool)
-        'syscall/js.copyBytesToGo': sp => {
+        'syscall/js.copyBytesToGo': (sp) => {
           const dst = loadSlice(sp + 8)
           const src = loadValue(sp + 32)
           if (!(src instanceof Uint8Array)) {
@@ -530,7 +536,7 @@ class Go {
         },
 
         // func copyBytesToJS(dst ref, src []byte) (int, bool)
-        'syscall/js.copyBytesToJS': sp => {
+        'syscall/js.copyBytesToJS': (sp) => {
           const dst = loadValue(sp + 8)
           const src = loadSlice(sp + 16)
           if (!(dst instanceof Uint8Array)) {
@@ -543,7 +549,7 @@ class Go {
           this.mem.setUint8(sp + 48, 1)
         },
 
-        debug: value => {
+        debug: (value) => {
           console.log(value)
         },
       },
@@ -571,7 +577,7 @@ class Go {
     // Pass command line arguments and environment variables to WebAssembly by writing them to the linear memory.
     let offset = 4096
 
-    const strPtr = str => {
+    const strPtr = (str) => {
       const ptr = offset
       const bytes = encoder.encode(str + '\0')
       new Uint8Array(this.mem.buffer, offset, bytes.length).set(bytes)
@@ -585,19 +591,19 @@ class Go {
     const argc = this.argv.length
 
     const argvPtrs = []
-    this.argv.forEach(arg => {
+    this.argv.forEach((arg) => {
       argvPtrs.push(strPtr(arg))
     })
     argvPtrs.push(0)
 
     const keys = Object.keys(this.env).sort()
-    keys.forEach(key => {
+    keys.forEach((key) => {
       argvPtrs.push(strPtr(`${key}=${this.env[key]}`))
     })
     argvPtrs.push(0)
 
     const argv = offset
-    argvPtrs.forEach(ptr => {
+    argvPtrs.forEach((ptr) => {
       this.mem.setUint32(offset, ptr, true)
       this.mem.setUint32(offset + 4, 0, true)
       offset += 8
@@ -622,7 +628,7 @@ class Go {
 
   _makeFuncWrapper(id) {
     const go = this
-    return function() {
+    return function () {
       const event = { id: id, this: this, args: arguments }
       go._pendingEvent = event
       go._resume()
@@ -639,7 +645,9 @@ async function getWasmBuffer(
   if (global.fs && fs.readFileSync) {
     return fs.readFileSync(source)
   } else if (isBrowser && global.fetch) {
-    return fetch(source).then(response => response.arrayBuffer())
+    return fetch(`${wasmFetchDir}/main.wasm`).then((response) =>
+      response.arrayBuffer()
+    )
   }
   throw new Error(`Unable to create buffer from source file ${source}`)
 }
@@ -649,8 +657,8 @@ class GoWasm extends Go {
     const go = new Go()
     // instantiate WASM
     await WebAssembly.instantiate(await getWasmBuffer(), go.importObject)
-      .then(result => {
-        process.on('exit', code => {
+      .then((result) => {
+        process.on('exit', (code) => {
           // Node.js exits if no event handler is pending
           if (code === 0 && !go.exited) {
             // deadlock, make Go print error and stack traces
@@ -662,7 +670,7 @@ class GoWasm extends Go {
         go.run(result.instance)
         return
       })
-      .catch(err => {
+      .catch((err) => {
         console.error(err)
         this.exitCode = 'Error while executing Gabi WASM'
       })
@@ -684,7 +692,7 @@ class GoWasm extends Go {
           }
           resolve(...messages)
         })
-      }).catch(e => {
+      }).catch((e) => {
         throw new WasmError(`${fn}: \n${e}`)
       })
     }
