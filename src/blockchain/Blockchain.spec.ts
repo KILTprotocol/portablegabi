@@ -15,10 +15,6 @@ describe('chain mocks', () => {
     it('Should connect', async () => {
       await expect(connect()).resolves.toStrictEqual(BlockchainMock)
     })
-    it('Should waitForNextBlock', async () => {
-      await BlockchainMock.waitForNextBlock()
-      expect(api.rpc.chain.subscribeNewHeads).toHaveBeenCalled()
-    })
     it('Should getAccumulatorCount', async () => {
       const count = await BlockchainMock.getAccumulatorCount(dummyAddress)
       expect(count).toBe(dummyAddress.length)
