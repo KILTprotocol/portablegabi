@@ -22,6 +22,15 @@ func RequestPresentation(this js.Value, inputs []js.Value) (interface{}, error) 
 	if len(inputs) < 3 {
 		return nil, errors.New("missing inputs")
 	}
+	keyLength := DefaultKeyLength
+	if len(inputs) > 4 && !inputs[3].IsUndefined() {
+		keyLength = inputs[3].Int()
+	}
+	sysParams, success := gabi.DefaultSystemParameters[keyLength]
+	if !success {
+		return nil, errors.New("invalid key length")
+	}
+
 	var requestedAttributes []string
 	if err := json.Unmarshal([]byte(inputs[2].String()), &requestedAttributes); err != nil {
 		return nil, err
@@ -30,7 +39,7 @@ func RequestPresentation(this js.Value, inputs []js.Value) (interface{}, error) 
 	if err != nil {
 		return nil, err
 	}
-	session, msg := credentials.RequestPresentation(SysParams, requestedAttributes, inputs[0].Bool(), updateAfter)
+	session, msg := credentials.RequestPresentation(sysParams, requestedAttributes, inputs[0].Bool(), updateAfter)
 
 	return map[string]interface{}{
 		"session": session,
@@ -42,7 +51,14 @@ func RequestCombinedPresentation(this js.Value, inputs []js.Value) (interface{},
 	if len(inputs) < 1 {
 		return nil, errors.New("missing inputs")
 	}
-
+	keyLength := DefaultKeyLength
+	if len(inputs) > 1 && !inputs[1].IsUndefined() {
+		keyLength = inputs[1].Int()
+	}
+	sysParams, success := gabi.DefaultSystemParameters[keyLength]
+	if !success {
+		return nil, errors.New("invalid key length")
+	}
 	// first two inputs are check-revocation-flag and minimum required revocation index
 	var sessionArgs []credentials.PartialPresentationRequest
 
@@ -50,7 +66,7 @@ func RequestCombinedPresentation(this js.Value, inputs []js.Value) (interface{},
 		return nil, err
 	}
 
-	session, msg := credentials.RequestCombinedPresentation(SysParams, sessionArgs)
+	session, msg := credentials.RequestCombinedPresentation(sysParams, sessionArgs)
 
 	return map[string]interface{}{
 		"session": session,
