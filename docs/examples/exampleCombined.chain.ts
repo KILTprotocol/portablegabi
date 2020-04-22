@@ -82,7 +82,7 @@ async function completeProcessCombined({
       accumulator: accumulator1,
       witnesses: [witness1],
     })
-    await blockchain.waitForNextBlock()
+
     console.log(
       'AccumulatorCount after revocation:',
       await blockchain.getAccumulatorCount(attester1.address)
