@@ -91,7 +91,7 @@ describe('Test attester', () => {
         keypair.publicKey
       )
       await expect(
-        AttesterChain.create(1, 10, 'ed25519')
+        AttesterChain.create(1, 10, 1024, 'ed25519')
       ).resolves.toHaveProperty('privateKey', keypair.privateKey)
       await expect(AttesterChain.create()).resolves.toHaveProperty(
         'publicKey',

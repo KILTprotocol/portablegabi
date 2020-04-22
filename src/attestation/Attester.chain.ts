@@ -44,18 +44,21 @@ export default class AttesterChain extends Attester implements IAttesterChain {
    *
    * @param validityDuration The duration in days for which the public key will be valid.
    * @param maxAttributes The maximum number of attributes that can be signed with the generated private key.
+   * @param keyLength The key length of the new key pair. Note that this key will only support credentials and claimer with the same key length.
    * @param keypairType The signature scheme used in the keyring pair, either 'sr25519' or 'ed25519'.
    * @returns A [[AttesterChain]] instance including a chain address and a public and private key pair.
    */
   public static async create(
     validityDuration?: number,
     maxAttributes = 70,
+    keyLength: 1024 | 2048 | 4096 = 1024,
     keypairType: KeypairType = 'sr25519'
   ): Promise<AttesterChain> {
     const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
     const { publicKey, privateKey } = await super.genKeyPair(
       durationInNanoSecs,
-      maxAttributes
+      maxAttributes,
+      keyLength
     )
     const mnemonic = this.generateMnemonic()
     return this.buildFromMnemonic(publicKey, privateKey, mnemonic, keypairType)
