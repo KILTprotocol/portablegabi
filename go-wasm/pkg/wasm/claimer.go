@@ -14,7 +14,16 @@ import (
 
 // GenKey creates the private key for the claimer
 func GenKey(this js.Value, inputs []js.Value) (interface{}, error) {
-	claimer, err := credentials.NewClaimer(SysParams)
+	keyLength := DefaultKeyLength
+	if len(inputs) > 0 && !inputs[0].IsUndefined() {
+		keyLength = inputs[0].Int()
+	}
+	sysParams, success := gabi.DefaultSystemParameters[keyLength]
+	if !success {
+		return nil, errors.New("invalid key length")
+	}
+
+	claimer, err := credentials.NewClaimer(sysParams)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +38,16 @@ func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 2 {
 		return nil, errors.New("Missing password to generate claimer keys")
 	}
-	claimer, err := credentials.ClaimerFromMnemonic(SysParams, inputs[0].String(), inputs[1].String())
+	keyLength := DefaultKeyLength
+	if len(inputs) > 2 && !inputs[2].IsUndefined() {
+		keyLength = inputs[2].Int()
+	}
+	sysParams, success := gabi.DefaultSystemParameters[keyLength]
+	if !success {
+		return nil, errors.New("invalid key length")
+	}
+
+	claimer, err := credentials.ClaimerFromMnemonic(sysParams, inputs[0].String(), inputs[1].String())
 	if err != nil {
 		return nil, err
 	}

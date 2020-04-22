@@ -8,8 +8,9 @@ import Credential from '../../../src/claim/Credential'
 function compareClaims(claim: any, claimFromAtt: any): void {
   const [keys1, values1] = Object.entries(claim)
   const [keys2, values2] = Object.entries(claimFromAtt)
-  const checkKeys = keys1.filter(key => keys2.includes(key)).length === 0
-  const checkValues = values1.filter(val => values2.includes(val)).length === 0
+  const checkKeys = keys1.filter((key) => keys2.includes(key)).length === 0
+  const checkValues =
+    values1.filter((val) => values2.includes(val)).length === 0
   if (!checkKeys || !checkValues) {
     console.error('Original claim and claim from attestation do not match!')
   }

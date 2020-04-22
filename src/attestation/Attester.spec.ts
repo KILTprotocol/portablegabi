@@ -78,20 +78,32 @@ describe('Test attester', () => {
     })
     it('Should generate dummy key pair', async () => {
       ;(goWasmExec as any) = jest.fn(async () => keypair)
-      await expect(Attester.genKeyPair(1, 10)).resolves.toEqual(keypair)
+      await expect(
+        Attester.genKeyPair({
+          validityDuration: 1,
+          maxAttributes: 10,
+        })
+      ).resolves.toEqual(keypair)
       await expect(Attester.genKeyPair()).resolves.toEqual(keypair)
     })
     it('Should create attester', async () => {
-      await expect(Attester.create(1, 10)).resolves.toHaveProperty(
-        'privateKey',
-        keypair.privateKey
-      )
+      await expect(
+        Attester.create({
+          validityDuration: 1,
+          maxAttributes: 10,
+        })
+      ).resolves.toHaveProperty('privateKey', keypair.privateKey)
       await expect(Attester.create()).resolves.toHaveProperty(
         'publicKey',
         keypair.publicKey
       )
       await expect(
-        AttesterChain.create(1, 10, 'ed25519')
+        AttesterChain.create({
+          validityDuration: 1,
+          maxAttributes: 10,
+          keyLength: 1024,
+          keypairType: 'ed25519',
+        })
       ).resolves.toHaveProperty('privateKey', keypair.privateKey)
       await expect(AttesterChain.create()).resolves.toHaveProperty(
         'publicKey',

@@ -19,8 +19,16 @@ func GenKeypair(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 2 {
 		return nil, errors.New("missing inputs")
 	}
+	keyLength := DefaultKeyLength
+	if len(inputs) > 2 && !inputs[2].IsUndefined() {
+		keyLength = inputs[2].Int()
+	}
+	sysParams, success := gabi.DefaultSystemParameters[keyLength]
+	if !success {
+		return nil, errors.New("invalid key length")
+	}
 
-	attester, err := credentials.NewAttester(SysParams, inputs[0].Int(), int64(inputs[1].Int()))
+	attester, err := credentials.NewAttester(sysParams, inputs[0].Int(), int64(inputs[1].Int()))
 	if err != nil {
 		return nil, err
 	}

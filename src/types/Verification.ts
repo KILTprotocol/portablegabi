@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
 /* eslint-disable max-classes-per-file */
 
+import { KeyLength } from './Attestation'
+
 export interface IPresentationRequest {
   requestedAttributes: string[]
   reqUpdatedAfter?: Date
+  keyLength?: KeyLength
 }
 
 export interface IVerifiedPresentation {

@@ -13,7 +13,11 @@ import {
   CombinedVerificationSession,
   CombinedPresentationRequest,
 } from '../types/Verification'
-import { IGabiMsgSession, AttesterPublicKey } from '../types/Attestation'
+import {
+  IGabiMsgSession,
+  AttesterPublicKey,
+  KeyLength,
+} from '../types/Attestation'
 import { Presentation, CombinedPresentation } from '../types/Claim'
 
 /**
@@ -26,28 +30,37 @@ export default class Verifier {
    * @param p The parameter object.
    * @param p.requestedAttributes The attributes that need to be disclosed for the [[Verifier]] in order to verify the [[Credential]].
    * @param p.reqUpdatedAfter The minimum [[Accumulator]] timestamp on which the [[Credential]] needs to be updated.
+   * @param p.keyLength The key length of the new key pair. Note that this key will only support credentials and claimer with the same key length.
    * @returns A session and a message object. The message should be sent to the [[Claimer]] and used in [[buildPresentation]]. The session should be kept private and used in [[verifyPresentation]].
    */
   public static async requestPresentation({
     requestedAttributes,
     reqUpdatedAfter,
+    keyLength,
   }: IPresentationRequest): Promise<{
     message: PresentationRequest
     session: VerificationSession
   }> {
-    let args: [boolean, string, string]
+    // since we are using a destructed object as parameter, we don't have default parameter
+    let kl = keyLength
+    if (typeof kl === 'undefined') {
+      kl = 1024
+    }
+    let args: [boolean, string, string, KeyLength]
     if (typeof reqUpdatedAfter === 'undefined') {
       args = [
         false,
         // date will be ignored, we won't check for a revocation proof
         new Date().toISOString(),
         JSON.stringify(requestedAttributes),
+        kl,
       ]
     } else {
       args = [
         true,
         reqUpdatedAfter.toISOString(),
         JSON.stringify(requestedAttributes),
+        kl,
       ]
     }
     const { message, session } = await goWasmExec<IGabiMsgSession>(

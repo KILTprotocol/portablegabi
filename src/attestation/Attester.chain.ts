@@ -10,7 +10,7 @@ import {
 } from '@polkadot/util-crypto'
 import { KeypairType } from '@polkadot/util-crypto/types'
 import { u8aToHex } from '@polkadot/util'
-import Attester, { daysToNanoSecs } from './Attester'
+import Attester, { KeyGenOptions } from './Attester'
 import {
   Witness,
   AttesterPublicKey,
@@ -19,6 +19,11 @@ import {
 } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Accumulator from './Accumulator'
+import { DEFAULT_KEY_TYPE } from '../types/Chain'
+
+export type ChainKeyGenOptions = KeyGenOptions & {
+  keypairType?: KeypairType
+}
 
 /**
  * The AttesterChain extends an [[Attester]]'s creation process and functionality to on-chain compatibility.
@@ -42,23 +47,24 @@ export default class AttesterChain extends Attester implements IAttesterChain {
   /**
    * Generates a new key pair and returns a new [[AttesterChain]].
    *
-   * @param validityDuration The duration in days for which the public key will be valid.
-   * @param maxAttributes The maximum number of attributes that can be signed with the generated private key.
-   * @param keypairType The signature scheme used in the keyring pair, either 'sr25519' or 'ed25519'.
+   * @param options An optional object containing options for the key generation.
+   * @param options.validityDuration The duration in days for which the public key will be valid.
+   * @param options.maxAttributes The maximum number of attributes that can be signed with the generated private key.
+   * @param options.keyLength The key length of the new key pair. Note that this key will only support credentials and claimer with the same key length.
+   * @param options.keypairType The signature scheme used in the keyring pair, either 'sr25519' or 'ed25519'.
    * @returns A [[AttesterChain]] instance including a chain address and a public and private key pair.
    */
   public static async create(
-    validityDuration?: number,
-    maxAttributes = 70,
-    keypairType: KeypairType = 'sr25519'
+    options: ChainKeyGenOptions = {}
   ): Promise<AttesterChain> {
-    const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
-    const { publicKey, privateKey } = await super.genKeyPair(
-      durationInNanoSecs,
-      maxAttributes
-    )
+    const { publicKey, privateKey } = await super.genKeyPair(options)
     const mnemonic = this.generateMnemonic()
-    return this.buildFromMnemonic(publicKey, privateKey, mnemonic, keypairType)
+    return this.buildFromMnemonic(
+      publicKey,
+      privateKey,
+      mnemonic,
+      options.keypairType || DEFAULT_KEY_TYPE
+    )
   }
 
   /**

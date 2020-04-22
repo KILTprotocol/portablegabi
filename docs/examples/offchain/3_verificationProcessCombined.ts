@@ -35,7 +35,7 @@ export async function verificationProcessCombined({
     )
   }
   console.group()
-  const attesterPubKeys = attesters.map(attester => attester.publicKey)
+  const attesterPubKeys = attesters.map((attester) => attester.publicKey)
 
   // verifier requests presentation for each credential and combines request by calling `finalise`
   // call requestPresentation for every array index
