@@ -171,7 +171,7 @@ export default class Blockchain implements IBlockchainApi {
     address: KeyringPair,
     accumulator: Accumulator
   ): Promise<void> {
-    const update = await this.api.tx[this.chainmod].updateAccumulator(
+    const update = this.api.tx[this.chainmod].updateAccumulator(
       accumulator.valueOf()
     )
     return new Promise((resolve, reject) => {

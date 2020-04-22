@@ -51,7 +51,7 @@ describe('chain mocks', () => {
       // update to new accumulator
       await expect(
         BlockchainMock.updateAccumulator('s' as any, newAccumulator)
-      ).rejects.toThrowError("Cannot read property 'signAndSend' of undefined")
+      ).resolves.toBeUndefined()
       const latestAccumulator = await BlockchainMock.getLatestAccumulator(
         dummyAddress
       )
