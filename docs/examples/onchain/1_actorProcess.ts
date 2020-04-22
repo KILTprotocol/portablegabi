@@ -60,7 +60,6 @@ export async function actorProcessChain({
       )
     }
     await attester.updateAccumulator(accumulator)
-    await blockchain.waitForNextBlock()
   }
 
   return { claimer, attester, accumulator }

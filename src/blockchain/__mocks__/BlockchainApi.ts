@@ -2,16 +2,37 @@ import Accumulator from '../../attestation/Accumulator'
 import { Codec } from '@polkadot/types/types'
 import { stringToHex } from '@polkadot/util'
 
+
 const api = {
   tx: {
     portablegabi: {
       // mocked updateAccumulator returns value of input accumulator by default
       updateAccumulator: jest.fn(
-        async (accumulator: Accumulator): Promise<void> => {
+        (accumulator: Accumulator): any => {
           // mock new accumulator list
           api.query.portablegabi.accumulatorList.mockReturnValue(
             (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
           )
+
+          return {
+            signAndSend: (addr: any, cb: any) => {
+              const result = {
+                status: {
+                  isFinalized: true,
+                },
+                events: [
+                  {
+                    event: {
+                      section: 'system',
+                      method: 'ExtrinsicSuccess'
+                    }
+                  }
+                ]
+              }
+              if (typeof cb !== 'undefined') cb(result)
+              return new Promise((res) => {res()})
+            }
+          }
         }
       ),
     },

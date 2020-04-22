@@ -42,5 +42,4 @@ export interface IBlockchainApi {
     address: KeyringPair,
     accumulator: Accumulator
   ) => Promise<void>
-  waitForNextBlock: () => Promise<void>
 }
