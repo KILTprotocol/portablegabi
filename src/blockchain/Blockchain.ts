@@ -180,7 +180,7 @@ export default class Blockchain implements IBlockchainApi {
 
       // sign and send transaction
       update
-        .signAndSend(address, r => {
+        .signAndSend(address, (r) => {
           // if block containing the transaction was finalized, check if transaction was successful
           if (r.status.isFinalized) {
             if (unsubscribe !== null) unsubscribe()
@@ -205,7 +205,7 @@ export default class Blockchain implements IBlockchainApi {
             else reject()
           }
         })
-        .then(u => {
+        .then((u) => {
           unsubscribe = u
         })
     })
