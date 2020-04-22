@@ -13,6 +13,7 @@ import IAttester, {
   Attestation,
   AttesterPublicKey,
   AttesterPrivateKey,
+  KeyLength,
 } from '../types/Attestation'
 
 /**
@@ -43,7 +44,7 @@ export default class Attester implements IAttester {
   public static async genKeyPair(
     validityDuration?: number,
     maxAttributes = 70,
-    keyLength: 1024 | 2048 | 4096 = 1024
+    keyLength: KeyLength = 1024
   ): Promise<{
     privateKey: AttesterPrivateKey
     publicKey: AttesterPublicKey
@@ -70,7 +71,7 @@ export default class Attester implements IAttester {
   public static async create(
     validityDuration?: number,
     maxAttributes = 70,
-    keyLength: 1024 | 2048 | 4096 = 1024
+    keyLength: KeyLength = 1024
   ): Promise<Attester> {
     const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
     const { publicKey, privateKey } = await this.genKeyPair(

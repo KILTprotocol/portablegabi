@@ -16,6 +16,7 @@ import {
   AttesterPublicKey,
   IAttesterChain,
   AttesterPrivateKey,
+  KeyLength,
 } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
 import Accumulator from './Accumulator'
@@ -51,7 +52,7 @@ export default class AttesterChain extends Attester implements IAttesterChain {
   public static async create(
     validityDuration?: number,
     maxAttributes = 70,
-    keyLength: 1024 | 2048 | 4096 = 1024,
+    keyLength: KeyLength = 1024,
     keypairType: KeypairType = 'sr25519'
   ): Promise<AttesterChain> {
     const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)

@@ -11,6 +11,7 @@ import {
   InitiateAttestationRequest,
   Attestation,
   AttesterPublicKey,
+  KeyLength,
 } from '../types/Attestation'
 import {
   CombinedPresentationRequest,
@@ -53,7 +54,7 @@ export default class Claimer implements IClaimer {
   public static async buildFromMnemonic(
     mnemonic: string,
     password = '',
-    keyLength = 1024
+    keyLength: KeyLength = 1024
   ): Promise<Claimer> {
     // secret's structure unmarshalled is { MasterSecret: string }
     const secret = await goWasmExec<string>(WasmHooks.keyFromMnemonic, [
