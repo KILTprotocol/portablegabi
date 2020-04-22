@@ -47,7 +47,7 @@ export default class Claimer implements IClaimer {
    *
    * @param mnemonic The mnemonic which is used to generate the key.
    * @param password The password which is used to generate the key.
-   * @param keyLength The key length .
+   * @param keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
    * @returns A new claimer.
    */
   public static async buildFromMnemonic(

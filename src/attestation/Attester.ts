@@ -37,6 +37,7 @@ export default class Attester implements IAttester {
    *
    * @param validityDuration The duration in days for which the public key will be valid.
    * @param maxAttributes The maximum number of attributes that can be signed with the generated private key.
+   * @param keyLength The key length of the new key pair. Note that this key will only support credentials and claimer with the same key length.
    * @returns A newly generated key pair.
    */
   public static async genKeyPair(
@@ -63,16 +64,19 @@ export default class Attester implements IAttester {
    *
    * @param validityDuration The duration in days for which the public key will be valid.
    * @param maxAttributes The maximal number of attributes that can be signed with the generated private key.
+   * @param keyLength The key length of the new key pair. Note that this key will only support credentials and claimer with the same key length.
    * @returns A new [[Attester]].
    */
   public static async create(
     validityDuration?: number,
-    maxAttributes = 70
+    maxAttributes = 70,
+    keyLength: 1024 | 2048 | 4096 = 1024
   ): Promise<Attester> {
     const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
     const { publicKey, privateKey } = await this.genKeyPair(
       durationInNanoSecs,
-      maxAttributes
+      maxAttributes,
+      keyLength
     )
     return new Attester(publicKey, privateKey)
   }
