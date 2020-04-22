@@ -9,6 +9,11 @@ import Accumulator from '../attestation/Accumulator'
  */
 export type PgabiModName = 'portablegabi' | 'portablegabiPallet' | string
 
+/**
+ * The default key type for the attester identities.
+ */
+export const DEFAULT_KEY_TYPE = 'sr25519'
+
 export interface IPortablegabiApi<T extends PgabiModName> {
   query: {
     [K in T]: {
