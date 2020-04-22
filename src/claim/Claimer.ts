@@ -47,16 +47,19 @@ export default class Claimer implements IClaimer {
    *
    * @param mnemonic The mnemonic which is used to generate the key.
    * @param password The password which is used to generate the key.
+   * @param keyLength The key length .
    * @returns A new claimer.
    */
   public static async buildFromMnemonic(
     mnemonic: string,
-    password = ''
+    password = '',
+    keyLength = 1024
   ): Promise<Claimer> {
     // secret's structure unmarshalled is { MasterSecret: string }
     const secret = await goWasmExec<string>(WasmHooks.keyFromMnemonic, [
       mnemonic,
       password,
+      keyLength,
     ])
     return new this(secret)
   }

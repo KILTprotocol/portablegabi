@@ -31,23 +31,31 @@ export default class Verifier {
   public static async requestPresentation({
     requestedAttributes,
     reqUpdatedAfter,
+    keyLength,
   }: IPresentationRequest): Promise<{
     message: PresentationRequest
     session: VerificationSession
   }> {
-    let args: [boolean, string, string]
+    // since we are using a destructed object as parameter, we don't have default parameter
+    let kl = keyLength
+    if (typeof kl === 'undefined') {
+      kl = 1024
+    }
+    let args: [boolean, string, string, 1024 | 2048 | 4096]
     if (typeof reqUpdatedAfter === 'undefined') {
       args = [
         false,
         // date will be ignored, we won't check for a revocation proof
         new Date().toISOString(),
         JSON.stringify(requestedAttributes),
+        kl,
       ]
     } else {
       args = [
         true,
         reqUpdatedAfter.toISOString(),
         JSON.stringify(requestedAttributes),
+        kl,
       ]
     }
     const { message, session } = await goWasmExec<IGabiMsgSession>(

@@ -41,7 +41,8 @@ export default class Attester implements IAttester {
    */
   public static async genKeyPair(
     validityDuration?: number,
-    maxAttributes = 70
+    maxAttributes = 70,
+    keyLength: 1024 | 2048 | 4096 = 1024
   ): Promise<{
     privateKey: AttesterPrivateKey
     publicKey: AttesterPublicKey
@@ -50,7 +51,7 @@ export default class Attester implements IAttester {
     const { privateKey, publicKey } = await goWasmExec<{
       privateKey: string
       publicKey: string
-    }>(WasmHooks.genKeypair, [maxAttributes, durationInNanoSecs])
+    }>(WasmHooks.genKeypair, [maxAttributes, durationInNanoSecs, keyLength])
     return {
       privateKey: new AttesterPrivateKey(privateKey),
       publicKey: new AttesterPublicKey(publicKey),

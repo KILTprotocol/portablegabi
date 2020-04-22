@@ -4,6 +4,7 @@
 export interface IPresentationRequest {
   requestedAttributes: string[]
   reqUpdatedAfter?: Date
+  keyLength?: 1024 | 2048 | 4096
 }
 
 export interface IVerifiedPresentation {
