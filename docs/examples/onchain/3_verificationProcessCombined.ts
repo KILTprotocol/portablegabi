@@ -37,10 +37,10 @@ export async function verificationProcessCombinedChain({
     )
   }
   console.group()
-  const attesterPubKeys = attesters.map(attester => attester.publicKey)
+  const attesterPubKeys = attesters.map((attester) => attester.publicKey)
   const blockchain = await connect()
   const accumulators = await Promise.all(
-    attesters.map(attester => {
+    attesters.map((attester) => {
       return blockchain.getLatestAccumulator(attester.address)
     })
   )
