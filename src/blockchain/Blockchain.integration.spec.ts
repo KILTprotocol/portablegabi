@@ -17,13 +17,13 @@ let alice: Attester
 let bob: Attester
 
 beforeAll(async () => {
-  alice = await Attester.buildFromURI(pubKey, privKey, '//Alice')
-  bob = await Attester.buildFromURI(pubKey2, privKey2, '//Bob')
+  alice = await Attester.buildFromURI(pubKey, privKey, '//Alice', 'ed25519')
+  bob = await Attester.buildFromURI(pubKey2, privKey2, '//Bob', 'ed25519')
 })
 
 describe('When I have a fresh chain with a Portablegabi pallet...', () => {
   it('it connects', async () => {
-    chain = await getCached({ pgabiModName: 'portablegabiPallet' })
+    chain = await getCached({ pgabiModName: 'portablegabi' })
     expect(chain.api.isReady).toBeTruthy()
   })
 
