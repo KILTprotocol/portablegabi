@@ -17,6 +17,7 @@ import {
   IGabiMsgSession,
   AttesterPublicKey,
   KeyLength,
+  DEFAULT_KEY_LENGTH,
 } from '../types/Attestation'
 import { Presentation, CombinedPresentation } from '../types/Claim'
 
@@ -37,11 +38,6 @@ export async function requestPresentation({
   message: PresentationRequest
   session: VerificationSession
 }> {
-  // since we are using a destructed object as parameter, we don't have default parameter
-  let kl = keyLength
-  if (typeof kl === 'undefined') {
-    kl = 1024
-  }
   let args: [boolean, string, string, KeyLength]
   if (typeof reqUpdatedAfter === 'undefined') {
     args = [
@@ -49,14 +45,14 @@ export async function requestPresentation({
       // date will be ignored, we won't check for a revocation proof
       new Date().toISOString(),
       JSON.stringify(requestedAttributes),
-      kl,
+      keyLength || DEFAULT_KEY_LENGTH,
     ]
   } else {
     args = [
       true,
       reqUpdatedAfter.toISOString(),
       JSON.stringify(requestedAttributes),
-      kl,
+      keyLength || DEFAULT_KEY_LENGTH,
     ]
   }
   const { message, session } = await goWasmExec<IGabiMsgSession>(
