@@ -32,7 +32,7 @@ func main() {
 	methods["revokeAttestation"] = js.FuncOf(wasm.Callbacker(wasm.RevokeAttestation))
 
 	methods["genKey"] = js.FuncOf(wasm.Callbacker(wasm.GenKey))
-	methods["keyFromMnemonic"] = js.FuncOf(wasm.Callbacker(wasm.KeyFromMnemonic))
+	methods["keyFromSeed"] = js.FuncOf(wasm.Callbacker(wasm.KeyFromSeed))
 	methods["requestAttestation"] = js.FuncOf(wasm.Callbacker(wasm.RequestAttestation))
 	methods["buildCredential"] = js.FuncOf(wasm.Callbacker(wasm.BuildCredential))
 	methods["buildPresentation"] = js.FuncOf(wasm.Callbacker(wasm.BuildPresentation))

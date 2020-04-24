@@ -106,6 +106,7 @@ func TestReconstructClaim(t *testing.T) {
 			"name":         "Berta",
 			"special":      true,
 			"likedNumbers": []interface{}{1., 2., 3.},
+			"ups":          nil,
 		},
 	}
 	attributes := oldClaim.ToAttributes()

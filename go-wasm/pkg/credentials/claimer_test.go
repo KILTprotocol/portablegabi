@@ -1,6 +1,7 @@
 package credentials
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -10,10 +11,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestClaimerFromMnemonic(t *testing.T) {
+func TestClaimerFromSeed(t *testing.T) {
 	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
 	require.True(t, success, "Error in sysparams")
-	secret, err := ClaimerFromMnemonic(sysParams, mnemonic, "")
+	bSeed, err := hex.DecodeString(seed[2:])
+	require.NoError(t, err)
+	secret, err := NewClaimerFromSecret(sysParams, bSeed)
+	assert.NoError(t, err, "could not create claimer secret")
+	assert.NotNil(t, secret)
+	assert.Equal(t, sysParams.Lm, uint(secret.MasterSecret.BitLen()))
+}
+
+func TestClaimerFromRawSeed(t *testing.T) {
+	sysParams, success := gabi.DefaultSystemParameters[KeyLength]
+	require.True(t, success, "Error in sysparams")
+
+	secret, err := NewClaimerFromSecret(sysParams, binSeed)
 	assert.NoError(t, err, "could not create claimer secret")
 	assert.NotNil(t, secret)
 	assert.Equal(t, sysParams.Lm, uint(secret.MasterSecret.BitLen()))
@@ -60,7 +73,7 @@ func TestBuildCredential(t *testing.T) {
 	err = json.Unmarshal(byteAttestClaimerSession, session)
 	require.NoError(t, err)
 
-	claimer, err := ClaimerFromMnemonic(sysParams, mnemonic, "")
+	claimer, err := NewClaimerFromSecret(sysParams, binSeed)
 	require.NoError(t, err)
 	cred, err := claimer.BuildCredential(attestation, session)
 	assert.NoError(t, err)

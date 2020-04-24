@@ -87,6 +87,10 @@ describe('Test combined requests', () => {
       .finalise()
     expect(message).toEqual(expect.anything())
     expect(session).toEqual(expect.anything())
+    expect(message.getRequestedProperties()).toEqual([
+      disclosedAttributes,
+      disclosedAttributesCombined,
+    ])
   })
   it('Should not verify if one of the attesters keys does not fit', async () => {
     const credentials = await Promise.all(
