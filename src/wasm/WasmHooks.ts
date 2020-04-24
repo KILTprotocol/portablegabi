@@ -1,7 +1,7 @@
 enum WasmHooks {
   // claimer methods
   genKey = 'genKey',
-  keyFromMnemonic = 'keyFromMnemonic',
+  keyFromSeed = 'keyFromSeed',
   requestAttestation = 'requestAttestation',
   buildCredential = 'buildCredential',
   buildPresentation = 'buildPresentation',

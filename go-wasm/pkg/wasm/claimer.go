@@ -3,8 +3,10 @@
 package wasm
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"syscall/js"
 
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/credentials"
@@ -30,14 +32,19 @@ func GenKey(this js.Value, inputs []js.Value) (interface{}, error) {
 	return claimer, nil
 }
 
-// KeyFromMnemonic derives a key from a given mnemonic
-func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
+// KeyFromSeed derives a key from a given seed
+func KeyFromSeed(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 1 {
-		return nil, errors.New("Missing mnemonic to generate claimer keys")
+		return nil, errors.New("missing seed to generate claimer keys")
 	}
-	if len(inputs) < 2 {
-		return nil, errors.New("Missing password to generate claimer keys")
+	// get seed
+	hexString := inputs[0].String()
+	if len(hexString) < 4 || hexString[:2] != "0x" {
+		return nil, errors.New("seed should be a hexadecimal string starting with '0x' followed by at least two hexadecimal digits")
 	}
+	seed, err := hex.DecodeString(hexString[2:])
+
+	// get optional key length
 	keyLength := DefaultKeyLength
 	if len(inputs) > 2 && !inputs[2].IsUndefined() {
 		keyLength = inputs[2].Int()
@@ -47,7 +54,8 @@ func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, errors.New("invalid key length")
 	}
 
-	claimer, err := credentials.ClaimerFromMnemonic(sysParams, inputs[0].String(), inputs[1].String())
+	// create claimer
+	claimer, err := credentials.NewClaimerFromSecret(sysParams, seed)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +69,7 @@ func KeyFromMnemonic(this js.Value, inputs []js.Value) (interface{}, error) {
 // handshake message from the attester and the public key of the attester.
 func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 4 {
-		return nil, errors.New("Missing inputs to request attestation")
+		return nil, errors.New("missing inputs to request attestation")
 	}
 	claimer := &credentials.Claimer{}
 	claim := credentials.Claim{}
@@ -78,7 +86,7 @@ func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[3].String()), issuerPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	session, msg, err := claimer.RequestAttestationForClaim(issuerPubKey, handshakeMsg, claim)
@@ -97,7 +105,7 @@ func RequestAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 // and the signature message send the attester.
 func BuildCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 3 {
-		return nil, errors.New("Missing inputs to build credential")
+		return nil, errors.New("missing inputs to build credential")
 	}
 	claimer := &credentials.Claimer{}
 	session := &credentials.UserIssuanceSession{}
@@ -120,14 +128,14 @@ func BuildCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	return credential, nil
 }
 
-// BuildPresentation creates a proof that the claimer posseses the requested
+// BuildPresentation creates a proof that the claimer possesses the requested
 // attributes. This method takes as input the private key of the claimer, the
 // credential which contains the requested attributes, a json encoded list
 // containing the requested attributes and the public key of the attester.
 // It returns a proof containing the values of the requested attributes.
 func BuildPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 4 {
-		return nil, errors.New("Missing inputs to build presentation")
+		return nil, errors.New("missing inputs to build presentation")
 	}
 	claimer := &credentials.Claimer{}
 	credential := &credentials.AttestedClaim{}
@@ -144,7 +152,7 @@ func BuildPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[3].String()), issuerPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	disclosedAttr, err := claimer.BuildPresentation(issuerPubKey, credential, request)
@@ -156,7 +164,7 @@ func BuildPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 
 func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 4 {
-		return nil, errors.New("Missing inputs to build combined presentation")
+		return nil, errors.New("missing inputs to build combined presentation")
 	}
 	claimer := &credentials.Claimer{}
 	creds := []*credentials.AttestedClaim{}
@@ -173,7 +181,7 @@ func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, e
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[3].String()), &attesterPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	disclosedAttr, err := claimer.BuildCombinedPresentation(attesterPubKey, creds, request)
@@ -186,7 +194,7 @@ func BuildCombinedPresentation(this js.Value, inputs []js.Value) (interface{}, e
 // UpdateCredential updates the non revocation witness using the provided update.
 func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 3 {
-		return nil, errors.New("Missing inputs to update credential")
+		return nil, errors.New("missing inputs to update credential")
 	}
 	credential := &credentials.AttestedClaim{}
 	update := &revocation.Update{}
@@ -199,7 +207,7 @@ func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), issuerPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	if err := credential.Update(issuerPubKey, update); err != nil {
@@ -211,7 +219,7 @@ func UpdateCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 // UpdateAllCredential updates the non revocation witness using all the provided updates.
 func UpdateAllCredential(this js.Value, inputs []js.Value) (interface{}, error) {
 	if len(inputs) < 3 {
-		return nil, errors.New("Missing inputs to update credential")
+		return nil, errors.New("missing inputs to update credential")
 	}
 	credential := &credentials.AttestedClaim{}
 	updates := []*revocation.Update{}
@@ -224,7 +232,7 @@ func UpdateAllCredential(this js.Value, inputs []js.Value) (interface{}, error) 
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), issuerPubKey); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 
 	if err := credential.UpdateAll(issuerPubKey, updates); err != nil {
