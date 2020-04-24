@@ -17,13 +17,13 @@ let alice: Attester
 let bob: Attester
 
 beforeAll(async () => {
-  alice = await Attester.buildFromURI(pubKey, privKey, '//Alice')
-  bob = await Attester.buildFromURI(pubKey2, privKey2, '//Bob')
+  alice = await Attester.buildFromURI(pubKey, privKey, '//Alice', 'ed25519')
+  bob = await Attester.buildFromURI(pubKey2, privKey2, '//Bob', 'ed25519')
 })
 
 describe('When I have a fresh chain with a Portablegabi pallet...', () => {
   it('it connects', async () => {
-    chain = await getCached({ pgabiModName: 'portablegabiPallet' })
+    chain = await getCached({ pgabiModName: 'portablegabi' })
     expect(chain.api.isReady).toBeTruthy()
   })
 
@@ -50,7 +50,7 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
           accumulator
         ),
       ])
-    }, 10_000)
+    }, 20_000)
 
     it('accumulates if you put a lot of stuff in', async () => {
       const baseline = await chain.getAccumulatorCount(alice.address)
@@ -73,7 +73,7 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
       await expect(chain.getLatestAccumulator(alice.address)).resolves.toEqual(
         accumulator
       )
-    }, 30_000)
+    }, 60_000)
 
     it('is possible to retrieve accumulators you put in earlier', async () => {
       const baseline = await chain.getAccumulatorCount(alice.address)
@@ -99,7 +99,7 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
       await expect(
         chain.getAccumulatorArray(alice.address, baseline)
       ).resolves.toEqual(accumulators)
-    }, 30_000)
+    }, 60_000)
   })
 
   describe('negative tests', () => {
@@ -138,7 +138,7 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
   })
 
   it('it disconnects', async () => {
-    chain = await getCached({ pgabiModName: 'portablegabiPallet' })
+    chain = await getCached({ pgabiModName: 'portablegabi' })
     await chain.api.disconnect()
     expect(chain.api.isReady).resolves.toStrictEqual({})
   })
