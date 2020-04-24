@@ -26,8 +26,8 @@ const goWasmExec = <T>(
   args?: Array<string | number | boolean>
 ): Promise<T> =>
   Promise.resolve(GoInstance)
-    .then(wasm => wasm.execWasmFn(goHook, args))
-    .catch(e => {
+    .then((wasm) => wasm.execWasmFn(goHook, args))
+    .catch((e) => {
       // catches unresolved wasm calls despite calling goWasmClose
       if (isClosed) {
         process.exit(0)

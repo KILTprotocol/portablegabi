@@ -6,7 +6,7 @@ import { WasmError } from './wasm_exec'
 describe('Test WASM wrapper', () => {
   let spy: Spy<''>
   const hooksArr: string[] = Object.keys(WasmHooks).filter(
-    x =>
+    (x) =>
       x !== WasmHooks.genKeypair && // # 1 takes too much time
       x !== WasmHooks.genKey && // #2 works w/o input
       x !== WasmHooks.closeWasm // #3 needs custom handling
@@ -28,7 +28,7 @@ describe('Test WASM wrapper', () => {
   })
   it.each(hooksArr)(
     'Should throw calling %s without input',
-    async wasmHook =>
+    async (wasmHook) =>
       expect(goWasmExec(wasmHook as WasmHooks)).rejects.toThrow(WasmError),
     5000
   )
@@ -36,7 +36,7 @@ describe('Test WASM wrapper', () => {
     return expect(goWasmExec(WasmHooks.genKey)).resolves.toBeDefined()
   }, 5000)
 })
-it('Should exit on process when closing WASM with non empty event queue', async done => {
+it('Should exit on process when closing WASM with non empty event queue', async (done) => {
   jest.spyOn(process, 'exit').mockImplementation()
   const spy = {
     exit: jest.spyOn(process, 'exit').mockImplementation(),
