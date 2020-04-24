@@ -9,7 +9,7 @@ describe('Test WASM wrapper', () => {
     x =>
       x !== WasmHooks.genKeypair && // # 1 takes too much time
       x !== WasmHooks.genKey && // #2 works w/o input
-      x !== WasmHooks.closeWasm // #3 TODO: ,
+      x !== WasmHooks.closeWasm // #3 needs custom handling
   )
   beforeEach(() => {
     spy = {
