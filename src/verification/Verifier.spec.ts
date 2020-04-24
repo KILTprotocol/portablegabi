@@ -172,6 +172,11 @@ describe('Test verifier functionality', () => {
       expect(verObj.reqUpdatedAfter).toEqual(
         presObj.partialPresentationRequest.reqUpdatedAfter
       )
+      expect(presentationReq.getRequestedProperties()).toEqual([
+        'contents.id',
+        'contents.picture.DATA',
+        'contents.eyeColor',
+      ])
     })
     it('Checks valid verifyPresentation', () => {
       expectSuccess(verified, presentedClaim)
@@ -557,7 +562,7 @@ describe('Test verifier functionality', () => {
         accumulator
       )
     })
-    it('Should not verify after re-arrenging attributes of credential', async () => {
+    it('Should not verify after re-arranging attributes of credential', async () => {
       const tamperedCredential: ICredential<typeof claim> = JSON.parse(
         credential.valueOf()
       )

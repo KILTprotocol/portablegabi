@@ -31,8 +31,16 @@ export class VerificationSession extends String {
  * The message result of [[requestPresentation]] which should be sent to the [[Claimer]] and used in [[buildPresentation]].
  */
 export class PresentationRequest extends String {
-  // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  public getRequestedProperties(): string[] {
+    const parsed = JSON.parse(this.valueOf())
+    if ('partialPresentationRequest' in parsed) {
+      const { partialPresentationRequest } = parsed
+      if ('requestedAttributes' in partialPresentationRequest) {
+        return partialPresentationRequest.requestedAttributes
+      }
+    }
+    throw new Error('Invalid request')
+  }
 }
 
 /**
@@ -47,6 +55,14 @@ export class CombinedVerificationSession extends String {
  * The message result of [[requestCombinedPresentation]] which should be sent to the [[Claimer]] and used in [[buildCombiendPresentation]].
  */
 export class CombinedPresentationRequest extends String {
-  // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  public getRequestedProperties(): string[][] {
+    const parsed = JSON.parse(this.valueOf())
+    if ('partialPresentationRequests' in parsed) {
+      const { partialPresentationRequests } = parsed
+      return partialPresentationRequests.map(
+        (req: { requestedAttributes: any }) => req.requestedAttributes
+      )
+    }
+    throw new Error('Invalid request')
+  }
 }
