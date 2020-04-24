@@ -15,10 +15,6 @@ describe('chain mocks', () => {
     it('Should connect', async () => {
       await expect(connect()).resolves.toStrictEqual(BlockchainMock)
     })
-    it('Should waitForNextBlock', async () => {
-      await BlockchainMock.waitForNextBlock()
-      expect(api.rpc.chain.subscribeNewHeads).toHaveBeenCalled()
-    })
     it('Should getAccumulatorCount', async () => {
       const count = await BlockchainMock.getAccumulatorCount(dummyAddress)
       expect(count).toBe(dummyAddress.length)
@@ -55,7 +51,7 @@ describe('chain mocks', () => {
       // update to new accumulator
       await expect(
         BlockchainMock.updateAccumulator('s' as any, newAccumulator)
-      ).rejects.toThrowError("Cannot read property 'signAndSend' of undefined")
+      ).resolves.toBeUndefined()
       const latestAccumulator = await BlockchainMock.getLatestAccumulator(
         dummyAddress
       )

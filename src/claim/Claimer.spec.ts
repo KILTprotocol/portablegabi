@@ -54,7 +54,9 @@ describe('Test claimer creation', () => {
     expect(claimerWithoutPass).not.toStrictEqual(claimer)
     const claimerWithPass = await Claimer.buildFromMnemonic(
       mnemonicGenerate(),
-      'password'
+      {
+        password: 'password',
+      }
     )
     expect(claimerWithPass).toHaveProperty('secret')
     expect(claimer).toHaveProperty('secret')
@@ -68,7 +70,9 @@ describe('Test claimer creation', () => {
       '{"MasterSecret":"HdWjkfn17XNA/01FE6q5zORPlJel5+2F/YGIdrbrQC4="}'
     )
     expect(claimerWithoutPass).not.toStrictEqual(claimer)
-    const claimerWithPass = await Claimer.buildFromMnemonic('', 'password')
+    const claimerWithPass = await Claimer.buildFromMnemonic('', {
+      password: 'password',
+    })
     expect(claimerWithPass).toHaveProperty(
       'secret',
       '{"MasterSecret":"Ugc7cbbFMn0UzRGkxgahlb6GxLohyWp2/6G2L6GrCVo="}'
@@ -87,7 +91,7 @@ describe('Test claimer creation', () => {
     expect(claimerWithoutPass).not.toStrictEqual(claimer)
     const claimerWithPass = await Claimer.buildFromMnemonic(
       'scissors purse again yellow cabbage fat alpha come snack ripple jacket broken',
-      'password'
+      { password: 'password' }
     )
     expect(claimerWithPass).toHaveProperty(
       'secret',

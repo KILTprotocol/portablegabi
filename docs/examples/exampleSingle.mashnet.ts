@@ -56,7 +56,7 @@ async function completeProcessSingle({
       accumulator,
       witnesses: [witness],
     })
-    await blockchain.waitForNextBlock()
+
     console.log(
       'AccumulatorCount after revocation:',
       await blockchain.getAccumulatorCount(attester.address)

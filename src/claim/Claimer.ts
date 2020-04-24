@@ -11,6 +11,8 @@ import {
   InitiateAttestationRequest,
   Attestation,
   AttesterPublicKey,
+  KeyLength,
+  DEFAULT_KEY_LENGTH,
 } from '../types/Attestation'
 import {
   CombinedPresentationRequest,
@@ -46,17 +48,26 @@ export default class Claimer implements IClaimer {
    * Generates a claimer using the provided mnemonic.
    *
    * @param mnemonic The mnemonic which is used to generate the key.
-   * @param password The password which is used to generate the key.
+   * @param options An optional object containing options for the key generation.
+   * @param options.password The password which is used to generate the key.
+   * @param options.keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
    * @returns A new claimer.
    */
   public static async buildFromMnemonic(
     mnemonic: string,
-    password = ''
+    {
+      password,
+      keyLength,
+    }: {
+      password?: string
+      keyLength?: KeyLength
+    } = {}
   ): Promise<Claimer> {
     // secret's structure unmarshalled is { MasterSecret: string }
     const secret = await goWasmExec<string>(WasmHooks.keyFromMnemonic, [
       mnemonic,
-      password,
+      password || '',
+      keyLength || DEFAULT_KEY_LENGTH,
     ])
     return new this(secret)
   }

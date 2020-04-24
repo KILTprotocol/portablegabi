@@ -31,7 +31,7 @@ export async function actorProcessChain({
   // create claimer either from scratch or from mnemonic input
   const claimer = claimerMnemonic
     ? await Claimer.create()
-    : await Claimer.buildFromMnemonic(mnemonic, claimerMnemonicPw)
+    : await Claimer.buildFromMnemonic(mnemonic, { password: claimerMnemonicPw })
 
   // create attester
   const attester = await AttesterChain.buildFromURI(
@@ -60,7 +60,6 @@ export async function actorProcessChain({
       )
     }
     await attester.updateAccumulator(accumulator)
-    await blockchain.waitForNextBlock()
   }
 
   return { claimer, attester, accumulator }

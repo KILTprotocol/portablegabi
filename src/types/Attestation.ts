@@ -2,6 +2,11 @@
 /* eslint-disable-next-line max-classes-per-file */
 import Accumulator from '../attestation/Accumulator'
 
+export type KeyLength = 1024 | 2048 | 4096
+export const DEFAULT_MAX_ATTRIBUTES = 70
+export const DEFAULT_VALIDITY_DURATION = 365
+export const DEFAULT_KEY_LENGTH = 1024
+
 export interface IGabiMsgSession {
   message: string
   session: string
