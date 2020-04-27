@@ -1,4 +1,9 @@
-[![Test](https://github.com/KILTprotocol/portablegabi/workflows/Test/badge.svg)](https://github.com/KILTprotocol/portablegabi/actions) [![NPM](https://img.shields.io/npm/v/@kiltprotocol/portablegabi)](https://www.npmjs.com/package/@kiltprotocol/portablegabi)
+[![Test](https://github.com/KILTprotocol/portablegabi/workflows/Test/badge.svg)](https://github.com/KILTprotocol/portablegabi/actions)
+[![NPM](https://img.shields.io/npm/v/@kiltprotocol/portablegabi)](https://www.npmjs.com/package/@kiltprotocol/portablegabi)
+[![NPM size](https://img.shields.io/bundlephobia/min/@kiltprotocol/portablegabi)](https://www.npmjs.com/package/@kiltprotocol/portablegabi)
+[![Last Commit](https://img.shields.io/github/last-commit/KILTprotocol/portablegabi)](https://github.com/KILTprotocol/portablegabi/commits/develop)
+[![License](https://img.shields.io/npm/l/@kiltprotocol/portablegabi)](https://github.com/KILTprotocol/portablegabi/blob/develop/LICENSE)
+
 
 # Portablegabi
 
