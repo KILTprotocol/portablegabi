@@ -8,7 +8,7 @@ import {
   AttesterPublicKey,
   AttesterPrivateKey,
 } from '../../src/types/Attestation'
-import { goWasmClose } from '../../src/wasm/wasm_exec_wrapper'
+import teardown from './offchain/4_teardown'
 
 const {
   pubKey: pubKey1,
@@ -95,25 +95,29 @@ async function completeProcessCombinedExamples(): Promise<void> {
   // we only accept the newest accumulator
   const future = new Date()
   future.setDate(past.getDate() + 100)
+  // store outcomes here for CI check
+  const outcomes: boolean[] = []
 
   // without credential revocation
-  await completeProcessCombined(true, false, [undefined, undefined])
+  outcomes.push(
+    await completeProcessCombined(true, false, [undefined, undefined])
+  )
 
   // without credential revocation but required dates in future => should verify
-  await completeProcessCombined(true, false, [future, undefined])
-  await completeProcessCombined(true, false, [undefined, future])
+  outcomes.push(await completeProcessCombined(true, false, [future, undefined]))
+  outcomes.push(await completeProcessCombined(true, false, [undefined, future]))
 
   // with revocation of 2nd credential and required date in future => should not verify
-  await completeProcessCombined(false, true, [future, future])
+  outcomes.push(await completeProcessCombined(false, true, [future, future]))
 
   // with revocation of 2nd credential but required date in past => should verify
-  await completeProcessCombined(true, true, [past, past])
+  outcomes.push(await completeProcessCombined(true, true, [past, past]))
 
   // with revocation (2nd) but revocation not required in verification
-  await completeProcessCombined(true, true, [undefined, past])
+  outcomes.push(await completeProcessCombined(true, true, [undefined, past]))
 
-  // close wasm
-  return goWasmClose()
+  // check whether outcome is true fall our instances and close wasm
+  return teardown('offchain', outcomes)
 }
 
 completeProcessCombinedExamples()

@@ -3,7 +3,7 @@ import { testEnv1, mnemonic } from './exampleConfig'
 import actorProcess from './offchain/1_actorProcess'
 import issuanceProcess from './offchain/2_issuanceProcess'
 import verificationProcessSingle from './offchain/3_verificationProcessSingle'
-import { goWasmClose } from '../../src/wasm/wasm_exec_wrapper'
+import teardown from './offchain/4_teardown'
 
 const { pubKey, privKey, disclosedAttributes, claim } = testEnv1
 
@@ -63,24 +63,26 @@ async function completeProcessSingleExamples(): Promise<void> {
   // we only accept the newest accumulator
   const future = new Date()
   future.setDate(past.getDate() + 100)
+  // store outcomes here for CI check
+  const outcomes: boolean[] = []
 
   // without credential revocation
-  await completeProcessSingle(true, false, undefined)
+  outcomes.push(await completeProcessSingle(true, false, undefined))
 
   // without revocation but required dates in future => should verify
-  await completeProcessSingle(true, false, future)
+  outcomes.push(await completeProcessSingle(true, false, future))
 
   // with revocation and required date in future => should not verify
-  await completeProcessSingle(false, true, future)
+  outcomes.push(await completeProcessSingle(false, true, future))
 
   // with revocation but required date in past => should verify
-  await completeProcessSingle(true, true, past)
+  outcomes.push(await completeProcessSingle(true, true, past))
 
   // with revocation but revocation not required in verification
-  await completeProcessSingle(true, true, undefined)
+  outcomes.push(await completeProcessSingle(true, true, undefined))
 
-  // close wasm
-  return goWasmClose()
+  // check whether outcome is true fall our instances and close wasm
+  return teardown('offchain', outcomes)
 }
 
 completeProcessSingleExamples()
