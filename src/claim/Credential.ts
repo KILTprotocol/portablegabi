@@ -9,9 +9,6 @@ import connect from '../blockchainApiConnection/BlockchainApiConnection'
  * It must be kept secret.
  */
 export default class Credential extends String {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private parseCache: any | undefined
-
   /**
    * This methods updates a [[Credential]] using a new [[Accumulator]].
    * After an attester revoked an attestation all credentials need to be updated.
@@ -102,15 +99,13 @@ export default class Credential extends String {
    * @returns The number of accumulator updates done with this credential.
    */
   public getUpdateCounter(): number {
-    let parsed = this.parseCache
     try {
-      parsed = JSON.parse(this.valueOf())
+      const parsed = JSON.parse(this.valueOf())
       const counter =
         parsed && 'updateCounter' in parsed ? parsed.updateCounter : undefined
       if (typeof counter !== 'number') {
         throw new Error()
       }
-      this.parseCache = parsed
       return counter
     } catch (e) {
       throw new Error('Invalid credential')
@@ -124,10 +119,8 @@ export default class Credential extends String {
    * @returns The date of the [[Credential]]'s last update as ISO string.
    */
   public getDate(): Date {
-    let parsed = this.parseCache
     try {
-      parsed = JSON.parse(this.valueOf())
-      this.parseCache = parsed
+      const parsed = JSON.parse(this.valueOf())
       const date = parsed.credential.nonrevWitness.Updated
       if (typeof date === 'undefined') {
         throw new Error()
