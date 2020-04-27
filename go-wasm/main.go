@@ -9,12 +9,21 @@ import (
 	"github.com/KILTprotocol/portablegabi/go-wasm/pkg/wasm"
 )
 
+var c chan bool
+
+func init() {
+	c = make(chan bool)
+}
+
+func CloseWasm(js.Value, []js.Value) interface{} {
+	close(c)
+	return nil
+}
+
 func main() {
 
 	// expose all methods to the js environment. Use callbacker to transform the
 	// return style methods to callback style methods.
-	c := make(chan bool)
-
 	methods := make(map[string]js.Func)
 	methods["genKeypair"] = js.FuncOf(wasm.Callbacker(wasm.GenKeypair))
 	methods["createAccumulator"] = js.FuncOf(wasm.Callbacker(wasm.CreateAccumulator))
@@ -38,6 +47,7 @@ func main() {
 
 	methods["getAccumulatorIndex"] = js.FuncOf(wasm.Callbacker(wasm.GetAccumulatorIndex))
 	methods["getAccumulatorTimestamp"] = js.FuncOf(wasm.Callbacker(wasm.GetAccumulatorTimestamp))
+	methods["closeWasm"] = js.FuncOf(CloseWasm)
 
 	for k, v := range methods {
 		js.Global().Set(k, v)

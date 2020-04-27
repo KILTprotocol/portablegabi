@@ -7,6 +7,7 @@ import { testEnv1, testEnv2, mnemonic } from './exampleConfig'
 import actorProcessChain from './onchain/1_actorProcess'
 import issuanceProcess from './offchain/2_issuanceProcess'
 import verificationProcessCombinedChain from './onchain/3_verificationProcessCombined'
+import { goWasmClose } from '../../src/wasm/wasm_exec_wrapper'
 
 const {
   pubKey: pubKey1,
@@ -109,7 +110,7 @@ async function completeProcessCombined({
 async function completeProcessCombinedExamples(): Promise<void> {
   // connect to chain
   const blockchain = await connect({
-    pgabiModName: 'portablegabiPallet',
+    pgabiModName: 'portablegabi',
   })
   console.log('Connected to chain')
   // we accept every accumulator when requiring past in reqUpdatedAfter
@@ -170,7 +171,7 @@ async function completeProcessCombinedExamples(): Promise<void> {
   })
 
   // disconnect from chain
-  await disconnect().finally(() => process.exit())
+  return disconnect().finally(() => goWasmClose())
 }
 
 completeProcessCombinedExamples()

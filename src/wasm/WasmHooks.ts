@@ -1,4 +1,7 @@
 enum WasmHooks {
+  // misc
+  closeWasm = 'closeWasm',
+
   // claimer methods
   genKey = 'genKey',
   keyFromSeed = 'keyFromSeed',
