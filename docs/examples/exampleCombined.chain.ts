@@ -182,7 +182,7 @@ async function completeProcessCombinedExamples(): Promise<void> {
     })
   )
 
-  // check whether outcome is true fall our instances and disconnect from chain
+  // check whether outcome is true for all our instances and disconnect from chain
   return teardown('onchain', outcomes)
 }
 
