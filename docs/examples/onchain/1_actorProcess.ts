@@ -37,7 +37,8 @@ export async function actorProcessChain({
   const attester = await AttesterChain.buildFromURI(
     new AttesterPublicKey(attesterPubKey),
     new AttesterPrivateKey(attesterPrivKey),
-    attesterURI
+    attesterURI,
+    'ed25519'
   )
 
   // get accumulator from chain

@@ -109,7 +109,7 @@ async function completeProcessCombined({
 async function completeProcessCombinedExamples(): Promise<void> {
   // connect to chain
   const blockchain = await connect({
-    pgabiModName: 'portablegabiPallet',
+    pgabiModName: 'portablegabi',
   })
   console.log('Connected to chain')
   // we accept every accumulator when requiring past in reqUpdatedAfter
