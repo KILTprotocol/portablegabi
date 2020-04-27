@@ -128,7 +128,7 @@ async function completeProcessSingleExamples(): Promise<void> {
   })
 
   // disconnect from chain
-  await disconnect().finally(() => goWasmClose())
+  return disconnect().finally(() => goWasmClose())
 }
 
 completeProcessSingleExamples()
