@@ -8,23 +8,21 @@ import {
 import Claimer from './Claimer'
 import Attester from '../attestation/Attester'
 import { claim } from '../testSetup/testConfig'
-import {
-  ICredential,
-  IIssueAttestation,
-  Spy,
-  IProof,
-} from '../testSetup/testTypes'
+import { Spy } from '../testSetup/testTypes'
 import {
   Attestation,
   InitiateAttestationRequest,
   AttesterAttestationSession,
   Witness,
+  IIssueAttestation,
 } from '../types/Attestation'
 import {
   ClaimerAttestationSession,
   AttestationRequest,
   Presentation,
   ClaimError,
+  ICredential,
+  IProof,
 } from '../types/Claim'
 import Accumulator from '../attestation/Accumulator'
 import Credential from './Credential'
@@ -241,10 +239,10 @@ describe('Test claimer functionality', () => {
         attestation,
       })
       expect(cred).toBeDefined()
-      const credObj: ICredential<typeof claim> = JSON.parse(cred.valueOf())
+      const credObj: ICredential<typeof claim> = cred.parse()
       expect(credObj).toHaveProperty('claim', claim)
       // compare signatures
-      const aSigObj: IIssueAttestation = JSON.parse(attestation.valueOf())
+      const aSigObj: IIssueAttestation = attestation.parse()
       expect(Object.keys(aSigObj.signature)).toStrictEqual(
         Object.keys(credObj.credential.signature)
       )
@@ -260,8 +258,8 @@ describe('Test claimer functionality', () => {
     })
     it('Checks for correct data in buildPresentation', () => {
       expect(presentation).not.toBe('undefined')
-      const proofObj: IProof = JSON.parse(presentation.valueOf())
-      const sigObj: IIssueAttestation = JSON.parse(attestation.valueOf())
+      const proofObj: IProof = presentation.parse()
+      const sigObj: IIssueAttestation = attestation.parse()
       expect(proofObj.proof.A).not.toEqual(sigObj.signature.A)
       expect(proofObj.proof.e_response).not.toEqual(sigObj.proof.e_response)
       expect(proofObj.proof.c).not.toEqual(sigObj.proof.c)

@@ -139,8 +139,8 @@ export default class Claimer implements IClaimer {
       [
         this.secret,
         JSON.stringify(claim),
-        startAttestationMsg.valueOf(),
-        attesterPubKey.valueOf(),
+        startAttestationMsg.toString(),
+        attesterPubKey.toString(),
       ]
     )
     return {
@@ -167,8 +167,8 @@ export default class Claimer implements IClaimer {
     return new Credential(
       await goWasmExec<string>(WasmHooks.buildCredential, [
         this.secret,
-        claimerSession.valueOf(),
-        attestation.valueOf(),
+        claimerSession.toString(),
+        attestation.toString(),
       ])
     )
   }
@@ -195,9 +195,9 @@ export default class Claimer implements IClaimer {
     return new Presentation(
       await goWasmExec<string>(WasmHooks.buildPresentation, [
         this.secret,
-        credential.valueOf(),
-        presentationReq.valueOf(),
-        attesterPubKey.valueOf(),
+        credential.toString(),
+        presentationReq.toString(),
+        attesterPubKey.toString(),
       ])
     )
   }
@@ -227,7 +227,7 @@ export default class Claimer implements IClaimer {
       await goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
         this.secret,
         `[${credentials.join(',')}]`,
-        combinedPresentationReq.valueOf(),
+        combinedPresentationReq.toString(),
         `[${attesterPubKeys.join(',')}]`,
       ])
     )

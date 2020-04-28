@@ -3,12 +3,14 @@ import WasmHooks from '../wasm/WasmHooks'
 import Accumulator from '../attestation/Accumulator'
 import { AttesterPublicKey } from '../types/Attestation'
 import connect from '../blockchainApiConnection/BlockchainApiConnection'
+import WasmData from '../types/Wasm'
+import { ICredential } from '../types/Claim'
 
 /**
  * The credential contains information which are used to create presentations.
  * It must be kept secret.
  */
-export default class Credential extends String {
+export default class Credential extends WasmData {
   /**
    * This methods updates a [[Credential]] using a new [[Accumulator]].
    * After an attester revoked an attestation all credentials need to be updated.
@@ -27,9 +29,9 @@ export default class Credential extends String {
   }): Promise<Credential> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.updateCredential, [
-        this.valueOf(),
-        accumulator.valueOf(),
-        attesterPubKey.valueOf(),
+        this.toString(),
+        accumulator.toString(),
+        attesterPubKey.toString(),
       ])
     )
   }
@@ -52,9 +54,9 @@ export default class Credential extends String {
   }): Promise<Credential> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.updateAllCredential, [
-        this.valueOf(),
+        this.toString(),
         `[${accumulators.join(',')}]`,
-        attesterPubKey.valueOf(),
+        attesterPubKey.toString(),
       ])
     )
   }
@@ -100,7 +102,7 @@ export default class Credential extends String {
    */
   public getUpdateCounter(): number {
     try {
-      const parsed = JSON.parse(this.valueOf())
+      const parsed = this.parse()
       const counter =
         parsed && 'updateCounter' in parsed ? parsed.updateCounter : undefined
       if (typeof counter !== 'number') {
@@ -120,7 +122,7 @@ export default class Credential extends String {
    */
   public getDate(): Date {
     try {
-      const parsed = JSON.parse(this.valueOf())
+      const parsed = this.parse()
       const date = parsed.credential.nonrevWitness.Updated
       if (typeof date === 'undefined') {
         throw new Error()
@@ -129,5 +131,9 @@ export default class Credential extends String {
     } catch (e) {
       throw new Error('Invalid credential, missing updated date')
     }
+  }
+
+  public parse<T>(): ICredential<T> {
+    return JSON.parse(this.toString())
   }
 }

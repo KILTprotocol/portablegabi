@@ -15,8 +15,8 @@ describe('Test accumulator', () => {
   it('Checks non-deterministic accumulator creation', async () => {
     const accumulator2 = await attester.createAccumulator()
     expect(accumulator2).toEqual(expect.anything())
-    expect(accumulator2.valueOf()).toBeDefined()
-    expect(accumulator.valueOf()).not.toStrictEqual(accumulator2.valueOf())
+    expect(accumulator2.toString()).toBeDefined()
+    expect(accumulator.toString()).not.toStrictEqual(accumulator2.toString())
   })
   it('Should return the accumulators timestamp', async () => {
     const compTimestamp = new Date().getTime()

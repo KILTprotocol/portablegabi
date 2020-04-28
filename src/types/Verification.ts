@@ -2,6 +2,7 @@
 /* eslint-disable max-classes-per-file */
 
 import { KeyLength } from './Attestation'
+import WasmData from './Wasm'
 
 export interface IPresentationRequest {
   requestedAttributes: string[]
@@ -22,7 +23,7 @@ export interface IVerifiedCombinedPresentation {
 /**
  * The session result of [[requestPresentation]] which should be kept private by the [[Verifier]] and used in [[verifyPresentation]].
  */
-export class VerificationSession extends String {
+export class VerificationSession extends WasmData {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }
@@ -30,9 +31,9 @@ export class VerificationSession extends String {
 /**
  * The message result of [[requestPresentation]] which should be sent to the [[Claimer]] and used in [[buildPresentation]].
  */
-export class PresentationRequest extends String {
+export class PresentationRequest extends WasmData {
   public getRequestedProperties(): string[] {
-    const parsed = JSON.parse(this.valueOf())
+    const parsed = this.parse()
     if ('partialPresentationRequest' in parsed) {
       const { partialPresentationRequest } = parsed
       if ('requestedAttributes' in partialPresentationRequest) {
@@ -46,7 +47,7 @@ export class PresentationRequest extends String {
 /**
  * The session result of [[requestCombinedPresentation]] which should be kept private by the [[Verifier]] and used in [[verifyCombinedPresentation]].
  */
-export class CombinedVerificationSession extends String {
+export class CombinedVerificationSession extends WasmData {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }
@@ -54,13 +55,13 @@ export class CombinedVerificationSession extends String {
 /**
  * The message result of [[requestCombinedPresentation]] which should be sent to the [[Claimer]] and used in [[buildCombiendPresentation]].
  */
-export class CombinedPresentationRequest extends String {
+export class CombinedPresentationRequest extends WasmData {
   public getRequestedProperties(): string[][] {
-    const parsed = JSON.parse(this.valueOf())
+    const parsed = this.parse()
     if ('partialPresentationRequests' in parsed) {
       const { partialPresentationRequests } = parsed
       return partialPresentationRequests.map(
-        (req: { requestedAttributes: any }) => req.requestedAttributes
+        (req: { requestedAttributes: unknown }) => req.requestedAttributes
       )
     }
     throw new Error('Invalid request')

@@ -75,8 +75,8 @@ async function exec() {
 
   // (2.1.b) Alternatively, use a pre-compiled key pair from src/testSetup/testConfig.ts
   // const attester = new portablegabi.Attester(pubKey, privKey);
-  console.log('Public key:\n\t', attester.privateKey.valueOf())
-  console.log('Private key:\n\t', attester.privateKey.valueOf())
+  console.log('Public key:\n\t', attester.privateKey.toString())
+  console.log('Private key:\n\t', attester.privateKey.toString())
 
   // (2.1) Create accumulator (for revocation)
   const accumulator = await attester.createAccumulator()
