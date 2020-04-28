@@ -20,8 +20,8 @@ export async function actorProcessChain({
   blockchain: Blockchain
   claimerMnemonic?: string
   claimerMnemonicPw?: string
-  attesterPubKey?: string | AttesterPublicKey
-  attesterPrivKey?: string | AttesterPrivateKey
+  attesterPubKey?: string
+  attesterPrivKey?: string
   attesterURI?: string
 }): Promise<{
   claimer: Claimer

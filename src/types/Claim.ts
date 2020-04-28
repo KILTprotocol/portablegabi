@@ -1,4 +1,8 @@
 /* eslint-disable max-classes-per-file */
+
+import WasmData from './Wasm'
+import { IIssueAttestation } from './Attestation'
+
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
 export default interface IClaimer {
   requestAttestation: Function
@@ -9,6 +13,36 @@ export default interface IClaimer {
 
 export interface IClaimerChain {
   updateCredentialChain: Function
+}
+
+export interface IProof {
+  proof: {
+    A: 'string'
+    a_disclosed: {
+      [key: number]: string
+    }
+    a_responses: {
+      [key: number]: string
+    }
+    c: string
+    e_response: string
+    nonrev_proof: {
+      C_r: string
+      C_u: string
+      responses: {
+        beta: string
+        delta: string
+        epsilon: string
+        zeta: string
+      }
+      sacc: {
+        data: string
+        pk: number
+      }
+    }
+    nonrev_response: string
+    v_response: string
+  }
 }
 
 /**
@@ -52,7 +86,7 @@ export class ClaimError extends Error {
 /**
  * The message result of [[requestAttestation]] which is sent to the [[Attester]] and used in [[]].
  */
-export class AttestationRequest extends String {
+export class AttestationRequest extends WasmData {
   /**
    * Extracts the original claim object from the [[AttestationRequest]].
    *
@@ -63,7 +97,7 @@ export class AttestationRequest extends String {
   public getClaim(): object {
     let claim: object
     try {
-      claim = JSON.parse(this.valueOf()).claim
+      claim = this.parse()?.claim
     } catch (e) {
       throw ClaimError.duringParsing
     }
@@ -77,7 +111,7 @@ export class AttestationRequest extends String {
 /**
  * The session result of [[requestAttestation]] which should be kept private by the [[Claimer]] and used in [[buildCredential]].
  */
-export class ClaimerAttestationSession extends String {
+export class ClaimerAttestationSession extends WasmData {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
 }
@@ -85,15 +119,26 @@ export class ClaimerAttestationSession extends String {
 /**
  * The result of [[buildPresentation]] which can be used to disclose attributes with a [[Verifier]].
  */
-export class Presentation extends String {
-  // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+export class Presentation extends WasmData {
+  public parse(): IProof {
+    return JSON.parse(this.toString())
+  }
 }
 
 /**
  *  The result of [[buildCombinedPresentation]] which can be used to verify of multiple [[Credentials]] at once.
  */
-export class CombinedPresentation extends String {
+export class CombinedPresentation extends WasmData {
   // @ts-ignore
   private thisIsOnlyHereToPreventClassMixes: int
+}
+
+export interface ICredential<Claim> {
+  claim: Claim
+  credential: {
+    attributes: string[]
+    nonrevWitness: IIssueAttestation['nonrev']
+    signature: IIssueAttestation['signature']
+  }
+  updateCounter: number
 }

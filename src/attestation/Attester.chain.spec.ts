@@ -122,7 +122,7 @@ describe('Test Attester on chain', () => {
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(1)
     const latestAccumulator = await chain.getLatestAccumulator(attester.address)
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
-      latestAccumulator.valueOf()
+      latestAccumulator.toString()
     )
   })
   it('Should revoke attestation without accumulator input', async () => {
@@ -146,7 +146,7 @@ describe('Test Attester on chain', () => {
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(1)
     const latestAccumulator = await chain.getLatestAccumulator(attester.address)
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
-      latestAccumulator.valueOf()
+      latestAccumulator.toString()
     )
   }, 10000)
 })

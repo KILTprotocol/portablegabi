@@ -1,5 +1,5 @@
 import WasmHooks from './WasmHooks'
-import IGoWasm from '../types/Wasm'
+import { IGoWasm } from '../types/Wasm'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const goWasm = require('./wasm_exec')

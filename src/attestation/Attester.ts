@@ -115,7 +115,7 @@ export default class Attester implements IAttester {
   }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.startAttestationSession,
-      [this.privateKey.valueOf(), this.publicKey.valueOf()]
+      [this.privateKey.toString(), this.publicKey.toString()]
     )
     return {
       message: new InitiateAttestationRequest(message),
@@ -131,8 +131,8 @@ export default class Attester implements IAttester {
   public async createAccumulator(): Promise<Accumulator> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.createAccumulator, [
-        this.privateKey.valueOf(),
-        this.publicKey.valueOf(),
+        this.privateKey.toString(),
+        this.publicKey.toString(),
       ])
     )
   }
@@ -162,11 +162,11 @@ export default class Attester implements IAttester {
       attestation: string
       witness: string
     }>(WasmHooks.issueAttestation, [
-      this.privateKey.valueOf(),
-      this.publicKey.valueOf(),
-      attestationSession.valueOf(),
-      attestationRequest.valueOf(),
-      accumulator.valueOf(),
+      this.privateKey.toString(),
+      this.publicKey.toString(),
+      attestationSession.toString(),
+      attestationRequest.toString(),
+      accumulator.toString(),
     ])
     return {
       attestation: new Attestation(attestation),
@@ -191,12 +191,10 @@ export default class Attester implements IAttester {
   }): Promise<Accumulator> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.revokeAttestation, [
-        this.privateKey.valueOf(),
-        this.publicKey.valueOf(),
-        accumulator.valueOf(),
-        JSON.stringify(
-          (witnesses || []).map((witness) => JSON.parse(witness.valueOf()))
-        ),
+        this.privateKey.toString(),
+        this.publicKey.toString(),
+        accumulator.toString(),
+        JSON.stringify((witnesses || []).map((witness) => witness.parse())),
       ])
     )
   }

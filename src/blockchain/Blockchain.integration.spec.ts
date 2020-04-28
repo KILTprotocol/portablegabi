@@ -38,7 +38,7 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
       ])
       expect(count).toEqual<number>(1)
       expect(accChain).toEqual<Accumulator>(accumulator)
-    }, 10_000)
+    }, 15_000)
 
     it('is possible for someone else to store an accumulator at the same time', async () => {
       const accumulator = await bob.createAccumulator()
