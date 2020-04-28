@@ -68,12 +68,9 @@ async function exec() {
   /* (2) Attester Setup */
 
   // (2.1) Create a key pair and attester entity.
-  const attester = await portablegabi.Attester.create(
-    365 * 24 * 60 * 60 * 1000,
-    70
-  ) // takes very long due to finding safe prime numbers (~10-20 minutes)
+  const attester = await portablegabi.Attester.create() // takes very long due to finding safe prime numbers (~10-20 minutes)
 
-  // (2.1.b) Alternatively, use a pre-compiled key pair from src/testSetup/testConfig.ts
+  // (2.1.b) Alternatively, use a pre-compiled key pair from /docs/examples/exampleReadme.js
   // const attester = new portablegabi.Attester(pubKey, privKey);
   console.log('Public key:\n\t', attester.privateKey.toString())
   console.log('Private key:\n\t', attester.privateKey.toString())
