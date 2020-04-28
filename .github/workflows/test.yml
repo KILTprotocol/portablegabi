@@ -137,6 +137,7 @@ jobs:
           sleep 5s
           yarn ts-node docs/examples/exampleSingle.chain.ts
           yarn ts-node docs/examples/exampleCombined.chain.ts
+          node docs/examples/readme.js
           docker stop $(docker ps -f ancestor=kiltprotocol/portablegabi-node -q)
         env:
           CI: true
