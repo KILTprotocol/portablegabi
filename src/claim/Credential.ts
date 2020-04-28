@@ -97,7 +97,7 @@ export default class Credential extends WasmData {
    * Returns the number of updates done. Combining this method with [[getLatestAccumulator]] in [[updateFromChain]],
    * it shows how many updates of this [[Credential]] would be required to be up to date.
    *
-   * @throws `Invalid credential` If the credential does not have an update counter.
+   * @throws `Invalid credential` If the credential does not have an `updateCounter` field.
    * @returns The number of accumulator updates done with this credential.
    */
   public getUpdateCounter(): number {
@@ -117,7 +117,7 @@ export default class Credential extends WasmData {
   /**
    * Returns the date when this [[Credential]] has been updated the last time.
    *
-   * @throws `Invalid credential` If the credential does not have an Updated field.
+   * @throws `Invalid credential` If the credential does not have an `Updated` field.
    * @returns The date of the [[Credential]]'s last update as ISO string.
    */
   public getDate(): Date {
