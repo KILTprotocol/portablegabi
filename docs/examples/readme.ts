@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const portablegabi = require('../../build')
+import * as portablegabi from '../../src'
 
 const privKey = new portablegabi.AttesterPrivateKey(
   '{"XMLName":{"Space":"","Local":""},"Counter":0,"ExpiryDate":1610554062,"P":"iDYKxuFGt1Xv1aqMLaagjrOPX0hjkOlFrKOp4NPnSBHmQ9SFETUX1M43q3jLsGz+UEWFS3+SS9QpP4CTkl3p/w==","Q":"92MJOhwjESn7QohCCY1oBxsToAfccGoKtE3sBoaNxHWoowSiCy8fMG+B1sO5QU+bV3i1xwvVno9o30RcMoXEaw==","PPrime":"RBsFY3CjW6r36tVGFtNQR1nHr6QxyHSi1lHU8GnzpAjzIepCiJqL6mcb1bxl2DZ/KCLCpb/JJeoUn8BJyS70/w==","QPrime":"e7GEnQ4RiJT9oUQhBMa0A42J0APuODUFWib2A0NG4jrUUYJRBZePmDfA62HcoKfNq7xa44Xqz0e0b6IuGULiNQ==","ECDSA":"MHcCAQEEILO+g4uSDheZ6PSLxR7olFzUhZpeO9tQu84hX6UeIevaoAoGCCqGSM49AwEHoUQDQgAEKvmUz3HIZy890jE78CC9V9BuN8taO+L8GjAeS14v0CL7GCFZ1GMnaSZi4WG3mOjJlJ80CnMowIbUT3Fw1TluFw==","NonrevSk":null}'
@@ -60,6 +60,7 @@ async function exec() {
   // (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
   // the attester might want to inspect the attributes he is about to sign
   const checkClaim = attestationRequest.getClaim()
+  console.log('Attester checks claim :\n\t', checkClaim)
 
   const { attestation, witness } = await attester.issueAttestation({
     attestationSession,
