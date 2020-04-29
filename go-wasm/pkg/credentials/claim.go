@@ -218,6 +218,8 @@ func newClaimFromAttribute(attributes []*Attribute) (Claim, error) {
 			if err == nil {
 				err = setNestedValue(claim, attr.Name, array)
 			}
+		case "":
+			err = setNestedValue(claim, attr.Name, nil)
 		default:
 			err = setNestedValue(claim, attr.Name, hex.EncodeToString(attr.Value))
 		}
@@ -250,8 +252,8 @@ func (claim Claim) ToAttributes() []*Attribute {
 			} else {
 				name = n
 			}
-
 			reflected := reflect.ValueOf(v)
+
 			switch reflected.Kind() {
 			case reflect.Map:
 				if m, ok := v.(Claim); ok {
@@ -305,8 +307,14 @@ func (claim Claim) ToAttributes() []*Attribute {
 					Typename: "bool",
 					Value:    []byte{value},
 				})
+			case 0:
+				attributes = append(attributes, &Attribute{
+					Name:     name,
+					Typename: "",
+					Value:    []byte{},
+				})
 			default:
-				panic(fmt.Sprintf("unknown type %T", v))
+				panic(fmt.Sprintf("unknown type %T of property %s", v, name))
 			}
 		}
 	}

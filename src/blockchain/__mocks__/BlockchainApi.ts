@@ -6,14 +6,34 @@ const api = {
   tx: {
     portablegabi: {
       // mocked updateAccumulator returns value of input accumulator by default
-      updateAccumulator: jest.fn(
-        async (accumulator: Accumulator): Promise<void> => {
-          // mock new accumulator list
-          api.query.portablegabi.accumulatorList.mockReturnValue(
-            (stringToHex(accumulator.valueOf()) as unknown) as Promise<Codec>
-          )
+      updateAccumulator: jest.fn((accumulator: Accumulator): any => {
+        // mock new accumulator list
+        api.query.portablegabi.accumulatorList.mockReturnValue(
+          (stringToHex(accumulator.toString()) as unknown) as Promise<Codec>
+        )
+
+        return {
+          signAndSend: (addr: any, cb: any) => {
+            const result = {
+              status: {
+                isFinalized: true,
+              },
+              events: [
+                {
+                  event: {
+                    section: 'system',
+                    method: 'ExtrinsicSuccess',
+                  },
+                },
+              ],
+            }
+            if (typeof cb !== 'undefined') cb(result)
+            return new Promise((res) => {
+              res()
+            })
+          },
         }
-      ),
+      }),
     },
   },
   query: {
@@ -42,7 +62,7 @@ const api = {
 }
 ;(api.query.portablegabi
   .accumulatorList as any).multi = jest.fn(async (arr: string[]) =>
-  arr.map(x => (stringToHex(x) as unknown) as Promise<Codec[]>)
+  arr.map((x) => (stringToHex(x) as unknown) as Promise<Codec[]>)
 ) as any
 
 export default api

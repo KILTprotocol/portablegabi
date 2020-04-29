@@ -4,6 +4,7 @@ import "time"
 
 const (
 	mnemonic = "opera initial unknown sign minimum sadness crane worth attract ginger category discover"
+	seed     = "0x0ce134807c492b2dc1db65914e154212a337eb45f2334c0699e66f82586c1cc3"
 )
 
 var (
@@ -35,4 +36,6 @@ var (
 	//other stuff
 	earlier = time.Now().Add(time.Duration(-OneYear))
 	future  = time.Now().Add(time.Duration(OneYear))
+
+	binSeed = []byte("\x8c\xe14\x80|I+-\xc1\xdbe\x91N\x15B\x12\xa37\xebE\xf23L\x06\x99\xe6o\x82Xl\x1c\xc3\xc3\xc3\xc3")
 )

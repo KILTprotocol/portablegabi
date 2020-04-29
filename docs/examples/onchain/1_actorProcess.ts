@@ -20,8 +20,8 @@ export async function actorProcessChain({
   blockchain: Blockchain
   claimerMnemonic?: string
   claimerMnemonicPw?: string
-  attesterPubKey?: string | AttesterPublicKey
-  attesterPrivKey?: string | AttesterPrivateKey
+  attesterPubKey?: string
+  attesterPrivKey?: string
   attesterURI?: string
 }): Promise<{
   claimer: Claimer
@@ -31,13 +31,14 @@ export async function actorProcessChain({
   // create claimer either from scratch or from mnemonic input
   const claimer = claimerMnemonic
     ? await Claimer.create()
-    : await Claimer.buildFromMnemonic(mnemonic, claimerMnemonicPw)
+    : await Claimer.buildFromMnemonic(mnemonic, { password: claimerMnemonicPw })
 
   // create attester
   const attester = await AttesterChain.buildFromURI(
     new AttesterPublicKey(attesterPubKey),
     new AttesterPrivateKey(attesterPrivKey),
-    attesterURI
+    attesterURI,
+    'ed25519'
   )
 
   // get accumulator from chain
@@ -60,7 +61,6 @@ export async function actorProcessChain({
       )
     }
     await attester.updateAccumulator(accumulator)
-    await blockchain.waitForNextBlock()
   }
 
   return { claimer, attester, accumulator }

@@ -71,10 +71,10 @@ describe('Test Credential on chain functionality', () => {
     const { accumulators: newAccumulators } = await actorSetupChain({})
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(2)
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
-      newAccumulators[0].valueOf()
+      newAccumulators[0].toString()
     )
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
-      newAccumulators[1].valueOf()
+      newAccumulators[1].toString()
     )
   })
   it('Should throw when updating credential from chain with only address missing accumulators (maxIndex === 0)', async () => {
@@ -99,7 +99,7 @@ describe('Test Credential on chain functionality', () => {
     )
   })
   it('Should update credential from chain with only address input (# of new accs: 1)', async () => {
-    apiMultiQuery.mockResolvedValueOnce([stringToHex(accumulator.valueOf())])
+    apiMultiQuery.mockResolvedValueOnce([stringToHex(accumulator.toString())])
     const credUpdated = await credential.updateFromChain({
       attesterPubKey,
       attesterChainAddress,
@@ -111,12 +111,12 @@ describe('Test Credential on chain functionality', () => {
     )
     expect(apiMultiQuery).toHaveBeenCalledTimes(1)
     expect(credUpdated).toEqual(expect.anything())
-    expect(credUpdated.valueOf()).toStrictEqual(credential.valueOf())
+    expect(credUpdated.toString()).toStrictEqual(credential.toString())
   })
   it('Should update credential from chain with only address input (# of new accs: 2)', async () => {
     apiMultiQuery.mockResolvedValueOnce([
-      stringToHex(accumulators[1].valueOf()),
-      stringToHex(accumulators[2].valueOf()),
+      stringToHex(accumulators[1].toString()),
+      stringToHex(accumulators[2].toString()),
     ])
     expect(credential.getUpdateCounter()).toEqual(0)
     const credUpdated = await credential.updateFromChain({
@@ -131,10 +131,10 @@ describe('Test Credential on chain functionality', () => {
     expect(apiMultiQuery).toHaveBeenCalledTimes(1)
     expect(credUpdated).toEqual(expect.anything())
     expect(credUpdated.getUpdateCounter()).toEqual(2)
-    expect(credUpdated.valueOf()).not.toStrictEqual(credential.valueOf())
+    expect(credUpdated.toString()).not.toStrictEqual(credential.toString())
   })
   it('Should update credential from chain with index input (# of new accs: 1)', async () => {
-    apiMultiQuery.mockResolvedValueOnce([stringToHex(accumulator.valueOf())])
+    apiMultiQuery.mockResolvedValueOnce([stringToHex(accumulator.toString())])
     const credUpdated = await credential.updateFromChain({
       attesterPubKey,
       attesterChainAddress,
@@ -147,12 +147,12 @@ describe('Test Credential on chain functionality', () => {
     )
     expect(apiMultiQuery).toHaveBeenCalledTimes(1)
     expect(credUpdated).toEqual(expect.anything())
-    expect(credUpdated.valueOf()).toStrictEqual(credential.valueOf())
+    expect(credUpdated.toString()).toStrictEqual(credential.toString())
   })
   it('Should update credential from chain with index input (# of new accs: 2)', async () => {
     apiMultiQuery.mockResolvedValueOnce([
-      stringToHex(accumulators[1].valueOf()),
-      stringToHex(accumulators[2].valueOf()),
+      stringToHex(accumulators[1].toString()),
+      stringToHex(accumulators[2].toString()),
     ])
     expect(credential.getUpdateCounter()).toEqual(0)
     const credUpdated = await credential.updateFromChain({
@@ -168,6 +168,6 @@ describe('Test Credential on chain functionality', () => {
     expect(apiMultiQuery).toHaveBeenCalledTimes(1)
     expect(credUpdated).toEqual(expect.anything())
     expect(credUpdated.getUpdateCounter()).toEqual(2)
-    expect(credUpdated.valueOf()).not.toStrictEqual(credential.valueOf())
+    expect(credUpdated.toString()).not.toStrictEqual(credential.toString())
   })
 })

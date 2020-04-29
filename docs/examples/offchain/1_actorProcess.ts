@@ -16,8 +16,8 @@ export async function actorProcess({
 }: {
   claimerMnemonic?: string
   claimerMnemonicPw?: string
-  attesterPubKey?: string | AttesterPublicKey
-  attesterPrivKey?: string | AttesterPrivateKey
+  attesterPubKey?: string
+  attesterPrivKey?: string
 }): Promise<{
   claimer: Claimer
   attester: Attester
@@ -26,7 +26,7 @@ export async function actorProcess({
   // create claimer either from scratch or from mnemonic input
   const claimer = claimerMnemonic
     ? await Claimer.create()
-    : await Claimer.buildFromMnemonic(mnemonic, claimerMnemonicPw)
+    : await Claimer.buildFromMnemonic(mnemonic, { password: claimerMnemonicPw })
 
   // create attester from (pk, sk) pair
   const attester = new Attester(

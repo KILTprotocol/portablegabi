@@ -77,21 +77,37 @@ describe('Test attester', () => {
       ;(goWasmExec as any) = goWasmExecOrig
     })
     it('Should generate dummy key pair', async () => {
-      ;(goWasmExec as any) = jest.fn(async () => keypair)
-      await expect(Attester.genKeyPair(1, 10)).resolves.toEqual(keypair)
+      // we can't return keypair as this nests the values 'sk' and 'pk' multiple times
+      ;(goWasmExec as any) = jest.fn(async () => ({
+        privateKey: 'sk',
+        publicKey: 'pk',
+      }))
+      await expect(
+        Attester.genKeyPair({
+          validityDuration: 1,
+          maxAttributes: 10,
+        })
+      ).resolves.toEqual(keypair)
       await expect(Attester.genKeyPair()).resolves.toEqual(keypair)
     })
     it('Should create attester', async () => {
-      await expect(Attester.create(1, 10)).resolves.toHaveProperty(
-        'privateKey',
-        keypair.privateKey
-      )
+      await expect(
+        Attester.create({
+          validityDuration: 1,
+          maxAttributes: 10,
+        })
+      ).resolves.toHaveProperty('privateKey', keypair.privateKey)
       await expect(Attester.create()).resolves.toHaveProperty(
         'publicKey',
         keypair.publicKey
       )
       await expect(
-        AttesterChain.create(1, 10, 'ed25519')
+        AttesterChain.create({
+          validityDuration: 1,
+          maxAttributes: 10,
+          keyLength: 1024,
+          keypairType: 'ed25519',
+        })
       ).resolves.toHaveProperty('privateKey', keypair.privateKey)
       await expect(AttesterChain.create()).resolves.toHaveProperty(
         'publicKey',
@@ -120,9 +136,6 @@ describe('Test attester', () => {
 
     it('Should throw parse error when building invalid claim from request', async () => {
       expect(() => new AttestationRequest('undefined').getClaim()).toThrowError(
-        ClaimError.duringParsing
-      )
-      expect(() => new AttestationRequest(undefined).getClaim()).toThrowError(
         ClaimError.duringParsing
       )
     })
@@ -207,7 +220,8 @@ describe('Test attester', () => {
         message: initiateAttestationReq2,
       } = await attester.startAttestation()
       const tamperObj: { nonce: string; context: string } = {
-        ...JSON.parse(initiateAttestationReq2.valueOf()),
+        nonce: '',
+        ...initiateAttestationReq2.parse(),
         context: 'El1fs5GK2sko8JkfEhWiCITaD38uA2CZN29opxU6TKM=',
       }
       const { message: attestationRequest2 } = await claimer.requestAttestation(
@@ -233,7 +247,8 @@ describe('Test attester', () => {
         message: initiateAttestationReq2,
       } = await attester.startAttestation()
       const tamperObj: { nonce: string; context: string } = {
-        ...JSON.parse(initiateAttestationReq2.valueOf()),
+        context: '',
+        ...initiateAttestationReq2.parse(),
         nonce: 'w4eSUP9HnptKog==',
       }
       const { message: attestationRequest2 } = await claimer.requestAttestation(

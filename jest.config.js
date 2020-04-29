@@ -11,7 +11,12 @@ module.exports = {
       statements: 90,
     },
   },
-  collectCoverageFrom: ['**/*.ts', '!index.ts'],
+  rootDir: 'src',
+  collectCoverageFrom: [
+    '**/*.ts',
+    '!index.ts',
+    '!<rootDir>/testSetup/testTypes.ts',
+  ],
   coverageDirectory: '../coverage',
   globalTeardown: './testSetup/jest.teardown.js',
   testTimeout: 10000,

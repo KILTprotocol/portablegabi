@@ -44,7 +44,7 @@ package-lock.json
 docs/example.mashnet.ts
 
 # documentation
-docs/api/*
+docs/api
 
 # browser example
 docs/examples/browser/bundle.js

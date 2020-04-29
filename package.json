@@ -1,16 +1,15 @@
 {
   "name": "@kiltprotocol/portablegabi",
-  "version": "0.1.4",
+  "version": "0.2.1",
   "description": "Typescript API and WASM wrapper of Go library Gabi enabling anonymous credentials",
   "main": "./build/index.js",
   "typings": "./build/index.d.ts",
   "scripts": {
     "_comment": "NODE_ENV=custom is set because otherwise tests won't compile (see https://github.com/polkadot-js/common/issues/321)",
-    "test": "yarn build && export NODE_ENV=custom; jest --group=-integration",
-    "test -c": "yarn test --coverage",
-    "test:ci": "yarn test --ci --coverage",
+    "test": "yarn build && export NODE_ENV=custom; jest --group=-integration --coverage",
+    "test:ci": "yarn test --ci",
     "testf": "export NODE_ENV=custom; jest --group=-integration",
-    "testf -c": "yarn test quick --coverage",
+    "testf -c": "yarn test quick",
     "testWatch": "jest --watch --coverage --group=-integration",
     "test:integration": "export NODE_ENV=custom;jest --bail --runInBand --group=integration",
     "lint": "eslint 'src/**'",
@@ -20,6 +19,7 @@
     "build": "yarn build:typescript && yarn build:wasm",
     "build:typescript": "tsc --declaration",
     "build:wasm": "cd go-wasm && dep ensure && env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go",
+    "build:docs": "typedoc --theme default --out docs/api --includeVersion && touch docs/api/.nojekyll",
     "publish": "npm publish --access public"
   },
   "author": "KILT Protocol",
@@ -57,11 +57,11 @@
     "url": "git+https://github.com/KILTprotocol/portablegabi.git"
   },
   "dependencies": {
-    "@polkadot/api": "^1.10.1",
-    "@polkadot/keyring": "^2.8.1",
-    "@polkadot/rpc-provider": "^1.10.1",
-    "@polkadot/types": "^1.10.1",
-    "@polkadot/util": "^2.8.1",
-    "@polkadot/util-crypto": "^2.8.1"
+    "@polkadot/api": "^0.96.1",
+    "@polkadot/keyring": "^1.7.0",
+    "@polkadot/types": "^0.96.1",
+    "@polkadot/util": "^1.7.0",
+    "@polkadot/util-crypto": "^1.7.0",
+    "@polkadot/rpc-provider": "^1.7.0"
   }
 }

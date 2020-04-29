@@ -9,11 +9,10 @@ import {
   PresentationRequest,
   IPresentationRequest,
 } from '../types/Verification'
-import { ICredential, IProof } from '../testSetup/testTypes'
 import Verifier from './Verifier'
 import Claimer from '../claim/Claimer'
 import { Witness } from '../types/Attestation'
-import { Presentation } from '../types/Claim'
+import { Presentation, IProof, ICredential } from '../types/Claim'
 import Attester from '../attestation/Attester'
 import Accumulator from '../attestation/Accumulator'
 import Credential from '../claim/Credential'
@@ -159,8 +158,8 @@ describe('Test verifier functionality', () => {
       expect(verifierSession).toBeDefined()
       expect(presentationReq).toBeDefined()
 
-      const verObj = JSON.parse(verifierSession.valueOf())
-      const presObj = JSON.parse(presentationReq.valueOf())
+      const verObj = verifierSession.parse()
+      const presObj = presentationReq.parse()
       expect(verObj.context).toStrictEqual(presObj.context)
       expect(verObj.nonce).toStrictEqual(presObj.nonce)
       expect(
@@ -172,6 +171,11 @@ describe('Test verifier functionality', () => {
       expect(verObj.reqUpdatedAfter).toEqual(
         presObj.partialPresentationRequest.reqUpdatedAfter
       )
+      expect(presentationReq.getRequestedProperties()).toEqual([
+        'contents.id',
+        'contents.picture.DATA',
+        'contents.eyeColor',
+      ])
     })
     it('Checks valid verifyPresentation', () => {
       expectSuccess(verified, presentedClaim)
@@ -281,9 +285,10 @@ describe('Test verifier functionality', () => {
     })
     // this is intended to work since the original claim data is already hidden inside the credential
     it('Should still verify after tampering with claim data (post-attestation)', async () => {
-      const tamperedCredential: ICredential<typeof claim> = JSON.parse(
-        credential.valueOf()
-      )
+      const tamperedCredential: ICredential<typeof claim> = credential.parse<
+        typeof claim
+      >()
+
       tamperedCredential.claim.contents.id = 0
       tamperedCredential.claim.contents.eyeColor = false
       tamperedCredential.claim.contents.picture = {
@@ -318,10 +323,7 @@ describe('Test verifier functionality', () => {
       })
       expect(presentation).not.toStrictEqual(presFakedReq)
       expect(
-        expectProofsNotToRevealData(
-          JSON.parse(presentation.valueOf()),
-          JSON.parse(presFakedReq.valueOf())
-        )
+        expectProofsNotToRevealData(presentation.parse(), presFakedReq.parse())
       ).toBe(true)
       const {
         verified: verifiedFakedReq,
@@ -386,7 +388,7 @@ describe('Test verifier functionality', () => {
 
       // pairwise comparison
       const proofArr: IProof[] = [presentation, proof2, proof3].map((proof) =>
-        JSON.parse(proof.valueOf())
+        proof.parse()
       )
       // start to compare prev = proofArr[2] with curr = proofArr[0], then set prev[i+1] to curr[i] and curr[i+1] to proofArr[i+1]
       proofArr.reduce((prevProof, currProof) => {
@@ -535,9 +537,8 @@ describe('Test verifier functionality', () => {
       ).rejects.toThrow('requested attributes should not be empty')
     })
     it('Should not verify after tampering with attributes data (post-attestation)', async () => {
-      const tamperedCredential: ICredential<typeof claim> = JSON.parse(
-        credential.valueOf()
-      )
+      const tamperedCredential: ICredential<typeof claim> = credential.parse()
+
       // change first attribute to base64 encoding of 'I have been changed'
       tamperedCredential.credential.attributes[0] =
         'SSBoYXZlIGJlZW4gY2hhbmdlZA=='
@@ -557,10 +558,9 @@ describe('Test verifier functionality', () => {
         accumulator
       )
     })
-    it('Should not verify after re-arrenging attributes of credential', async () => {
-      const tamperedCredential: ICredential<typeof claim> = JSON.parse(
-        credential.valueOf()
-      )
+    it('Should not verify after re-arranging attributes of credential', async () => {
+      const tamperedCredential: ICredential<typeof claim> = credential.parse()
+
       // swap first two elements
       ;[
         tamperedCredential.credential.attributes[0],
@@ -663,12 +663,10 @@ describe('Test verifier functionality', () => {
       )
     })
     it('Should not affect the credential when tampering data post-attestation pre-verification', async () => {
-      const credObj: ICredential<typeof claim> = JSON.parse(
-        credential.valueOf()
-      )
-      const credObj2: ICredential<typeof claim> = JSON.parse(
-        credential.valueOf()
-      )
+      const credObj: ICredential<typeof claim> = credential.parse()
+
+      const credObj2: ICredential<typeof claim> = credential.parse()
+
       ;[
         credObj.claim.contents.picture.DATA,
         credObj.claim.contents.picture.URL,

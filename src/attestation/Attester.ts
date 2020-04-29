@@ -13,7 +13,17 @@ import IAttester, {
   Attestation,
   AttesterPublicKey,
   AttesterPrivateKey,
+  KeyLength,
+  DEFAULT_MAX_ATTRIBUTES,
+  DEFAULT_VALIDITY_DURATION,
+  DEFAULT_KEY_LENGTH,
 } from '../types/Attestation'
+
+export type KeyGenOptions = {
+  validityDuration?: number
+  maxAttributes?: number
+  keyLength?: KeyLength
+}
 
 /**
  * Converts days to nano seconds.
@@ -29,28 +39,37 @@ export function daysToNanoSecs(days: number): number {
  * The Attester can be used to create and revoke [[Attestation]]s of [[Credential]]s.
  */
 export default class Attester implements IAttester {
-  private readonly privateKey: AttesterPrivateKey
+  readonly privateKey: AttesterPrivateKey
   readonly publicKey: AttesterPublicKey
 
   /**
    * Generates a new key pair.
    *
-   * @param validityDuration The duration in days for which the public key will be valid.
-   * @param maxAttributes The maximum number of attributes that can be signed with the generated private key.
+   * @param options An optional object containing options for the key generation.
+   * @param options.validityDuration The duration in days for which the public key will be valid.
+   * @param options.maxAttributes The maximum number of attributes that can be signed with the generated private key.
+   * @param options.keyLength The key length of the new key pair. Note that this key will only support credentials and claimer with the same key length.
    * @returns A newly generated key pair.
    */
-  public static async genKeyPair(
-    validityDuration?: number,
-    maxAttributes = 70
-  ): Promise<{
+  public static async genKeyPair({
+    validityDuration,
+    maxAttributes,
+    keyLength,
+  }: KeyGenOptions = {}): Promise<{
     privateKey: AttesterPrivateKey
     publicKey: AttesterPublicKey
   }> {
-    const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
+    const durationInNanoSecs = daysToNanoSecs(
+      validityDuration || DEFAULT_VALIDITY_DURATION
+    )
     const { privateKey, publicKey } = await goWasmExec<{
       privateKey: string
       publicKey: string
-    }>(WasmHooks.genKeypair, [maxAttributes, durationInNanoSecs])
+    }>(WasmHooks.genKeypair, [
+      maxAttributes || DEFAULT_MAX_ATTRIBUTES,
+      durationInNanoSecs,
+      keyLength || DEFAULT_KEY_LENGTH,
+    ])
     return {
       privateKey: new AttesterPrivateKey(privateKey),
       publicKey: new AttesterPublicKey(publicKey),
@@ -60,19 +79,14 @@ export default class Attester implements IAttester {
   /**
    * Generates a new key pair and returns a new [[Attester]].
    *
-   * @param validityDuration The duration in days for which the public key will be valid.
-   * @param maxAttributes The maximal number of attributes that can be signed with the generated private key.
+   * @param options An optional object containing options for the key generation.
+   * @param options.validityDuration The duration in days for which the public key will be valid.
+   * @param options.maxAttributes The maximal number of attributes that can be signed with the generated private key.
+   * @param options.keyLength The key length of the new key pair. Note that this key will only support credentials and claimer with the same key length.
    * @returns A new [[Attester]].
    */
-  public static async create(
-    validityDuration?: number,
-    maxAttributes = 70
-  ): Promise<Attester> {
-    const durationInNanoSecs = daysToNanoSecs(validityDuration || 365)
-    const { publicKey, privateKey } = await this.genKeyPair(
-      durationInNanoSecs,
-      maxAttributes
-    )
+  public static async create(options: KeyGenOptions = {}): Promise<Attester> {
+    const { publicKey, privateKey } = await this.genKeyPair(options)
     return new Attester(publicKey, privateKey)
   }
 
@@ -101,7 +115,7 @@ export default class Attester implements IAttester {
   }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.startAttestationSession,
-      [this.privateKey.valueOf(), this.publicKey.valueOf()]
+      [this.privateKey.toString(), this.publicKey.toString()]
     )
     return {
       message: new InitiateAttestationRequest(message),
@@ -117,8 +131,8 @@ export default class Attester implements IAttester {
   public async createAccumulator(): Promise<Accumulator> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.createAccumulator, [
-        this.privateKey.valueOf(),
-        this.publicKey.valueOf(),
+        this.privateKey.toString(),
+        this.publicKey.toString(),
       ])
     )
   }
@@ -148,11 +162,11 @@ export default class Attester implements IAttester {
       attestation: string
       witness: string
     }>(WasmHooks.issueAttestation, [
-      this.privateKey.valueOf(),
-      this.publicKey.valueOf(),
-      attestationSession.valueOf(),
-      attestationRequest.valueOf(),
-      accumulator.valueOf(),
+      this.privateKey.toString(),
+      this.publicKey.toString(),
+      attestationSession.toString(),
+      attestationRequest.toString(),
+      accumulator.toString(),
     ])
     return {
       attestation: new Attestation(attestation),
@@ -177,12 +191,10 @@ export default class Attester implements IAttester {
   }): Promise<Accumulator> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.revokeAttestation, [
-        this.privateKey.valueOf(),
-        this.publicKey.valueOf(),
-        accumulator.valueOf(),
-        JSON.stringify(
-          (witnesses || []).map((witness) => JSON.parse(witness.valueOf()))
-        ),
+        this.privateKey.toString(),
+        this.publicKey.toString(),
+        accumulator.toString(),
+        JSON.stringify((witnesses || []).map((witness) => witness.parse())),
       ])
     )
   }

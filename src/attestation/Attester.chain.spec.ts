@@ -103,9 +103,7 @@ describe('Test Attester on chain', () => {
   })
   it('Should updateAccumulator', async () => {
     const accUpdate = new Accumulator('updatedAccumulator')
-    await expect(attester.updateAccumulator(accUpdate)).rejects.toThrowError(
-      "Cannot read property 'signAndSend' of undefined"
-    )
+    await expect(attester.updateAccumulator(accUpdate)).resolves.toBeUndefined()
     await expect(
       chain.getLatestAccumulator(attester.address)
     ).resolves.toStrictEqual(accUpdate)
@@ -118,13 +116,13 @@ describe('Test Attester on chain', () => {
     })
     await expect(
       attester.revokeAttestation({ witnesses: [witnessRev], accumulator })
-    ).rejects.toThrowError("Cannot read property 'signAndSend' of undefined")
+    ).resolves.toBeTruthy()
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(0)
     expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(0)
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(1)
     const latestAccumulator = await chain.getLatestAccumulator(attester.address)
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
-      latestAccumulator.valueOf()
+      latestAccumulator.toString()
     )
   })
   it('Should revoke attestation without accumulator input', async () => {
@@ -135,7 +133,7 @@ describe('Test Attester on chain', () => {
     })
     await expect(
       attester.revokeAttestation({ witnesses: [witnessRev] })
-    ).rejects.toThrowError("Cannot read property 'signAndSend' of undefined")
+    ).resolves.toBeTruthy()
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(2)
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledWith(
       attester.address
@@ -148,7 +146,7 @@ describe('Test Attester on chain', () => {
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(1)
     const latestAccumulator = await chain.getLatestAccumulator(attester.address)
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
-      latestAccumulator.valueOf()
+      latestAccumulator.toString()
     )
   }, 10000)
 })

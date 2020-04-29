@@ -1,4 +1,9 @@
 [![Test](https://github.com/KILTprotocol/portablegabi/workflows/Test/badge.svg)](https://github.com/KILTprotocol/portablegabi/actions)
+[![NPM](https://img.shields.io/npm/v/@kiltprotocol/portablegabi)](https://www.npmjs.com/package/@kiltprotocol/portablegabi)
+[![NPM size](https://img.shields.io/bundlephobia/min/@kiltprotocol/portablegabi)](https://www.npmjs.com/package/@kiltprotocol/portablegabi)
+[![Last Commit](https://img.shields.io/github/last-commit/KILTprotocol/portablegabi)](https://github.com/KILTprotocol/portablegabi/commits/develop)
+[![License](https://img.shields.io/npm/l/@kiltprotocol/portablegabi)](https://github.com/KILTprotocol/portablegabi/blob/develop/LICENSE)
+
 
 # Portablegabi
 
@@ -68,15 +73,12 @@ async function exec() {
   /* (2) Attester Setup */
 
   // (2.1) Create a key pair and attester entity.
-  const attester = await portablegabi.Attester.create(
-    365 * 24 * 60 * 60 * 1000,
-    70
-  ) // takes very long due to finding safe prime numbers (~10-20 minutes)
+  const attester = await portablegabi.Attester.create() // takes very long due to finding safe prime numbers (~10-20 minutes)
 
-  // (2.1.b) Alternatively, use a pre-compiled key pair from src/testSetup/testConfig.ts
+  // (2.1.b) Alternatively, use a pre-compiled key pair from /docs/examples/exampleReadme.js
   // const attester = new portablegabi.Attester(pubKey, privKey);
-  console.log('Public key:\n\t', attester.privateKey.valueOf())
-  console.log('Private key:\n\t', attester.privateKey.valueOf())
+  console.log('Public key:\n\t', attester.privateKey.toString())
+  console.log('Private key:\n\t', attester.privateKey.toString())
 
   // (2.1) Create accumulator (for revocation)
   const accumulator = await attester.createAccumulator()
@@ -103,6 +105,7 @@ async function exec() {
   // (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
   // the attester might want to inspect the attributes he is about to sign
   const checkClaim = attestationRequest.getClaim()
+  console.log('Attester checks claim :\n\t', checkClaim)
 
   const { attestation, witness } = await attester.issueAttestation({
     attestationSession,

@@ -1,3 +1,6 @@
+import toSeed from '@polkadot/util-crypto/mnemonic/toSeed'
+import { u8aToHex } from '@polkadot/util'
+import validate from '@polkadot/util-crypto/mnemonic/validate'
 import IClaimer, {
   AttestationRequest,
   ClaimerAttestationSession,
@@ -11,6 +14,8 @@ import {
   InitiateAttestationRequest,
   Attestation,
   AttesterPublicKey,
+  KeyLength,
+  DEFAULT_KEY_LENGTH,
 } from '../types/Attestation'
 import {
   CombinedPresentationRequest,
@@ -46,17 +51,43 @@ export default class Claimer implements IClaimer {
    * Generates a claimer using the provided mnemonic.
    *
    * @param mnemonic The mnemonic which is used to generate the key.
-   * @param password The password which is used to generate the key.
+   * @param options An optional object containing options for the key generation.
+   * @param options.password The password which is used to generate the key.
+   * @param options.keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
    * @returns A new claimer.
    */
   public static async buildFromMnemonic(
     mnemonic: string,
-    password = ''
+    {
+      password,
+      keyLength,
+    }: {
+      password?: string
+      keyLength?: KeyLength
+    } = {}
+  ): Promise<Claimer> {
+    if (!validate(mnemonic)) {
+      throw new Error('Invalid mnemonic')
+    }
+    const seed = toSeed(mnemonic, password)
+    return this.buildFromSeed(seed, keyLength)
+  }
+
+  /**
+   * Generates a claimer using the provided seed.
+   *
+   * @param seed The seed which is used to generate the key.
+   * @param keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
+   * @returns A new claimer.
+   */
+  public static async buildFromSeed(
+    seed: Uint8Array,
+    keyLength?: KeyLength
   ): Promise<Claimer> {
     // secret's structure unmarshalled is { MasterSecret: string }
-    const secret = await goWasmExec<string>(WasmHooks.keyFromMnemonic, [
-      mnemonic,
-      password,
+    const secret = await goWasmExec<string>(WasmHooks.keyFromSeed, [
+      u8aToHex(seed),
+      keyLength || DEFAULT_KEY_LENGTH,
     ])
     return new this(secret)
   }
@@ -108,8 +139,8 @@ export default class Claimer implements IClaimer {
       [
         this.secret,
         JSON.stringify(claim),
-        startAttestationMsg.valueOf(),
-        attesterPubKey.valueOf(),
+        startAttestationMsg.toString(),
+        attesterPubKey.toString(),
       ]
     )
     return {
@@ -136,8 +167,8 @@ export default class Claimer implements IClaimer {
     return new Credential(
       await goWasmExec<string>(WasmHooks.buildCredential, [
         this.secret,
-        claimerSession.valueOf(),
-        attestation.valueOf(),
+        claimerSession.toString(),
+        attestation.toString(),
       ])
     )
   }
@@ -164,9 +195,9 @@ export default class Claimer implements IClaimer {
     return new Presentation(
       await goWasmExec<string>(WasmHooks.buildPresentation, [
         this.secret,
-        credential.valueOf(),
-        presentationReq.valueOf(),
-        attesterPubKey.valueOf(),
+        credential.toString(),
+        presentationReq.toString(),
+        attesterPubKey.toString(),
       ])
     )
   }
@@ -196,7 +227,7 @@ export default class Claimer implements IClaimer {
       await goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
         this.secret,
         `[${credentials.join(',')}]`,
-        combinedPresentationReq.valueOf(),
+        combinedPresentationReq.toString(),
         `[${attesterPubKeys.join(',')}]`,
       ])
     )

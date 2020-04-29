@@ -31,18 +31,6 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   /**
-   * Wait until a block was finalized.
-   */
-  public async waitForNextBlock(): Promise<void> {
-    const currBlock = (await this.api.rpc.chain.getHeader()).number.toNumber()
-    return new Promise((resolve) =>
-      this.api.rpc.chain.subscribeNewHeads((header) => {
-        if (header.number.toNumber() > currBlock) resolve()
-      })
-    )
-  }
-
-  /**
    * Get the number of stored [[Accumulator]]s for a specific [[Attester]].
    *
    * @param address The address of the [[Attester]].
@@ -183,9 +171,43 @@ export default class Blockchain implements IBlockchainApi {
     address: KeyringPair,
     accumulator: Accumulator
   ): Promise<void> {
-    const update = await this.api.tx[this.chainmod].updateAccumulator(
-      accumulator.valueOf()
+    const update = this.api.tx[this.chainmod].updateAccumulator(
+      accumulator.toString()
     )
-    await update.signAndSend(address)
+    return new Promise((resolve, reject) => {
+      // store the handle to remove subscription.
+      let unsubscribe: (() => void) | null = null
+
+      // sign and send transaction
+      update
+        .signAndSend(address, (r) => {
+          // if block containing the transaction was finalized, check if transaction was successful
+          if (r.status.isFinalized) {
+            if (unsubscribe !== null) unsubscribe()
+
+            const sysEvents = r.events.filter(
+              ({ event: { section } }) => section === 'system'
+            )
+
+            // filter for error events
+            const errEvents = sysEvents.filter(
+              ({ event: { method } }) => method === 'ExtrinsicFailed'
+            )
+
+            // filter for success events
+            const okEvents = sysEvents.filter(
+              ({ event: { method } }) => method === 'ExtrinsicSuccess'
+            )
+
+            // if there is no error and no success event, we fail
+            if (errEvents.length > 0) reject(errEvents)
+            else if (okEvents.length > 0) resolve()
+            else reject()
+          }
+        })
+        .then((u) => {
+          unsubscribe = u
+        })
+    })
   }
 }

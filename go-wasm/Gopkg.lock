@@ -134,17 +134,6 @@
   version = "v1.4.0"
 
 [[projects]]
-  digest = "1:91b40a2adb6b4ccd51b1dfb306edfa76139e1599b01666346085472b386f5447"
-  name = "github.com/tyler-smith/go-bip39"
-  packages = [
-    ".",
-    "wordlists",
-  ]
-  pruneopts = "UT"
-  revision = "5e3853c3f4e1a44df487c7efeb064ee8b43755de"
-  version = "1.0.2"
-
-[[projects]]
   digest = "1:93f4c18679de6a3e34b9a3de10c5436e9888b5879ed7de0520749e1eac546bd8"
   name = "github.com/x448/float16"
   packages = ["."]
@@ -154,11 +143,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ab21860c302e36a82a205d19bf9a523c33a90960bd9c0186bbce7061ad1f2e42"
+  digest = "1:655984762d98b0e453af28cb6078d33479080784efb056ba7f365b5d4814d3fe"
   name = "golang.org/x/crypto"
   packages = [
     "blake2s",
-    "pbkdf2",
     "sha3",
   ]
   pruneopts = "UT"
@@ -193,7 +181,6 @@
     "github.com/privacybydesign/gabi/revocation",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
-    "github.com/tyler-smith/go-bip39",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

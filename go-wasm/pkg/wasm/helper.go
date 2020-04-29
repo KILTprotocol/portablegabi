@@ -6,18 +6,13 @@ import (
 	"encoding/json"
 	"syscall/js"
 	"time"
-
-	"github.com/privacybydesign/gabi"
 )
 
 // KeyLength sets the length of the used keys. Possible values are 1024, 2048, 4096
 const (
-	KeyLength  = 1024
 	TimeFormat = time.RFC3339Nano
+	DefaultKeyLength = 1024
 )
-
-// SysParams are the currently used system parameters for the cryptographic primitives
-var SysParams, _ = gabi.DefaultSystemParameters[KeyLength]
 
 // GoFunction is a function which can be transform it into a JSFunction
 type GoFunction func(js.Value, []js.Value) (interface{}, error)
