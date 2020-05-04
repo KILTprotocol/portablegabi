@@ -1,0 +1,355 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>@kiltprotocol/portablegabi - v0.2.2</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">@kiltprotocol/portablegabi - v0.2.2</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1>@kiltprotocol/portablegabi - v0.2.2</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<p><a href="https://github.com/KILTprotocol/portablegabi/actions"><img src="https://github.com/KILTprotocol/portablegabi/workflows/Test/badge.svg" alt="Test"></a>
+					<a href="https://www.npmjs.com/package/@kiltprotocol/portablegabi"><img src="https://img.shields.io/npm/v/@kiltprotocol/portablegabi" alt="NPM"></a>
+					<a href="https://www.npmjs.com/package/@kiltprotocol/portablegabi"><img src="https://img.shields.io/bundlephobia/min/@kiltprotocol/portablegabi" alt="NPM size"></a>
+					<a href="https://github.com/KILTprotocol/portablegabi/commits/develop"><img src="https://img.shields.io/github/last-commit/KILTprotocol/portablegabi" alt="Last Commit"></a>
+				<a href="https://github.com/KILTprotocol/portablegabi/blob/develop/LICENSE"><img src="https://img.shields.io/npm/l/@kiltprotocol/portablegabi" alt="License"></a></p>
+				<a href="#portablegabi" id="portablegabi" style="color: inherit; text-decoration: none;">
+					<h1>Portablegabi</h1>
+				</a>
+				<p>This TypeScript module of Portable Gabi enables the use of <a href="http://www.research.ibm.com/labs/zurich/idemix/">Idemix</a> attribute based anonymous credentials via NPM. It is based on the <a href="https://github.com/privacybydesign/gabi">Gabi Go</a> implementation by the <a href="https://privacybydesign.foundation/">Privacy By Design Foundation</a> but does not use the same API.</p>
+				<p>A user (in the following referred to as <em>claimer</em>) claiming something in JSON format (e.g. citizenship in a specific country, ownership of a valid driver&#39;s license) can request an attestation from a trusted entity (<em>attester</em>) and present these claims to multiple <em>verifiers</em> without revealing their identity or sensitive information (<strong>multi-show unlinkability</strong>).
+				The claimer can chose which attributes of the claim to disclose to a verifier (<strong>selective disclosure</strong>).</p>
+				<a href="#tutorial" id="tutorial" style="color: inherit; text-decoration: none;">
+					<h2>Tutorial</h2>
+				</a>
+				<p>We recommend visiting our <a href="https://kiltprotocol.github.io/portablegabi-tutorial/">Portablegabi tutorial</a> to better understand how to use our anonymous credentials and the API.</p>
+				<a href="#revocation-and-substrate" id="revocation-and-substrate" style="color: inherit; text-decoration: none;">
+					<h2>Revocation and Substrate</h2>
+				</a>
+				<p>This module can be used with and without a <a href="https://www.parity.io/substrate/">Substrate</a>-based blockchain.
+					However, it was designed to be used with a chain acting as a decentralised storage of each attester&#39;s accumulator versions to enable revocation.
+					All processes tied to chain activity can be found in files with <code>chain</code> suffix. In order to use them, you are required to have an active Substrate blockchain implementing our <a href="https://github.com/KILTprotocol/portablegabi-pallet"><code>portablegabi-pallet</code></a>.
+					We also provide a blockchain template which includes our pallet and can be used to store accumulators.
+				In order to use that, just clone and set up the <a href="https://github.com/KILTprotocol/portablegabi-node"><code>portablegabi-node</code></a> or use the template to create your own project. Please see our tutorial for more information.</p>
+				<a href="#installing" id="installing" style="color: inherit; text-decoration: none;">
+					<h2>Installing</h2>
+				</a>
+				<p>npm</p>
+				<pre><code><span class="hljs-built_in">npm</span> i @kiltprotocol/portablegabi</code></pre><p>yarn</p>
+				<pre><code>yarn <span class="hljs-keyword">add</span><span class="bash"> @kiltprotocol/portablegabi</span></code></pre>
+				<a href="#building--testing" id="building--testing" style="color: inherit; text-decoration: none;">
+					<h2>Building + Testing</h2>
+				</a>
+				<p>If you want to help develop portablegabi, we would be glad to merge your pull request.
+					But first, you need to set up a development environment for our project.
+				See <a href="https://kiltprotocol.github.io/portablegabi-tutorial/6_development.html">our tutorial</a> for more information.</p>
+				<a href="#example" id="example" style="color: inherit; text-decoration: none;">
+					<h2>Example</h2>
+				</a>
+				<p>Please see the <a href="docs/examples/">example files</a> for a showcase of on- and off-chain usage with single or combined credentials.</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">const</span> portablegabi = <span class="hljs-built_in">require</span>(<span class="hljs-string">'@kiltprotocol/portablegabi'</span>)
+<span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">exec</span>(<span class="hljs-params"></span>) </span>{
+  <span class="hljs-comment">/* (1) Claimer Setup */</span>
+
+  <span class="hljs-comment">// (1.1) Example claim</span>
+  <span class="hljs-keyword">const</span> claim = {
+    contents: {
+      name: <span class="hljs-string">'Jasper'</span>,
+      age: <span class="hljs-string">'42'</span>,
+      city: <span class="hljs-string">'Berlin'</span>,
+      id: <span class="hljs-string">'ed638ndke92902n29'</span>,
+    },
+  }
+
+  <span class="hljs-comment">// (1.2) Create the claimer identity (either from scratch or mnemonic seed).</span>
+  <span class="hljs-keyword">const</span> claimer = <span class="hljs-keyword">await</span> portablegabi.Claimer.create()
+
+  <span class="hljs-comment">/* (2) Attester Setup */</span>
+
+  <span class="hljs-comment">// (2.1) Create a key pair and attester entity.</span>
+  <span class="hljs-keyword">const</span> attester = <span class="hljs-keyword">await</span> portablegabi.Attester.create() <span class="hljs-comment">// takes very long due to finding safe prime numbers (~10-20 minutes)</span>
+
+  <span class="hljs-comment">// (2.1.b) Alternatively, use a pre-compiled key pair from /docs/examples/exampleReadme.js</span>
+  <span class="hljs-comment">// const attester = new portablegabi.Attester(pubKey, privKey);</span>
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Public key:\n\t'</span>, attester.privateKey.toString())
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Private key:\n\t'</span>, attester.privateKey.toString())
+
+  <span class="hljs-comment">// (2.1) Create accumulator (for revocation)</span>
+  <span class="hljs-keyword">const</span> accumulator = <span class="hljs-keyword">await</span> attester.createAccumulator()
+
+  <span class="hljs-comment">/* (3) Attestation */</span>
+
+  <span class="hljs-comment">// (3.1) Attester sends two nonces to claimer</span>
+  <span class="hljs-keyword">const</span> {
+    message: startAttestationMsg,
+    session: attestationSession,
+  } = <span class="hljs-keyword">await</span> attester.startAttestation()
+
+  <span class="hljs-comment">// (3.2) Claimer requests attestation</span>
+  <span class="hljs-keyword">const</span> {
+    message: attestationRequest,
+    session: claimerSession,
+  } = <span class="hljs-keyword">await</span> claimer.requestAttestation({
+    startAttestationMsg,
+    claim,
+    attesterPubKey: attester.publicKey,
+  })
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Claimer requests attestation:\n\t'</span>, attestationRequest)
+
+  <span class="hljs-comment">// (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation</span>
+  <span class="hljs-comment">// the attester might want to inspect the attributes he is about to sign</span>
+  <span class="hljs-keyword">const</span> checkClaim = attestationRequest.getClaim()
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Attester checks claim :\n\t'</span>, checkClaim)
+
+  <span class="hljs-keyword">const</span> { attestation, witness } = <span class="hljs-keyword">await</span> attester.issueAttestation({
+    attestationSession,
+    attestationRequest,
+    accumulator,
+  })
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Attester issues attestion:\n\t'</span>, attestation)
+
+  <span class="hljs-comment">// (3.4) Claimer builds credential from attester's signature</span>
+  <span class="hljs-keyword">const</span> credential = <span class="hljs-keyword">await</span> claimer.buildCredential({
+    claimerSession,
+    attestation,
+  })
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Claimer builds credential:\n\t'</span>, credential)
+
+  <span class="hljs-comment">/* (4) Verification */</span>
+
+  <span class="hljs-comment">// (4.1) Verifier sends two nonces to claimer</span>
+  <span class="hljs-keyword">const</span> {
+    session: verifierSession,
+    message: presentationReq,
+  } = <span class="hljs-keyword">await</span> portablegabi.Verifier.requestPresentation({
+    requestedAttributes: [<span class="hljs-string">'contents.age'</span>, <span class="hljs-string">'contents.city'</span>],
+    reqUpdatedAfter: <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(), <span class="hljs-comment">// request that the nonrevocation proof contains an accumulator which was created after this date or that the accumulator is the newest available</span>
+  })
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Verifier starts verification session:\n\t'</span>, presentationReq)
+
+  <span class="hljs-comment">// (4.2) Claimer reveals attributes</span>
+  <span class="hljs-keyword">const</span> proof = <span class="hljs-keyword">await</span> claimer.buildPresentation({
+    credential,
+    presentationReq,
+    attesterPubKey: attester.publicKey,
+  })
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Claimer builds zk-proof on requested attributes:\n\t'</span>, proof)
+
+  <span class="hljs-comment">// (4.3) Verifier verifies attributes</span>
+  <span class="hljs-keyword">const</span> {
+    verified,
+    claim: verifiedClaim,
+  } = <span class="hljs-keyword">await</span> portablegabi.Verifier.verifyPresentation({
+    proof,
+    verifierSession,
+    attesterPubKey: attester.publicKey,
+    latestAccumulator: accumulator, <span class="hljs-comment">// the newest available accumulator</span>
+  })
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Verifier verifiers proof:\n\t'</span>, verified, verifiedClaim)
+
+  <span class="hljs-comment">/* (5) Revocation */</span>
+
+  <span class="hljs-comment">// Revoke the witness of a credential.</span>
+  <span class="hljs-keyword">const</span> accumulatorAfterRevocation = <span class="hljs-keyword">await</span> attester.revokeAttestation({
+    accumulator,
+    witnesses: [witness],
+  })
+
+  <span class="hljs-comment">// Expect failure here due to prior revocation.</span>
+  <span class="hljs-keyword">await</span> credential
+    .updateSingle({
+      attesterPubKey: attester.publicKey,
+      accumulator: accumulatorAfterRevocation,
+    })
+    .catch(<span class="hljs-function"><span class="hljs-params">e</span> =&gt;</span> {
+      <span class="hljs-keyword">if</span> (e.message.includes(<span class="hljs-string">'revoked'</span>)) {
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Credential was revoked and cannot be updated'</span>)
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">throw</span> e
+    })
+}
+exec()</code></pre>
+				<a href="#troubleshooting" id="troubleshooting" style="color: inherit; text-decoration: none;">
+					<h1>Troubleshooting</h1>
+				</a>
+				<a href="#node-process-did-not-exit-automatically" id="node-process-did-not-exit-automatically" style="color: inherit; text-decoration: none;">
+					<h2>Node process did not exit automatically</h2>
+				</a>
+				<p>Note that due to the usage of a Go WASM via callbacks, all functions are asynchronous. It can happen that NodeJS does not exit automatically since we keep the WASM instance open. We recommend calling <code>goWasmClose()</code> from <a href="src/wasm/wasm_exec_wrapper.ts">wasm_exec_wrapper</a> at the end of your process.</p>
+				<a href="#go-version-below-1141" id="go-version-below-1141" style="color: inherit; text-decoration: none;">
+					<h2>Go version below 1.14.1</h2>
+				</a>
+				<pre><code class="language-bash">  [LinkError: WebAssembly Instantiation: Import <span class="hljs-comment">#3 module="go" function="runtime.nanotime" error: function import requires a callable]</span>
+  (node:6909) UnhandledPromiseRejectionWarning: Error: Function genKey missing <span class="hljs-keyword">in</span> WASM</code></pre>
+				<p>Please check your Go version, it should be at least <code>1.14.1</code>. If this is the case for you, and you still encounter this problem without having modified our code, <a href="https://github.com/KILTprotocol/portablegabi/issues/new">please open a ticket</a>.</p>
+				<a href="#limitations" id="limitations" style="color: inherit; text-decoration: none;">
+					<h2>Limitations</h2>
+				</a>
+				<ul>
+					<li>all numbers inside a claim are handled as <code>float64</code></li>
+					<li>arrays are handled as a single attribute. Disclosing a value inside an array is only possible if the whole array is disclosed.</li>
+				</ul>
+				<p><img src="./web3_foundation_grants_badge_black.svg" alt=""></p>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+					<li class="label tsd-is-external">
+						<span>Internals</span>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_attestation_attester_.html">&quot;attestation/<wbr>Attester&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_claim_claimer_.html">&quot;claim/<wbr>Claimer&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_index_.html">&quot;index&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_types_attestation_.html">&quot;types/<wbr>Attestation&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_types_chain_.html">&quot;types/<wbr>Chain&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_types_claim_.html">&quot;types/<wbr>Claim&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_types_verification_.html">&quot;types/<wbr>Verification&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_types_wasm_.html">&quot;types/<wbr>Wasm&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_verification_verifier_.html">&quot;verification/<wbr>Verifier&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_wasm_wasm_exec_.html">&quot;wasm/wasm_<wbr>exec&quot;</a>
+					</li>
+					<li class="label tsd-is-external">
+						<span>Externals</span>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_attestation_accumulator_.html">&quot;attestation/<wbr>Accumulator&quot;</a>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_attestation_attester_chain_.html">&quot;attestation/<wbr>Attester.chain&quot;</a>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_blockchain_blockchain_.html">&quot;blockchain/<wbr>Blockchain&quot;</a>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_blockchain_blockchainerror_.html">&quot;blockchain/<wbr>Blockchain<wbr>Error&quot;</a>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_blockchainapiconnection_blockchainapiconnection_.html">&quot;blockchain<wbr>Api<wbr>Connection/<wbr>Blockchain<wbr>Api<wbr>Connection&quot;</a>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_claim_credential_.html">&quot;claim/<wbr>Credential&quot;</a>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_verification_combinedrequestbuilder_.html">&quot;verification/<wbr>Combined<wbr>Request<wbr>Builder&quot;</a>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_wasm_wasmhooks_.html">&quot;wasm/<wbr>Wasm<wbr>Hooks&quot;</a>
+					</li>
+					<li class=" tsd-kind-module tsd-is-external">
+						<a href="modules/_wasm_wasm_exec_wrapper_.html">&quot;wasm/wasm_<wbr>exec_<wbr>wrapper&quot;</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>
