@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import WasmHooks from '../wasm/WasmHooks'
 
-export default interface IGoWasm {
+export interface IGoWasm {
   execWasmFn: (
     fn: WasmHooks,
     fnArgs?: Array<string | number | boolean>
@@ -43,4 +43,33 @@ export default interface IGoWasm {
   run: Function
   _resume: Function
   _makeFuncWrapper: Function
+}
+
+/**
+ * A wrapper for data received from WASM callbacks.
+ */
+export default class WasmData {
+  private data: string
+
+  public constructor(data: string) {
+    this.data = data
+  }
+
+  /**
+   * Serializes the WASM data into JSON.
+   *
+   * @returns An object of the serialized data string.
+   */
+  public parse(): { [key: string]: any } {
+    return JSON.parse(this.data)
+  }
+
+  /**
+   * Getter for string of WASM data.
+   *
+   * @returns A string of the WASM data which can be serialized.
+   */
+  public toString(): string {
+    return this.data
+  }
 }

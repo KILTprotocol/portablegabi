@@ -1,12 +1,11 @@
 /* eslint-disable no-console */
 import Blockchain from '../../src/blockchain/Blockchain'
-import connect, {
-  disconnect,
-} from '../../src/blockchainApiConnection/BlockchainApiConnection'
+import connect from '../../src/blockchainApiConnection/BlockchainApiConnection'
 import { testEnv1, mnemonic } from './exampleConfig'
 import actorProcessChain from './onchain/1_actorProcess'
 import verificationProcessSingleChain from './onchain/3_verificationProcessSingle'
 import issuanceProcess from './offchain/2_issuanceProcess'
+import teardown from './offchain/4_teardown'
 
 const { pubKey, privKey, disclosedAttributes, claim } = testEnv1
 
@@ -79,55 +78,68 @@ async function completeProcessSingle({
 // all calls of completeProcessSingle should return true
 async function completeProcessSingleExamples(): Promise<void> {
   // connect to chain
-  const blockchain = await connect({ pgabiModName: 'portablegabiPallet' })
+  const blockchain = await connect({
+    pgabiModName: 'portablegabi',
+  })
   console.log('Connected to chain')
   // we accept every accumulator when requiring past in reqUpdatedAfter
   const past = new Date(0)
   // we only accept the newest accumulator
   const future = new Date()
   future.setDate(future.getDate() + 100)
+  // store outcomes here for CI check
+  const outcomes: boolean[] = []
 
   // without credential revocation
-  await completeProcessSingle({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: false,
-    reqUpdatedAfter: past,
-  })
+  outcomes.push(
+    await completeProcessSingle({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: false,
+      reqUpdatedAfter: past,
+    })
+  )
 
   // without revocation but required date in future => should verify
-  await completeProcessSingle({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: false,
-    reqUpdatedAfter: future,
-  })
+  outcomes.push(
+    await completeProcessSingle({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: false,
+      reqUpdatedAfter: future,
+    })
+  )
 
   // with revocation and required date in future => should not verify
-  await completeProcessSingle({
-    blockchain,
-    expectedVerificationOutcome: false,
-    doRevocation: true,
-    reqUpdatedAfter: future,
-  })
+  outcomes.push(
+    await completeProcessSingle({
+      blockchain,
+      expectedVerificationOutcome: false,
+      doRevocation: true,
+      reqUpdatedAfter: future,
+    })
+  )
 
   // with credential revocation but revocation not required in verification => should verify
-  await completeProcessSingle({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: true,
-  })
-
+  outcomes.push(
+    await completeProcessSingle({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: true,
+    })
+  )
   // with credential revocation but date in past => should verify
-  await completeProcessSingle({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: true,
-    reqUpdatedAfter: past,
-  })
+  outcomes.push(
+    await completeProcessSingle({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: true,
+      reqUpdatedAfter: past,
+    })
+  )
 
-  // disconnect from chain
-  await disconnect().finally(() => process.exit())
+  // check whether outcome is true fall our instances and disconnect from chain
+  return teardown('onchain', outcomes)
 }
 
 completeProcessSingleExamples()

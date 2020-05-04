@@ -172,7 +172,7 @@ export default class Blockchain implements IBlockchainApi {
     accumulator: Accumulator
   ): Promise<void> {
     const update = this.api.tx[this.chainmod].updateAccumulator(
-      accumulator.valueOf()
+      accumulator.toString()
     )
     return new Promise((resolve, reject) => {
       // store the handle to remove subscription.

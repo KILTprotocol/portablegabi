@@ -16,8 +16,8 @@ export async function actorProcess({
 }: {
   claimerMnemonic?: string
   claimerMnemonicPw?: string
-  attesterPubKey?: string | AttesterPublicKey
-  attesterPrivKey?: string | AttesterPrivateKey
+  attesterPubKey?: string
+  attesterPrivKey?: string
 }): Promise<{
   claimer: Claimer
   attester: Attester

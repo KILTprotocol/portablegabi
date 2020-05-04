@@ -118,17 +118,17 @@ export async function verifyPresentation({
   attesterPubKey: AttesterPublicKey
   latestAccumulator?: Accumulator
 }): Promise<IVerifiedPresentation> {
-  if (!latestAccumulator && proof.valueOf().includes('nonrev_proof')) {
+  if (!latestAccumulator && proof.toString().includes('nonrev_proof')) {
     throw new Error('Missing accumulator for requested revocation proof')
   }
   const response = await goWasmExec<{
     verified: string
     claim: string
   }>(WasmHooks.verifyPresentation, [
-    proof.valueOf(),
-    verifierSession.valueOf(),
-    attesterPubKey.valueOf(),
-    (latestAccumulator || new Accumulator('null')).valueOf(),
+    proof.toString(),
+    verifierSession.toString(),
+    attesterPubKey.toString(),
+    (latestAccumulator || new Accumulator('null')).toString(),
   ])
   return {
     verified: response.verified === 'true',
@@ -162,11 +162,11 @@ export async function verifyCombinedPresentation({
     verified: string
     claims: string
   }>(WasmHooks.verifyCombinedPresentation, [
-    proof.valueOf(),
-    verifierSession.valueOf(),
+    proof.toString(),
+    verifierSession.toString(),
     `[${attesterPubKeys.join(',')}]`,
     `[${latestAccumulators
-      .map((accumulator) => (accumulator || new Accumulator('null')).valueOf())
+      .map((accumulator) => (accumulator || new Accumulator('null')).toString())
       .join(',')}]`,
   ])
   return {

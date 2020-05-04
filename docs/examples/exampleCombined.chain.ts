@@ -1,12 +1,11 @@
 /* eslint-disable no-console */
 import Blockchain from '../../src/blockchain/Blockchain'
-import connect, {
-  disconnect,
-} from '../../src/blockchainApiConnection/BlockchainApiConnection'
+import connect from '../../src/blockchainApiConnection/BlockchainApiConnection'
 import { testEnv1, testEnv2, mnemonic } from './exampleConfig'
 import actorProcessChain from './onchain/1_actorProcess'
 import issuanceProcess from './offchain/2_issuanceProcess'
 import verificationProcessCombinedChain from './onchain/3_verificationProcessCombined'
+import teardown from './offchain/4_teardown'
 
 const {
   pubKey: pubKey1,
@@ -109,68 +108,82 @@ async function completeProcessCombined({
 async function completeProcessCombinedExamples(): Promise<void> {
   // connect to chain
   const blockchain = await connect({
-    pgabiModName: 'portablegabiPallet',
+    pgabiModName: 'portablegabi',
   })
   console.log('Connected to chain')
   // we accept every accumulator when requiring past in reqUpdatedAfter
   const past = new Date(0)
   // we only accept the newest accumulator
   const future = new Date()
+  // store outcomes here for CI check
+  const outcomes: boolean[] = []
 
   // without credential revocation
-  await completeProcessCombined({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: false,
-    reqUpdatedAfter: [past, past],
-    reqNonRevocationProofArr: [true, true],
-  })
+  outcomes.push(
+    await completeProcessCombined({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: false,
+      reqUpdatedAfter: [past, past],
+      reqNonRevocationProofArr: [true, true],
+    })
+  )
 
   // without credential revocation but required dates in future => should verify
-  await completeProcessCombined({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: false,
-    reqUpdatedAfter: [future, past],
-    reqNonRevocationProofArr: [true, false],
-  })
-  await completeProcessCombined({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: false,
-    reqUpdatedAfter: [past, future],
-    reqNonRevocationProofArr: [false, true],
-  })
+  outcomes.push(
+    await completeProcessCombined({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: false,
+      reqUpdatedAfter: [future, past],
+      reqNonRevocationProofArr: [true, false],
+    })
+  )
+  outcomes.push(
+    await completeProcessCombined({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: false,
+      reqUpdatedAfter: [past, future],
+      reqNonRevocationProofArr: [false, true],
+    })
+  )
 
   // with revocation of 2nd credential and required date in future => should not verify
-  await completeProcessCombined({
-    blockchain,
-    expectedVerificationOutcome: false,
-    doRevocation: true,
-    reqUpdatedAfter: [future, future],
-    reqNonRevocationProofArr: [true, true],
-  })
+  outcomes.push(
+    await completeProcessCombined({
+      blockchain,
+      expectedVerificationOutcome: false,
+      doRevocation: true,
+      reqUpdatedAfter: [future, future],
+      reqNonRevocationProofArr: [true, true],
+    })
+  )
 
   // with revocation of 2nd credential but required date in past => should verify
-  await completeProcessCombined({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: true,
-    reqUpdatedAfter: [future, past],
-    reqNonRevocationProofArr: [false, true],
-  })
+  outcomes.push(
+    await completeProcessCombined({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: true,
+      reqUpdatedAfter: [future, past],
+      reqNonRevocationProofArr: [false, true],
+    })
+  )
 
   // with revocation (2nd) but revocation not required in verification
-  await completeProcessCombined({
-    blockchain,
-    expectedVerificationOutcome: true,
-    doRevocation: true,
-    reqUpdatedAfter: [past, past],
-    reqNonRevocationProofArr: [false, false],
-  })
+  outcomes.push(
+    await completeProcessCombined({
+      blockchain,
+      expectedVerificationOutcome: true,
+      doRevocation: true,
+      reqUpdatedAfter: [past, past],
+      reqNonRevocationProofArr: [false, false],
+    })
+  )
 
-  // disconnect from chain
-  await disconnect().finally(() => process.exit())
+  // check whether outcome is true for all our instances and disconnect from chain
+  return teardown('onchain', outcomes)
 }
 
 completeProcessCombinedExamples()

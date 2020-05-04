@@ -24,7 +24,7 @@ describe('chain mocks', () => {
         dummyAddress,
         1
       )
-      expect(accu.valueOf()).toBe(dummyAddress)
+      expect(accu.toString()).toBe(dummyAddress)
     })
     it('Should getLatestAccumulator', async () => {
       api.query.portablegabi.accumulatorCount.mockResolvedValue(
@@ -36,7 +36,7 @@ describe('chain mocks', () => {
       const accumulator: Accumulator = await BlockchainMock.getLatestAccumulator(
         dummyAddress
       )
-      expect(accumulator.valueOf()).toBe('dummyAccumulator')
+      expect(accumulator.toString()).toBe('dummyAccumulator')
     })
     it('Should updateAccumulator', async () => {
       const newAccumulator = new Accumulator('newAccumulator')
@@ -47,7 +47,7 @@ describe('chain mocks', () => {
       const currAccumulator = await BlockchainMock.getLatestAccumulator(
         dummyAddress
       )
-      expect(currAccumulator.valueOf()).toBe('currAccumulator')
+      expect(currAccumulator.toString()).toBe('currAccumulator')
       // update to new accumulator
       await expect(
         BlockchainMock.updateAccumulator('s' as any, newAccumulator)
@@ -55,7 +55,7 @@ describe('chain mocks', () => {
       const latestAccumulator = await BlockchainMock.getLatestAccumulator(
         dummyAddress
       )
-      expect(latestAccumulator.valueOf()).toBe(newAccumulator.valueOf())
+      expect(latestAccumulator.toString()).toBe(newAccumulator.toString())
     })
     it('Should getAccumulatorArray', async () => {
       api.query.portablegabi.accumulatorList.mockResolvedValue(

@@ -20,8 +20,8 @@ export async function actorProcessChain({
   blockchain: Blockchain
   claimerMnemonic?: string
   claimerMnemonicPw?: string
-  attesterPubKey?: string | AttesterPublicKey
-  attesterPrivKey?: string | AttesterPrivateKey
+  attesterPubKey?: string
+  attesterPrivKey?: string
   attesterURI?: string
 }): Promise<{
   claimer: Claimer
@@ -37,7 +37,8 @@ export async function actorProcessChain({
   const attester = await AttesterChain.buildFromURI(
     new AttesterPublicKey(attesterPubKey),
     new AttesterPrivateKey(attesterPrivKey),
-    attesterURI
+    attesterURI,
+    'ed25519'
   )
 
   // get accumulator from chain
