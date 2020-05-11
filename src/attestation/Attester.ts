@@ -30,6 +30,7 @@ export type KeyGenOptions = {
  *
  * @param days The amount of days that should be converted.
  * @returns The amount of nanoseconds for the specified amount of days.
+ * @internal
  */
 export function daysToNanoSecs(days: number): number {
   return days * 24 * 60 * 60 * 1000 * 1000 * 1000

@@ -26,6 +26,7 @@ const DEFAULT_PARAMS: IPortableGabiApiOptions = {
   pgabiModName: DEFAULT_MOD_NAME,
 }
 
+/** @internal */
 let connectionCache: Promise<Blockchain> | null = null
 
 /**
@@ -89,6 +90,7 @@ export async function connect({
 
 /**
  * Remove the cached connection.
+ * @internal
  */
 export function clearCache(): void {
   connectionCache = null

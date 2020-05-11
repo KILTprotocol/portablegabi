@@ -1,3 +1,4 @@
+/** @internal */
 enum WasmHooks {
   // misc
   closeWasm = 'closeWasm',
