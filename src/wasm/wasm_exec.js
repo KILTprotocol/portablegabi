@@ -1,5 +1,4 @@
 /* eslint-disable */
-/** @internal */
 const path = require('path')
 
 if (typeof global !== 'undefined') {
@@ -22,7 +21,6 @@ if (!global.fs && global.require) {
   global.fs = require('fs')
 }
 
-/** @internal */
 const enosys = () => {
   const err = new Error('not implemented')
   err.code = 'ENOSYS'
@@ -188,12 +186,9 @@ if (!global.TextDecoder) {
 
 // End of polyfills for common API.
 
-/** @internal */
 const encoder = new TextEncoder('utf-8')
-/** @internal */
 const decoder = new TextDecoder('utf-8')
 
-/** @internal */
 class Go {
   constructor() {
     this.argv = ['js']
@@ -636,10 +631,8 @@ class Go {
   }
 }
 
-/** @internal */
 class WasmError extends Error {}
 
-/** @internal */
 class GoWasm extends Go {
   static async init() {
     const go = new Go()
