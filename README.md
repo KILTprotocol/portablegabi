@@ -190,5 +190,3 @@ Please check your Go version, it should be at least `1.14.1`. If this is the cas
 
 - all numbers inside a claim are handled as `float64`
 - arrays are handled as a single attribute. Disclosing a value inside an array is only possible if the whole array is disclosed.
-
-![](./web3_foundation_grants_badge_black.svg)
