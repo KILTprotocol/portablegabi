@@ -16,7 +16,7 @@ export default class Credential extends WasmData {
    * After an attester revoked an attestation all credentials need to be updated.
    *
    * @param p The parameter object.
-   * @param p.attesterPubKey The [[PublicKey]] of the attester who attest the claim.
+   * @param p.attesterPubKey The [[AttesterPublicKey]] matching the [[AttesterPrivateKey]] which signed the claim.
    * @param p.accumulator The new [[Accumulator]].
    * @returns An updated [[Credential]].
    */
@@ -41,7 +41,7 @@ export default class Credential extends WasmData {
    * After an [[Attester]] revoked an [[Attestation]] all [[Credential]]s need to be updated.
    *
    * @param p The parameter object.
-   * @param p.attesterPubKey The [[PublicKey]] of the [[Attester]] who attested the claim.
+   * @param p.attesterPubKey The [[AttesterPublicKey]] of the [[Attester]] who attested the claim.
    * @param p.accumulators The list of new [[Accumulator]]s.
    * @returns An updated [[Credential]].
    */
@@ -66,7 +66,7 @@ export default class Credential extends WasmData {
    * For that it pulls all [[Accumulator]]s up to [[endIndex]] from the chain.
    *
    * @param p The parameter object.
-   * @param p.attesterPubKey The [[PublicKey]] of the [[Attester]] who attested the claim.
+   * @param p.attesterPubKey The [[AttesterPublicKey]] of the [[Attester]] who attested the claim.
    * @param p.attesterChainAddress The on-chain address of the [[Attester]].
    * @param p.endIndex The index of the accumulator up to which the credential should get updated.
    * @returns An updated [[Credential]].

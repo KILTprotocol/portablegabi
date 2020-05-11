@@ -117,7 +117,7 @@ export default class Claimer implements IClaimer {
    * @param p The parameter object.
    * @param p.claim The claim which should get attested.
    * @param p.startAttestationMsg The [[InitiateAttestationRequest]] provided by the attester.
-   * @param p.attesterPubKey The [[PublicKey]] of the attester.
+   * @param p.attesterPubKey The [[AttesterPublicKey]].
    * @returns An [[AttestationRequest]] and a [[ClaimerAttestationSession]] which together with an [[AttestationResponse]] can be used to create a [[Credential]].
    */
   public async requestAttestation({
@@ -208,7 +208,7 @@ export default class Claimer implements IClaimer {
    * @param p The parameter object.
    * @param p.credentials An array of [[Credential]]s which is used to provide the requested attributes.
    * @param p.combinedPresentationReq The array of [[PresentationRequest]]s received from the [[Verifier]].
-   * @param p.attesterPubKeys An array of [[PublicKey]]s which corresponds to the array of [[Credential]]s.
+   * @param p.attesterPubKeys An array of [[AttesterPublicKey]]s which corresponds to the array of [[Credential]]s.
    * @returns A [[CombinedPresentation]] that can be used to disclose attributes with a [[Verifier]].
    *    Must only be used once!
    */

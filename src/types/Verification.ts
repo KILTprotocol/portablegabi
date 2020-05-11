@@ -59,7 +59,7 @@ export class CombinedVerificationSession extends WasmData {
 }
 
 /**
- * The message result of [[requestCombinedPresentation]] which should be sent to the [[Claimer]] and used in [[buildCombiendPresentation]].
+ * The message result of [[requestCombinedPresentation]] which should be sent to the [[Claimer]] and used in [[buildCombinedPresentation]].
  */
 export class CombinedPresentationRequest extends WasmData {
   /**

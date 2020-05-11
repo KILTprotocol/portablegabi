@@ -84,7 +84,7 @@ export class ClaimError extends Error {
 }
 
 /**
- * The message result of [[requestAttestation]] which is sent to the [[Attester]] and used in [[]].
+ * The message result of [[requestAttestation]] which is sent to the [[Attester]] and used in [[Attester.issueAttestation]].
  */
 export class AttestationRequest extends WasmData {
   /**
@@ -117,7 +117,7 @@ export class ClaimerAttestationSession extends WasmData {
 }
 
 /**
- * The result of [[buildPresentation]] which can be used to disclose attributes with a [[Verifier]].
+ * The result of [[buildPresentation]] which can be used to disclose attributes with a Verifier.
  */
 export class Presentation extends WasmData {
   public parse(): IProof {
@@ -126,7 +126,7 @@ export class Presentation extends WasmData {
 }
 
 /**
- *  The result of [[buildCombinedPresentation]] which can be used to verify of multiple [[Credentials]] at once.
+ *  The result of [[buildCombinedPresentation]] which can be used to verify of multiple [[Credential]]s at once.
  */
 export class CombinedPresentation extends WasmData {
   // @ts-ignore

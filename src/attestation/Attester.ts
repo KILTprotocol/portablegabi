@@ -141,7 +141,7 @@ export default class Attester implements IAttester {
    * Creates an [[Attestation]] for the claim inside the [[AttestationRequest]].
    *
    * @param p The parameter object.
-   * @param p.attestationSession The attestation session which was generated during [[startAttestation]].
+   * @param p.attestationSession The [[Attestation]] session which was generated during [[startAttestation]].
    * @param p.attestationRequest The [[AttestationRequest]] received from the [[Claimer]].
    * @param p.update The most recent [[Accumulator]].
    * @returns The [[Attestation]] object which should be sent to the [[Claimer]] and a [[Witness]] which can be used to revoke the attestation.
