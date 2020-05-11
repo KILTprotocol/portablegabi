@@ -21,7 +21,7 @@ export interface IVerifiedCombinedPresentation {
 }
 
 /**
- * The session result of [[requestPresentation]] which should be kept private by the [[Verifier]] and used in [[verifyPresentation]].
+ * The session result of [[requestPresentation]] which should be kept private by the Verifier and used in [[verifyPresentation]].
  */
 export class VerificationSession extends WasmData {
   // @ts-ignore
@@ -33,7 +33,7 @@ export class VerificationSession extends WasmData {
  */
 export class PresentationRequest extends WasmData {
   /**
-   * Returns the attributes a [[Verifier]] requested during [[requestPresentation]].
+   * Returns the attributes a Verifier requested during [[requestPresentation]].
    *
    * @throws `Invalid request` If the parsed object of this [[PresentationRequest]] does not have the correct structure (missing mandatory properties).
    * @returns An array of strings representing the requested attributes of a [[Claimer]]'s claim.
@@ -51,7 +51,7 @@ export class PresentationRequest extends WasmData {
 }
 
 /**
- * The session result of [[requestCombinedPresentation]] which should be kept private by the [[Verifier]] and used in [[verifyCombinedPresentation]].
+ * The session result of [[requestCombinedPresentation]] which should be kept private by the Verifier and used in [[verifyCombinedPresentation]].
  */
 export class CombinedVerificationSession extends WasmData {
   // @ts-ignore
@@ -63,7 +63,7 @@ export class CombinedVerificationSession extends WasmData {
  */
 export class CombinedPresentationRequest extends WasmData {
   /**
-   * Returns the attributes a [[Verifier]] requested during [[requestCombinedPresentation]].
+   * Returns the attributes a Verifier requested during [[requestCombinedPresentation]].
    *
    * @throws `Invalid request` If the parsed object of this [[CombinedPresentationRequest]] does not have the correct structure (missing mandatory properties).
    * @returns An array of array of strings representing the requested attributes of a [[Claimer]]'s claim.

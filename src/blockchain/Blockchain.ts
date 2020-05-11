@@ -115,7 +115,7 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   /**
-   * Fetches multiple [[Accumulators]] at once.
+   * Fetches multiple [[Accumulator]]s at once.
    *
    * @param address The chain address of the [[Attester]].
    * @param startIndex The index of the first [[Accumulator]] to fetch.
