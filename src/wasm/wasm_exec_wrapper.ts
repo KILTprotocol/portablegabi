@@ -44,6 +44,7 @@ const goWasmExec = <T>(
 // eslint-disable-next-line jsdoc/require-returns
 /**
  * Closes the Go wasm channel.
+ *
  * @internal
  */
 export const goWasmClose = async (): Promise<void> => {

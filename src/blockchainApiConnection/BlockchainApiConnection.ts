@@ -90,6 +90,7 @@ export async function connect({
 
 /**
  * Remove the cached connection.
+ *
  * @internal
  */
 export function clearCache(): void {
