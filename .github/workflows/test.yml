@@ -42,7 +42,7 @@ jobs:
   test_jest:
     runs-on: ubuntu-latest
     name: TS Tests
-    needs: testgo
+    needs: test_go
 
     strategy:
       matrix:
@@ -77,7 +77,7 @@ jobs:
   test_integration:
     runs-on: ubuntu-latest
     name: integration tests
-    needs: testgo
+    needs: test_go
 
     steps:
       - name: Check out code
@@ -109,7 +109,7 @@ jobs:
   test_examples:
     runs-on: ubuntu-latest
     name: example tests
-    needs: testgo
+    needs: test_go
 
     steps:
       - name: Check out code
@@ -145,7 +145,7 @@ jobs:
   test_tutorial:
     runs-on: ubuntu-latest
     name: test tutorial code
-    needs: testgo
+    needs: test_go
 
     steps:
       - name: Check out code
