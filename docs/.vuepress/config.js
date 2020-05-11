@@ -16,6 +16,15 @@ module.exports = {
       sidebarDepth: 2,
       sidebar: {
         '/api/': apiSideBarRelative,
+        '/tutorial/': [
+          '0a_introduction.md',
+          '1_getting_started.md',
+          '2_attestation.md',
+          '3_verification.md',
+          '4_revocation.md',
+          '5_with_chain.md',
+          '6_development.md',
+        ],
       },
       locales: {
         '/': {
