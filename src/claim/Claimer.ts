@@ -28,9 +28,9 @@ import Credential from './Credential'
  * Checks that the provided claim is a valid object.
  *
  * @param claim The object which should be a valid claim.
- * @throws {ClaimError.claimMissing} If the claim is missing inside the [[AttestationRequest]].
- * @throws {ClaimError.notAnObject} If the [[Attestation]] object includes a non-object type claim.
- * @throws {ClaimError.duringParsing} If an error occurs during JSON deserialization.
+ * @throws [[ClaimError.claimMissing]] If the claim is missing inside the [[AttestationRequest]].
+ * @throws [[ClaimError.notAnObject]] If the [[Attestation]] object includes a non-object type claim.
+ * @throws [[ClaimError.duringParsing]] If an error occurs during JSON deserialization.
  */
 function checkValidClaimStructure(claim: object): void | Error {
   if (!Object.keys(claim).length) {

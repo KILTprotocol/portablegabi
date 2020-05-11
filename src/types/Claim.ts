@@ -90,8 +90,8 @@ export class AttestationRequest extends WasmData {
   /**
    * Extracts the original claim object from the [[AttestationRequest]].
    *
-   * @throws {ClaimError.duringParsing} If an error occurs during JSON deserialization.
-   * @throws {ClaimError.claimMissing} If the claim is missing inside the [[AttestationRequest]].
+   * @throws [[ClaimError.duringParsing]] If an error occurs during JSON deserialization.
+   * @throws [[ClaimError.claimMissing]] If the claim is missing inside the [[AttestationRequest]].
    * @returns The original claim object which has been attested.
    */
   public getClaim(): object {
