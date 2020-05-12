@@ -656,7 +656,10 @@ class GoWasm extends Go {
   static async init() {
     const go = new Go()
     // instantiate WASM
-    await WebAssembly.instantiate(await getWasmBuffer(), go.importObject)
+    await WebAssembly.instantiate(
+      fs.readFileSync(path.resolve(__dirname, '../../build/wasm/main.wasm')),
+      go.importObject
+    )
       .then((result) => {
         process.on('exit', (code) => {
           // Node.js exits if no event handler is pending

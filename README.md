@@ -16,6 +16,8 @@ The claimer can chose which attributes of the claim to disclose to a verifier (*
 
 We recommend visiting our [Portablegabi tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/) to better understand how to use our anonymous credentials and the API.
 
+Portablegabi also provides a generated [API reference](https://kiltprotocol.github.io/portablegabi/).
+
 ## Revocation and Substrate
 
 This module can be used with and without a [Substrate](https://www.parity.io/substrate/)-based blockchain.

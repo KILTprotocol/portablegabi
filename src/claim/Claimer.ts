@@ -28,9 +28,9 @@ import Credential from './Credential'
  * Checks that the provided claim is a valid object.
  *
  * @param claim The object which should be a valid claim.
- * @throws {ClaimError.claimMissing} If the claim is missing inside the [[AttestationRequest]].
- * @throws {ClaimError.notAnObject} If the [[Attestation]] object includes a non-object type claim.
- * @throws {ClaimError.duringParsing} If an error occurs during JSON deserialization.
+ * @throws [[ClaimError.claimMissing]] If the claim is missing inside the [[AttestationRequest]].
+ * @throws [[ClaimError.notAnObject]] If the [[Attestation]] object includes a non-object type claim.
+ * @throws [[ClaimError.duringParsing]] If an error occurs during JSON deserialization.
  */
 function checkValidClaimStructure(claim: object): void | Error {
   if (!Object.keys(claim).length) {
@@ -117,8 +117,9 @@ export default class Claimer implements IClaimer {
    * @param p The parameter object.
    * @param p.claim The claim which should get attested.
    * @param p.startAttestationMsg The [[InitiateAttestationRequest]] provided by the attester.
-   * @param p.attesterPubKey The [[PublicKey]] of the attester.
-   * @returns An [[AttestationRequest]] and a [[ClaimerAttestationSession]] which together with an [[AttestationResponse]] can be used to create a [[Credential]].
+   * @param p.attesterPubKey The [[AttesterPublicKey]].
+   * @returns An [[AttestationRequest]] and a [[ClaimerAttestationSession]] which together with an [[Attestation]]
+   * can be used to create a [[Credential]].
    */
   public async requestAttestation({
     claim,
@@ -178,9 +179,9 @@ export default class Claimer implements IClaimer {
    *
    * @param p The parameter object.
    * @param p.credential The [[Credential]] which contains all the requested attributes.
-   * @param p.presentationReq The [[PresentationRequest]] received from the [[Verifier]].
+   * @param p.presentationReq The [[PresentationRequest]] received from the Verifier.
    * @param p.attesterPubKey The public key of the [[Attester]] who signed the [[Credential]].
-   * @returns A [[Presentation]] that can be used to disclose attributes with a [[Verifier]].
+   * @returns A [[Presentation]] that can be used to disclose attributes with a Verifier.
    *    Must only be used once!
    */
   public async buildPresentation({
@@ -207,9 +208,9 @@ export default class Claimer implements IClaimer {
    *
    * @param p The parameter object.
    * @param p.credentials An array of [[Credential]]s which is used to provide the requested attributes.
-   * @param p.combinedPresentationReq The array of [[PresentationRequest]]s received from the [[Verifier]].
-   * @param p.attesterPubKeys An array of [[PublicKey]]s which corresponds to the array of [[Credential]]s.
-   * @returns A [[CombinedPresentation]] that can be used to disclose attributes with a [[Verifier]].
+   * @param p.combinedPresentationReq The array of [[PresentationRequest]]s received from the Verifier.
+   * @param p.attesterPubKeys An array of [[AttesterPublicKey]]s which corresponds to the array of [[Credential]]s.
+   * @returns A [[CombinedPresentation]] that can be used to disclose attributes with a Verifier.
    *    Must only be used once!
    */
   public async buildCombinedPresentation({
