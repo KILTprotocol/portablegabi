@@ -26,10 +26,10 @@ async function exec() {
 
   /* (2) Attester Setup */
 
-  // (2.1.b) Alternatively, use a pre-compiled key pair from src/testSetup/testConfig.ts
+  // (2.1.b) Alternatively, use a pre-compiled key pair from /docs/examples/exampleReadme.js
   const attester = new portablegabi.Attester(pubKey, privKey)
-  console.log('Public key:\n\t', attester.privateKey.valueOf())
-  console.log('Private key:\n\t', attester.privateKey.valueOf())
+  console.log('Public key:\n\t', attester.privateKey.toString())
+  console.log('Private key:\n\t', attester.privateKey.toString())
 
   // (2.1) Create accumulator (for revocation)
   const accumulator = await attester.createAccumulator()
@@ -56,6 +56,7 @@ async function exec() {
   // (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation
   // the attester might want to inspect the attributes he is about to sign
   const checkClaim = attestationRequest.getClaim()
+  console.log('Attester checks claim :\n\t', checkClaim)
 
   const { attestation, witness } = await attester.issueAttestation({
     attestationSession,
