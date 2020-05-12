@@ -19,11 +19,13 @@ export type PgabiModName = 'portablegabi' | 'portablegabiPallet' | string
  */
 export const DEFAULT_KEY_TYPE = 'sr25519'
 
+/** @internal */
 export type AugmentedQuery<
   ApiType extends ApiTypes,
   F extends AnyFunction
 > = MethodResult<ApiType, F> & StorageEntryBase<ApiType, F>
 
+/** @internal */
 export interface IPortablegabiApi<T extends PgabiModName> {
   query: {
     [K in T]: {

@@ -1,6 +1,3 @@
-/**
- * This module contains the AttesterChain class which adds on-chain functionality to the super [[Attester]] class.
- */
 import { KeyringPair } from '@polkadot/keyring/types'
 import { Keyring } from '@polkadot/api'
 import {

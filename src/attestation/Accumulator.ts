@@ -4,10 +4,6 @@ import WasmHooks from '../wasm/WasmHooks'
 import WasmData from '../types/Wasm'
 
 /**
- * This module contains the Accumulator class which is used to create, update and revoke [[Attestation]]s.
- */
-
-/**
  * The Accumulator is necessary to issue and revoke [[Attestation]]s of [[Credential]]s.
  */
 export default class Accumulator extends WasmData {

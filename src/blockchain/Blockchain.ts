@@ -7,7 +7,17 @@ import { IBlockchainApi, IPortablegabiApi, PgabiModName } from '../types/Chain'
 import Accumulator from '../attestation/Accumulator'
 
 /**
- * The Blockchain class provides an interface to the for querying and creating transactions on chain.
+ * The Blockchain class provides an interface for querying and creating transactions on chain.
+ *
+ * Example:
+ *
+ * ```js
+ * import portablegabi from '@kiltprotocol/portablegabi'
+ * // depending on the blockchain, the module where the accumulator is store might be called differently.
+ * // The name can be configured using the 'pgabiModName' option.
+ * const bc = await portablegabi.connect({ pgabiModName: 'portablegabi' })
+ * const acc = await bc.getAccumulatorCount(addr)
+ * ```
  */
 export default class Blockchain implements IBlockchainApi {
   public api: ApiPromise & IPortablegabiApi<PgabiModName>

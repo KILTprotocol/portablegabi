@@ -1,6 +1,3 @@
-/**
- * This module contains the Attester class which is used to create and revoke [[Attestation]]s.
- */
 import { AttestationRequest } from '../types/Claim'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
