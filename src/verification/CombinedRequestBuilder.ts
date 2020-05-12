@@ -19,7 +19,7 @@ export default class CombinedRequestBuilder {
    * Adds a partial request to the combined request array.
    *
    * @param partialRequest The partial request which should be appended to the combined request array.
-   * @returns A [[CombinedRequestBuilder]] that still needs to call `finalise` before the [[Verifier]] can send the combined request to the [[Claimer]].
+   * @returns A [[CombinedRequestBuilder]] that still needs to call `finalise` before the Verifier can send the combined request to the [[Claimer]].
    */
   public requestPresentation(
     partialRequest: IPresentationRequest
@@ -31,7 +31,7 @@ export default class CombinedRequestBuilder {
   /**
    * Converts an array of partial requests to be callable by [[requestCombinedPresentation]].
    *
-   * @returns A message for the [[Claimer]] to be used in [[buildCombinedPresentation]] and a session which can be used by the [[Verifier]].
+   * @returns A message for the [[Claimer]] to be used in [[buildCombinedPresentation]] and a session which can be used by the Verifier.
    */
   public async finalise(): Promise<{
     message: CombinedPresentationRequest

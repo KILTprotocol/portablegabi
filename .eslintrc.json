@@ -57,6 +57,12 @@
         "exampleCodeRegex": "^```(?:js|javascript|typescript)\\n([\\s\\S]*)```\\s*$",
         "configFile": ".eslintrc-jsdoc.json"
       }
+    ],
+    "jsdoc/check-tag-names": [
+      "warn",
+      {
+        "definedTags": ["internal"]
+      }
     ]
   },
   "overrides": [

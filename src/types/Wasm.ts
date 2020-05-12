@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import WasmHooks from '../wasm/WasmHooks'
 
+/** @internal */
 export interface IGoWasm {
   execWasmFn: (
     fn: WasmHooks,

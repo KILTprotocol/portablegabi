@@ -45,7 +45,7 @@ export default class Blockchain implements IBlockchainApi {
    * Check for existing [[Accumulator]] count and return max index for query.
    *
    * @param address The chain address of the [[Attester]].
-   * @throws {BlockchainError.maxIndexZero} If the address does not have an [[Accumulator]] stored yet.
+   * @throws [[BlockchainError.maxIndexZero]] If the address does not have an [[Accumulator]] stored yet.
    * @returns The accumulator count minus one.
    */
   private async getMaxIndex(address: string): Promise<number> {
@@ -61,7 +61,7 @@ export default class Blockchain implements IBlockchainApi {
    *
    * @param address The chain address of the [[Attester]].
    * @param index The index of the [[Accumulator]].
-   * @throws {BlockchainError.indexOutOfRange} If the requested index is less than zero or greater than the maximum index.
+   * @throws [[BlockchainError.indexOutOfRange]] If the requested index is less than zero or greater than the maximum index.
    */
   private async checkIndex(address: string, index: number): Promise<void> {
     const maxIndex = await this.getMaxIndex(address)
@@ -76,7 +76,7 @@ export default class Blockchain implements IBlockchainApi {
    * @param address The chain address of the [[Attester]].
    * @param codec The raw [[Accumulator]].
    * @param index The index of the [[Accumulator]].
-   * @throws {BlockchainError.missingAccIndex} If there is no [[Accumulator]] at the specified index.
+   * @throws [[BlockchainError.missingAccIndex]] If there is no [[Accumulator]] at the specified index.
    * @returns An [[Accumulator]].
    */
   private static async codecToAccumulator(
@@ -115,7 +115,7 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   /**
-   * Fetches multiple [[Accumulators]] at once.
+   * Fetches multiple [[Accumulator]]s at once.
    *
    * @param address The chain address of the [[Attester]].
    * @param startIndex The index of the first [[Accumulator]] to fetch.
