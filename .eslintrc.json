@@ -46,7 +46,7 @@
     "jsdoc/require-description": "error",
     "jsdoc/require-returns": "error",
     "jsdoc/require-param-description": "error",
-    "jsdoc/require-description-complete-sentence": "warn",
+    "jsdoc/require-description-complete-sentence": "off",
     "jsdoc/no-types": "off",
     "jsdoc/require-param-type": "off",
     "jsdoc/require-returns-type": "off",
