@@ -99,6 +99,11 @@ async function exec() {
     witnesses: [witness],
     accumulator: accPreRevo,
   })
+  // To update the accumulator on chain, we first create a transaction.
+  const tx = await attester.updateAccumulator(accPostRevo)
+  // And send the transaction to the blockchain.
+  chain.sendAndSign(tx, attester.keyringPair)
+
   // Check whether accPostRevo is the latest accumulator on chain.
   console.log(
     '\t Waiting for next block to have the updated accumulator on the chain'
