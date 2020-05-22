@@ -7,6 +7,7 @@ import {
 } from '@polkadot/util-crypto'
 import { KeypairType } from '@polkadot/util-crypto/types'
 import { u8aToHex } from '@polkadot/util'
+import { SubmittableExtrinsic } from '@polkadot/api/types'
 import Attester, { KeyGenOptions } from './Attester'
 import {
   Witness,
@@ -26,7 +27,10 @@ export type ChainKeyGenOptions = KeyGenOptions & {
  * The AttesterChain extends an [[Attester]]'s creation process and functionality to on-chain compatibility.
  */
 export default class AttesterChain extends Attester implements IAttesterChain {
-  private readonly keyringPair: KeyringPair
+  /**
+   * The keypair for the blockchain identity.
+   */
+  public readonly keyringPair: KeyringPair
   /**
    * The address of the [[Attester]]'s keyring pair .
    */
@@ -134,12 +138,17 @@ export default class AttesterChain extends Attester implements IAttesterChain {
    *
    * @param accumulator The new [[Accumulator]] which will be put onto the accumulatorList chain storage.
    */
-  public async updateAccumulator(accumulator: Accumulator): Promise<void> {
-    return (await connect()).updateAccumulator(this.keyringPair, accumulator)
+  // eslint-disable-next-line class-methods-use-this
+  public async updateAccumulator(
+    accumulator: Accumulator
+  ): Promise<SubmittableExtrinsic<'promise'>> {
+    return (await connect()).updateAccumulator(accumulator)
   }
 
   /**
-   * Revokes an [[Attestation]] which corresponds to the provided [[Witness]] and updates [[Accumulator]] on chain.
+   * Revokes an [[Attestation]] which corresponds to the provided [[Witness]].
+   * The return accumulator is not updated on chain.
+   * Call [[updateAccumulator]] to notify verifiers about the revoked credentials.
    *
    * @param p The parameter object.
    * @param p.witness The [[Witness]] belonging to the [[Attestation]] which is about to be revoked.
@@ -159,12 +168,9 @@ export default class AttesterChain extends Attester implements IAttesterChain {
       accumulator ||
       (await blockchain.getLatestAccumulator(this.keyringPair.address))
     // revoke attestation + get new accumulator
-    const accUpdate = await super.revokeAttestation({
+    return super.revokeAttestation({
       accumulator: acc,
       witnesses,
     })
-    // accumulator accumulator on chain
-    await this.updateAccumulator(accUpdate)
-    return accUpdate
   }
 }

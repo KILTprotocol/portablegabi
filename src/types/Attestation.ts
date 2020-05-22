@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
 /* eslint-disable-next-line max-classes-per-file */
+import { SubmittableExtrinsic } from '@polkadot/api/types'
 import Accumulator from '../attestation/Accumulator'
 import WasmData from './Wasm'
 
@@ -79,7 +80,9 @@ export interface IAttesterChain extends IAttester {
     witnesses: Witness[]
     accumulator?: Accumulator
   }) => Promise<Accumulator>
-  updateAccumulator: (accumulator: Accumulator) => Promise<void>
+  updateAccumulator: (
+    accumulator: Accumulator
+  ) => Promise<SubmittableExtrinsic<'promise'>>
 }
 
 export interface IIssueAttestation {

@@ -49,8 +49,9 @@ describe('chain mocks', () => {
       )
       expect(currAccumulator.toString()).toBe('currAccumulator')
       // update to new accumulator
+      const tx = BlockchainMock.updateAccumulator(newAccumulator)
       await expect(
-        BlockchainMock.updateAccumulator('s' as any, newAccumulator)
+        BlockchainMock.signAndSend(tx, 's' as any)
       ).resolves.toBeUndefined()
       const latestAccumulator = await BlockchainMock.getLatestAccumulator(
         dummyAddress

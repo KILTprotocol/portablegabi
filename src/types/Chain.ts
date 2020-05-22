@@ -56,7 +56,11 @@ export interface IBlockchainApi {
   ) => Promise<Accumulator[]>
   getLatestAccumulator: (address: string) => Promise<Accumulator>
   updateAccumulator: (
-    address: KeyringPair,
     accumulator: Accumulator
-  ) => Promise<void>
+  ) => SubmittableExtrinsic<'promise'>
+
+  signAndSend(
+    tx: SubmittableExtrinsic<'promise'>,
+    keypair: KeyringPair
+  ): Promise<void>
 }
