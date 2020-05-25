@@ -108,10 +108,6 @@ export default class Attester implements IAttester {
    * @returns A session and a message object. The message should be sent over to the [[Claimer]].
    */
   public async startAttestation(): ReturnType<IAttester['startAttestation']> {
-    // public async startAttestation(): Promise<{
-    //   message: InitiateAttestationRequest
-    //   session: AttesterAttestationSession
-    // }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.startAttestationSession,
       [this.privateKey.toString(), this.publicKey.toString()]
