@@ -44,17 +44,17 @@ export async function actorSetupChain({
     accumulator1 = await chain.getLatestAccumulator(attester1.address)
   } catch (e) {
     accumulator1 = await attester1.createAccumulator()
-    await Promise.resolve(attester1.buildUpdateAccumulatorTX(accumulator1)).catch(
-      (err) => err
-    )
+    await Promise.resolve(
+      attester1.buildUpdateAccumulatorTX(accumulator1)
+    ).catch((err) => err)
   }
   try {
     accumulator2 = await chain.getLatestAccumulator(attester2.address)
   } catch (e) {
     accumulator2 = await attester1.createAccumulator()
-    await Promise.resolve(attester2.buildUpdateAccumulatorTX(accumulator2)).catch(
-      (err) => err
-    )
+    await Promise.resolve(
+      attester2.buildUpdateAccumulatorTX(accumulator2)
+    ).catch((err) => err)
   }
   return {
     claimers: [claimer1, claimer2],

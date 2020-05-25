@@ -69,7 +69,9 @@ describe('Test Credential on chain functionality', () => {
     api.query.portablegabi.accumulatorCount.mockResolvedValueOnce(0)
     api.query.portablegabi.accumulatorList.mockResolvedValueOnce([] as any)
     const { accumulators: newAccumulators } = await actorSetupChain({})
-    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(2)
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(
+      2
+    )
     expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledWith(
       newAccumulators[0].toString()
     )

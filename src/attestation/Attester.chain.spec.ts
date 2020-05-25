@@ -128,7 +128,9 @@ describe('Test Attester on chain', () => {
     ).resolves.toBeUndefined()
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(0)
     expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(0)
-    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(1)
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(
+      1
+    )
     const latestAccumulator = await chain.getLatestAccumulator(attester.address)
     expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledWith(
       latestAccumulator.toString()
@@ -156,7 +158,9 @@ describe('Test Attester on chain', () => {
       attester.address,
       attester.address.length - 1,
     ])
-    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(1)
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(
+      1
+    )
     const latestAccumulator = await chain.getLatestAccumulator(attester.address)
     expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledWith(
       latestAccumulator.toString()
