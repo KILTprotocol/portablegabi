@@ -1,3 +1,9 @@
+/**
+ * Re-exports for convenience.
+ *
+ * @packageDocumentation
+ */
+
 import Claimer from './claim/Claimer'
 import Attester from './attestation/Attester'
 import Accumulator from './attestation/Accumulator'

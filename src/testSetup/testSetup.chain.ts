@@ -1,3 +1,7 @@
+/**
+ * @ignore
+ * @packageDocumentation
+ */
 /* eslint-disable import/prefer-default-export */
 import { KeypairType } from '@polkadot/util-crypto/types'
 import Accumulator from '../attestation/Accumulator'

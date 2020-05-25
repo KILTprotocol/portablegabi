@@ -1,3 +1,7 @@
+/**
+ * @ignore
+ * @packageDocumentation
+ */
 import Claimer from '../claim/Claimer'
 import Attester from '../attestation/Attester'
 

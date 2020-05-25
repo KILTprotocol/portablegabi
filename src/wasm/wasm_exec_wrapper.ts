@@ -1,14 +1,15 @@
+/**
+ * @ignore
+ * @packageDocumentation
+ */
 import WasmHooks from './WasmHooks'
 import { IGoWasm } from '../types/Wasm'
 
-/** @internal */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const goWasm = require('./wasm_exec')
 
-/** @internal */
 const GoInstance: Promise<IGoWasm> = goWasm.GoWasm.init()
 
-/** @internal */
 let isClosed = false
 
 /**

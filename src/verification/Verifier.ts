@@ -1,6 +1,9 @@
 /**
  * This module contains the Verifier class which is used to verify [[Credential]]s.
+ *
+ * @packageDocumentation
  */
+
 import Accumulator from '../attestation/Accumulator'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
