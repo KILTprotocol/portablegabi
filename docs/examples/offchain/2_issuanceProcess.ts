@@ -26,7 +26,7 @@ export async function issuanceProcess({
   attester: Attester
   claimer: Claimer
   accumulator: Accumulator
-  claim: object
+  claim: Record<string | number, unknown>
 }): Promise<{
   credential: Credential
   witness: Witness

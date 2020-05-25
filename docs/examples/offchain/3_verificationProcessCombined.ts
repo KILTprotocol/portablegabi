@@ -23,7 +23,7 @@ export async function verificationProcessCombined({
   accumulators: Array<Accumulator | undefined>
 }): Promise<{
   verified: boolean
-  verifiedClaims: object[]
+  verifiedClaims: Array<Record<string, unknown>>
 }> {
   if (
     attesters.length !== credentials.length ||

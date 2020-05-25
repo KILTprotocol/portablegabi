@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-ignore */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable max-classes-per-file */
 
 import { KeyLength } from './Attestation'
@@ -12,12 +12,12 @@ export interface IPresentationRequest {
 
 export interface IVerifiedPresentation {
   verified: boolean
-  claim: object
+  claim: Record<string | number, unknown>
 }
 
 export interface IVerifiedCombinedPresentation {
   verified: boolean
-  claims: object[]
+  claims: Array<Record<string, unknown>>
 }
 
 /**
@@ -25,7 +25,7 @@ export interface IVerifiedCombinedPresentation {
  */
 export class VerificationSession extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 /**
@@ -55,7 +55,7 @@ export class PresentationRequest extends WasmData {
  */
 export class CombinedVerificationSession extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 /**
