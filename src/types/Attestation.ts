@@ -80,7 +80,7 @@ export interface IAttesterChain extends IAttester {
     witnesses: Witness[]
     accumulator?: Accumulator
   }) => Promise<Accumulator>
-  updateAccumulator: (
+  buildUpdateAccumulatorTX: (
     accumulator: Accumulator
   ) => Promise<SubmittableExtrinsic<'promise'>>
 }

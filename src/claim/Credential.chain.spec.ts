@@ -34,7 +34,7 @@ describe('Test Credential on chain functionality', () => {
       address: attesterChainAddress,
       publicKey: attesterPubKey,
     } = attesterChain)
-    await attesterChain.updateAccumulator(accumulator).catch((e) => {
+    await attesterChain.buildUpdateAccumulatorTX(accumulator).catch((e) => {
       expect(e.message).toBe("Cannot read property 'signAndSend' of undefined")
     })
     // off chain attester to prevent error after revocation due to accumulator update
@@ -69,11 +69,11 @@ describe('Test Credential on chain functionality', () => {
     api.query.portablegabi.accumulatorCount.mockResolvedValueOnce(0)
     api.query.portablegabi.accumulatorList.mockResolvedValueOnce([] as any)
     const { accumulators: newAccumulators } = await actorSetupChain({})
-    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(2)
-    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(2)
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledWith(
       newAccumulators[0].toString()
     )
-    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledWith(
       newAccumulators[1].toString()
     )
   })

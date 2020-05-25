@@ -178,7 +178,7 @@ export default class Blockchain implements IBlockchainApi {
    * @param accumulator The new [[Accumulator]].
    * @returns Returns an object that can be used to submit a transaction.
    */
-  public updateAccumulator(
+  public buildUpdateAccumulatorTX(
     accumulator: Accumulator
   ): SubmittableExtrinsic<'promise'> {
     return this.api.tx[this.chainmod].updateAccumulator(accumulator.toString())

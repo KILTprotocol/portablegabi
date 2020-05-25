@@ -134,21 +134,22 @@ export default class AttesterChain extends Attester implements IAttesterChain {
   }
 
   /**
-   * Generates a new [[AttesterChain]] from a keyring pair and pre-generated public and private key pair.
+   * Builds a transaction that updates the stored accumulator for the attester that will sign this transaction.
+   * The transaction must be signed and send, the accumulator will won't be updated otherwise.
    *
    * @param accumulator The new [[Accumulator]] which will be put onto the accumulatorList chain storage.
    */
   // eslint-disable-next-line class-methods-use-this
-  public async updateAccumulator(
+  public async buildUpdateAccumulatorTX(
     accumulator: Accumulator
   ): Promise<SubmittableExtrinsic<'promise'>> {
-    return (await connect()).updateAccumulator(accumulator)
+    return (await connect()).buildUpdateAccumulatorTX(accumulator)
   }
 
   /**
    * Revokes an [[Attestation]] which corresponds to the provided [[Witness]].
    * The return accumulator is not updated on chain.
-   * Call [[updateAccumulator]] to notify verifiers about the revoked credentials.
+   * Call [[buildUpdateAccumulatorTX]] to notify verifiers about the revoked credentials.
    *
    * @param p The parameter object.
    * @param p.witness The [[Witness]] belonging to the [[Attestation]] which is about to be revoked.

@@ -81,7 +81,7 @@ async function completeProcessCombined({
       accumulator: accumulator1,
       witnesses: [witness1],
     })
-    const tx = await attester1.updateAccumulator(newAcc)
+    const tx = await attester1.buildUpdateAccumulatorTX(newAcc)
     await blockchain.signAndSend(tx, attester1.keyringPair)
 
     console.log(

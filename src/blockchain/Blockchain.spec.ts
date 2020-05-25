@@ -38,7 +38,7 @@ describe('chain mocks', () => {
       )
       expect(accumulator.toString()).toBe('dummyAccumulator')
     })
-    it('Should updateAccumulator', async () => {
+    it('Should buildUpdateAccumulatorTX', async () => {
       const newAccumulator = new Accumulator('newAccumulator')
       // set current accumulator
       api.query.portablegabi.accumulatorList.mockResolvedValue(
@@ -49,7 +49,7 @@ describe('chain mocks', () => {
       )
       expect(currAccumulator.toString()).toBe('currAccumulator')
       // update to new accumulator
-      const tx = BlockchainMock.updateAccumulator(newAccumulator)
+      const tx = BlockchainMock.buildUpdateAccumulatorTX(newAccumulator)
       await expect(
         BlockchainMock.signAndSend(tx, 's' as any)
       ).resolves.toBeUndefined()

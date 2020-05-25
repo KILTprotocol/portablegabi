@@ -104,7 +104,7 @@ describe('Test Attester on chain', () => {
   })
   it('Should updateAccumulator', async () => {
     const accUpdate = new Accumulator('updatedAccumulator')
-    const tx = await attester.updateAccumulator(accUpdate)
+    const tx = await attester.buildUpdateAccumulatorTX(accUpdate)
     await expect(
       BlockchainMock.signAndSend(tx, attester.keyringPair)
     ).resolves.toBeUndefined()
@@ -122,15 +122,15 @@ describe('Test Attester on chain', () => {
       witnesses: [witnessRev],
       accumulator,
     })
-    const tx = await attester.updateAccumulator(newAcc)
+    const tx = await attester.buildUpdateAccumulatorTX(newAcc)
     await expect(
       BlockchainMock.signAndSend(tx, attester.keyringPair)
     ).resolves.toBeUndefined()
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(0)
     expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(0)
-    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(1)
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(1)
     const latestAccumulator = await chain.getLatestAccumulator(attester.address)
-    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledWith(
       latestAccumulator.toString()
     )
   })
@@ -143,7 +143,7 @@ describe('Test Attester on chain', () => {
     const newAcc = await attester.revokeAttestation({
       witnesses: [witnessRev],
     })
-    const tx = await attester.updateAccumulator(newAcc)
+    const tx = await attester.buildUpdateAccumulatorTX(newAcc)
     await expect(
       BlockchainMock.signAndSend(tx, attester.keyringPair)
     ).resolves.toBeUndefined()
@@ -156,9 +156,9 @@ describe('Test Attester on chain', () => {
       attester.address,
       attester.address.length - 1,
     ])
-    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(1)
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledTimes(1)
     const latestAccumulator = await chain.getLatestAccumulator(attester.address)
-    expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledWith(
+    expect(api.tx.portablegabi.buildUpdateAccumulatorTX).toHaveBeenCalledWith(
       latestAccumulator.toString()
     )
   }, 10000)

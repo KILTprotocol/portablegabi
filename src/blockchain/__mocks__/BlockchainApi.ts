@@ -5,8 +5,8 @@ import { stringToHex } from '@polkadot/util'
 const api = {
   tx: {
     portablegabi: {
-      // mocked updateAccumulator returns value of input accumulator by default
-      updateAccumulator: jest.fn((accumulator: Accumulator): any => {
+      // mocked buildUpdateAccumulatorTX returns value of input accumulator by default
+      buildUpdateAccumulatorTX: jest.fn((accumulator: Accumulator): any => {
         // mock new accumulator list
         api.query.portablegabi.accumulatorList.mockReturnValue(
           (stringToHex(accumulator.toString()) as unknown) as Promise<Codec>

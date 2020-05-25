@@ -32,7 +32,7 @@ async function exec(): Promise<void> {
 
   // (1.4) Put the accumulator on chain.
   console.log('Putting accumulator on the chain for Alice')
-  await attester.updateAccumulator(accPreRevo)
+  await attester.buildUpdateAccumulatorTX(accPreRevo)
 
   // Check whether it has actually been added to chain.
   // We need to wait for next block since updating the accumulator is a transaction.
@@ -100,7 +100,7 @@ async function exec(): Promise<void> {
     accumulator: accPreRevo,
   })
   // To update the accumulator on chain, we first create a transaction.
-  const tx = await attester.updateAccumulator(accPostRevo)
+  const tx = await attester.buildUpdateAccumulatorTX(accPostRevo)
   // And send the transaction to the blockchain.
   await chain.signAndSend(tx, attester.keyringPair)
 
