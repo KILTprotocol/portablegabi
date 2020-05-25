@@ -141,7 +141,7 @@ export default class Attester implements IAttester {
    * @param p The parameter object.
    * @param p.attestationSession The [[Attestation]] session which was generated during [[startAttestation]].
    * @param p.attestationRequest The [[AttestationRequest]] received from the [[Claimer]].
-   * @param p.update The most recent [[Accumulator]].
+   * @param p.accumulator The most recent [[Accumulator]].
    * @returns The [[Attestation]] object which should be sent to the [[Claimer]] and a [[Witness]] which can be used to revoke the attestation.
    */
   public async issueAttestation({
@@ -176,8 +176,8 @@ export default class Attester implements IAttester {
    * Revokes an [[Attestation]] which corresponds to the provided [[Witness]].
    *
    * @param p The parameter object.
-   * @param p.update The current [[Accumulator]].
-   * @param p.witness The [[Witness]] belonging to the [[Attestation]] which is about to be revoked.
+   * @param p.accumulator The current [[Accumulator]].
+   * @param p.witnesses The revocation [[Witness]]es belonging to the [[Attestation]] which is about to be revoked.
    * @returns An updated version of the [[Accumulator]].
    */
   public async revokeAttestation({

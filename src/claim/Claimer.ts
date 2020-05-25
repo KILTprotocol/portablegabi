@@ -54,7 +54,7 @@ export default class Claimer implements IClaimer {
    * @param options An optional object containing options for the key generation.
    * @param options.password The password which is used to generate the key.
    * @param options.keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
-   * @returns A new claimer.
+   * @returns A new [[Claimer]].
    */
   public static async buildFromMnemonic(
     mnemonic: string,
@@ -78,7 +78,7 @@ export default class Claimer implements IClaimer {
    *
    * @param seed The seed which is used to generate the key.
    * @param keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
-   * @returns A new claimer.
+   * @returns A new [[Claimer]].
    */
   public static async buildFromSeed(
     seed: Uint8Array,
