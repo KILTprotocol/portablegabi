@@ -11,7 +11,7 @@ const pubKey = new portablegabi.AttesterPublicKey(
  * In case you have to change something here, please copy paste the the entire exec function
  * to 5_with_chain.md below the key generation L#66 of the tutorial example
  */
-async function exec() {
+async function exec(): Promise<void> {
   /** (1) Chain phase */
   // (1.1) Connect to the chain.
   const chain = await portablegabi.connect({
@@ -102,7 +102,7 @@ async function exec() {
   // To update the accumulator on chain, we first create a transaction.
   const tx = await attester.updateAccumulator(accPostRevo)
   // And send the transaction to the blockchain.
-  chain.sendAndSign(tx, attester.keyringPair)
+  await chain.signAndSend(tx, attester.keyringPair)
 
   // Check whether accPostRevo is the latest accumulator on chain.
   console.log(
@@ -180,6 +180,7 @@ async function exec() {
       } else throw e
     })
 }
+
 console.group('\n#### [4/4] On-chain tutorial ####')
 exec().finally(async () => {
   await portablegabi.disconnect()
