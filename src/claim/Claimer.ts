@@ -32,7 +32,9 @@ import Credential from './Credential'
  * @throws [[ClaimError.notAnObject]] If the [[Attestation]] object includes a non-object type claim.
  * @throws [[ClaimError.duringParsing]] If an error occurs during JSON deserialization.
  */
-function checkValidClaimStructure(claim: object): void | Error {
+function checkValidClaimStructure(
+  claim: Record<string | number, unknown>
+): void | Error {
   if (!Object.keys(claim).length) {
     throw ClaimError.claimMissing
   }
@@ -126,13 +128,10 @@ export default class Claimer implements IClaimer {
     startAttestationMsg,
     attesterPubKey,
   }: {
-    claim: object
+    claim: Record<string | number, unknown>
     startAttestationMsg: InitiateAttestationRequest
     attesterPubKey: AttesterPublicKey
-  }): Promise<{
-    message: AttestationRequest
-    session: ClaimerAttestationSession
-  }> {
+  }): ReturnType<IClaimer['requestAttestation']> {
     // check for invalid claim structure
     checkValidClaimStructure(claim)
     const { message, session } = await goWasmExec<IGabiMsgSession>(
@@ -164,7 +163,7 @@ export default class Claimer implements IClaimer {
   }: {
     claimerSession: ClaimerAttestationSession
     attestation: Attestation
-  }): Promise<Credential> {
+  }): ReturnType<IClaimer['buildCredential']> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.buildCredential, [
         this.secret,
@@ -192,7 +191,7 @@ export default class Claimer implements IClaimer {
     credential: Credential
     presentationReq: PresentationRequest
     attesterPubKey: AttesterPublicKey
-  }): Promise<Presentation> {
+  }): ReturnType<IClaimer['buildPresentation']> {
     return new Presentation(
       await goWasmExec<string>(WasmHooks.buildPresentation, [
         this.secret,
@@ -221,7 +220,7 @@ export default class Claimer implements IClaimer {
     credentials: Credential[]
     combinedPresentationReq: CombinedPresentationRequest
     attesterPubKeys: AttesterPublicKey[]
-  }): Promise<CombinedPresentation> {
+  }): ReturnType<IClaimer['buildCombinedPresentation']> {
     // make a json array out of already json serialised values
     // we don't want a json array of strings
     return new CombinedPresentation(

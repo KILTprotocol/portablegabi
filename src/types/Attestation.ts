@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/ban-ts-ignore */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable-next-line max-classes-per-file */
 import { SubmittableExtrinsic } from '@polkadot/api/types'
 import Accumulator from '../attestation/Accumulator'
 import WasmData from './Wasm'
+import { AttestationRequest } from './Claim'
 
 export type KeyLength = 1024 | 2048 | 4096
 export const DEFAULT_MAX_ATTRIBUTES = 70
@@ -16,10 +17,30 @@ export interface IGabiMsgSession {
 
 export default interface IAttester {
   publicKey: AttesterPublicKey
-  createAccumulator: Function
-  startAttestation: Function
-  issueAttestation: Function
-  revokeAttestation: Function
+  createAccumulator: () => Promise<Accumulator>
+  startAttestation: () => Promise<{
+    message: InitiateAttestationRequest
+    session: AttesterAttestationSession
+  }>
+  issueAttestation: ({
+    attestationSession,
+    attestationRequest,
+    accumulator,
+  }: {
+    attestationSession: AttesterAttestationSession
+    attestationRequest: AttestationRequest
+    accumulator: Accumulator
+  }) => Promise<{
+    attestation: Attestation
+    witness: Witness
+  }>
+  revokeAttestation: ({
+    accumulator,
+    witnesses,
+  }: {
+    accumulator: Accumulator
+    witnesses: Witness[]
+  }) => Promise<Accumulator>
 }
 
 /**
@@ -27,7 +48,7 @@ export default interface IAttester {
  */
 export class AttesterPublicKey extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 /**
@@ -35,7 +56,7 @@ export class AttesterPublicKey extends WasmData {
  */
 export class AttesterPrivateKey extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 /**
@@ -43,7 +64,7 @@ export class AttesterPrivateKey extends WasmData {
  */
 export class AttesterAttestationSession extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 /**
@@ -51,7 +72,7 @@ export class AttesterAttestationSession extends WasmData {
  */
 export class InitiateAttestationRequest extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 /**
@@ -59,7 +80,7 @@ export class InitiateAttestationRequest extends WasmData {
  */
 export class Witness extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 /**
@@ -96,6 +117,7 @@ export interface IIssueAttestation {
   }
   proof: {
     c: string
+    // eslint-disable-next-line camelcase
     e_response: string
   }
   signature: {

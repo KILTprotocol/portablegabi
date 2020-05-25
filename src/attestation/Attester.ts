@@ -107,10 +107,11 @@ export default class Attester implements IAttester {
    *
    * @returns A session and a message object. The message should be sent over to the [[Claimer]].
    */
-  public async startAttestation(): Promise<{
-    message: InitiateAttestationRequest
-    session: AttesterAttestationSession
-  }> {
+  public async startAttestation(): ReturnType<IAttester['startAttestation']> {
+    // public async startAttestation(): Promise<{
+    //   message: InitiateAttestationRequest
+    //   session: AttesterAttestationSession
+    // }> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.startAttestationSession,
       [this.privateKey.toString(), this.publicKey.toString()]
@@ -126,7 +127,7 @@ export default class Attester implements IAttester {
    *
    * @returns A new [[Accumulator]].
    */
-  public async createAccumulator(): Promise<Accumulator> {
+  public async createAccumulator(): ReturnType<IAttester['createAccumulator']> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.createAccumulator, [
         this.privateKey.toString(),
@@ -152,10 +153,7 @@ export default class Attester implements IAttester {
     attestationSession: AttesterAttestationSession
     attestationRequest: AttestationRequest
     accumulator: Accumulator
-  }): Promise<{
-    attestation: Attestation
-    witness: Witness
-  }> {
+  }): ReturnType<IAttester['issueAttestation']> {
     const { attestation, witness } = await goWasmExec<{
       attestation: string
       witness: string
@@ -186,7 +184,7 @@ export default class Attester implements IAttester {
   }: {
     accumulator: Accumulator
     witnesses: Witness[]
-  }): Promise<Accumulator> {
+  }): ReturnType<IAttester['revokeAttestation']> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.revokeAttestation, [
         this.privateKey.toString(),
