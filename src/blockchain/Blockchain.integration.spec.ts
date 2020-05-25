@@ -29,23 +29,28 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
 
   describe('positive tests', () => {
     it('is possible to store an accumulator', async () => {
+      const baseline = await chain.getAccumulatorCount(alice.address)
       const accumulator = await alice.createAccumulator()
-      await alice.updateAccumulator(accumulator)
+      const tx = await alice.updateAccumulator(accumulator)
+      await chain.signAndSend(tx, alice.keyringPair)
 
       const [count, accChain] = await Promise.all([
         chain.getAccumulatorCount(alice.address),
         chain.getLatestAccumulator(alice.address),
       ])
-      expect(count).toEqual<number>(1)
+      expect(count).toEqual<number>(baseline + 1)
       expect(accChain).toEqual<Accumulator>(accumulator)
     }, 15_000)
 
     it('is possible for someone else to store an accumulator at the same time', async () => {
+      const baseline = await chain.getAccumulatorCount(bob.address)
       const accumulator = await bob.createAccumulator()
-      await bob.updateAccumulator(accumulator)
-
+      const tx = await bob.updateAccumulator(accumulator)
+      await chain.signAndSend(tx, bob.keyringPair)
       await Promise.all([
-        expect(chain.getAccumulatorCount(bob.address)).resolves.toBe(1),
+        expect(chain.getAccumulatorCount(bob.address)).resolves.toBe(
+          baseline + 1
+        ),
         expect(chain.getLatestAccumulator(bob.address)).resolves.toEqual(
           accumulator
         ),
@@ -59,8 +64,8 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
       for (let i = 1; i < 4; i += 1) {
         // we're cheating a bit here; just putting in new accumulators built from scratch
         accumulator = await alice.createAccumulator()
-        await alice.updateAccumulator(accumulator)
-
+        const tx = await alice.updateAccumulator(accumulator)
+        await chain.signAndSend(tx, alice.keyringPair)
         await Promise.all([
           expect(chain.getAccumulatorCount(alice.address)).resolves.toEqual(
             baseline + i
@@ -85,7 +90,8 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
       ])
 
       for (const accumulator of accumulators) {
-        await alice.updateAccumulator(accumulator)
+        const tx = await alice.updateAccumulator(accumulator)
+        await chain.signAndSend(tx, alice.keyringPair)
       }
 
       await expect(
