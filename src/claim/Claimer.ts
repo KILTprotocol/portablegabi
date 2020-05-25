@@ -32,9 +32,8 @@ import Credential from './Credential'
  * @throws [[ClaimError.notAnObject]] If the [[Attestation]] object includes a non-object type claim.
  * @throws [[ClaimError.duringParsing]] If an error occurs during JSON deserialization.
  */
-function checkValidClaimStructure(
-  claim: Record<string | number, unknown>
-): void | Error {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function checkValidClaimStructure(claim: Record<string, any>): void | Error {
   if (!Object.keys(claim).length) {
     throw ClaimError.claimMissing
   }
@@ -128,7 +127,8 @@ export default class Claimer implements IClaimer {
     startAttestationMsg,
     attesterPubKey,
   }: {
-    claim: Record<string | number, unknown>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    claim: Record<string, any>
     startAttestationMsg: InitiateAttestationRequest
     attesterPubKey: AttesterPublicKey
   }): ReturnType<IClaimer['requestAttestation']> {

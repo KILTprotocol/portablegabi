@@ -125,7 +125,7 @@ export async function presentationSetup({
   presentationReq: PresentationRequest
   presentation: Presentation
   verified: boolean
-  claim: Record<string | number, unknown>
+  claim: Record<string, any>
 }> {
   // request
   const {

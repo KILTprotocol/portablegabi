@@ -12,7 +12,8 @@ export interface IPresentationRequest {
 
 export interface IVerifiedPresentation {
   verified: boolean
-  claim: Record<string | number, unknown>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  claim: Record<string, any>
 }
 
 export interface IVerifiedCombinedPresentation {

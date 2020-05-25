@@ -21,7 +21,8 @@ export default interface IClaimer {
     startAttestationMsg,
     attesterPubKey,
   }: {
-    claim: Record<string | number, unknown>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    claim: Record<string, any>
     startAttestationMsg: InitiateAttestationRequest
     attesterPubKey: AttesterPublicKey
   }) => Promise<{
@@ -135,7 +136,8 @@ export class AttestationRequest extends WasmData {
    * @returns The original claim object which has been attested.
    */
   public getClaim(): Record<string, unknown> {
-    let claim: Record<string | number, unknown>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let claim: Record<string, any>
     try {
       claim = this.parse()?.claim
     } catch (e) {
