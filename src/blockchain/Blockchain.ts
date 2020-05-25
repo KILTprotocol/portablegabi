@@ -187,7 +187,7 @@ export default class Blockchain implements IBlockchainApi {
   /**
    * Signs and sends a transaction to a blockchain node.
    * The return promise will resolve if the transaction was included in a finalized block.
-   * If the transaction errors, the promise will be rejected.
+   * If the transaction fails, the promise will be rejected.
    *
    * @param tx The transaction that should get submitted.
    * @param keypair The keypair used for signing the transaction.
