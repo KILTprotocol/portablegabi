@@ -77,10 +77,12 @@ async function completeProcessCombined({
       'AccumulatorCount before revocation:',
       await blockchain.getAccumulatorCount(attester1.address)
     )
-    await attester1.revokeAttestation({
+    const newAcc = await attester1.revokeAttestation({
       accumulator: accumulator1,
       witnesses: [witness1],
     })
+    const tx = await attester1.buildUpdateAccumulatorTX(newAcc)
+    await blockchain.signAndSend(tx, attester1.keyringPair)
 
     console.log(
       'AccumulatorCount after revocation:',

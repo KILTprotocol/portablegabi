@@ -122,10 +122,10 @@ func CreateAccumulator(this js.Value, inputs []js.Value) (interface{}, error) {
 		PublicKey:  &gabi.PublicKey{},
 	}
 	if err := json.Unmarshal([]byte(inputs[0].String()), attester.PrivateKey); err != nil {
-		return nil, errors.New("Error in private key")
+		return nil, fmt.Errorf("Error in private key: %v", err)
 	}
 	if err := json.Unmarshal([]byte(inputs[1].String()), attester.PublicKey); err != nil {
-		return nil, errors.New("Error in private key")
+		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 	return attester.CreateAccumulator()
 }
@@ -150,10 +150,10 @@ func RevokeAttestation(this js.Value, inputs []js.Value) (interface{}, error) {
 		return nil, fmt.Errorf("Error in public key: %v", err)
 	}
 	if err := json.Unmarshal([]byte(inputs[2].String()), update); err != nil {
-		return nil, fmt.Errorf("Error in update key: %v", err)
+		return nil, fmt.Errorf("Error in update: %v", err)
 	}
 	if err := json.Unmarshal([]byte(inputs[3].String()), &witnesses); err != nil {
-		return nil, fmt.Errorf("Error in witness key: %v", err)
+		return nil, fmt.Errorf("Error in witness: %v", err)
 	}
 	return attester.RevokeAttestation(update, witnesses)
 }
@@ -168,10 +168,10 @@ func GetAccumulatorIndex(this js.Value, inputs []js.Value) (interface{}, error) 
 	update := revocation.Update{}
 
 	if err := json.Unmarshal([]byte(inputs[0].String()), &pubKey); err != nil {
-		return 0, fmt.Errorf("Error in witness key: %v", err)
+		return 0, fmt.Errorf("Error in witness: %v", err)
 	}
 	if err := json.Unmarshal([]byte(inputs[1].String()), &update); err != nil {
-		return 0, fmt.Errorf("Error in update key: %v", err)
+		return 0, fmt.Errorf("Error in update: %v", err)
 	}
 
 	revPubKey, err := pubKey.RevocationKey()
