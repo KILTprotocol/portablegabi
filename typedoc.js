@@ -5,5 +5,5 @@ module.exports = {
   excludeNotExported: true,
   excludePrivate: true,
   tsconfig: 'tsconfig.json',
-  readme: 'none',
+  readme: 'README.md',
 }
