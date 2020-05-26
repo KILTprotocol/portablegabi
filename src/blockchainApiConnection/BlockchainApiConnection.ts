@@ -36,6 +36,7 @@ let connectionCache: Promise<Blockchain> | null = null
  * @param p.host The host to connect with.
  * @param p.types Type mappings.
  * @param p.pgabiModName The module name which exposes the portablegabi API.
+ * @returns A [[Blockchain]] API instance on which we can query data or submit transactions.
  */
 export async function buildConnection({
   host = DEFAULT_WS_ADDRESS,
@@ -60,6 +61,7 @@ export async function buildConnection({
  * @param p.host The host to connect with.
  * @param p.types Type mappings.
  * @param p.pgabiModName The module name which exposes the portablegabi API.
+ * @returns A [[Blockchain]] API instance on which we can query data or submit transactions.
  */
 export async function getCached({
   host = DEFAULT_WS_ADDRESS,
@@ -79,6 +81,7 @@ export async function getCached({
  * @param p.host The host to connect with.
  * @param p.types Type mappings.
  * @param p.pgabiModName The module name which exposes the portablegabi API.
+ * @returns A [[Blockchain]] API instance on which we can query data or submit transactions.
  */
 export async function connect({
   host = DEFAULT_WS_ADDRESS,

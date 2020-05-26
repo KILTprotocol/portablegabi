@@ -30,7 +30,7 @@ export async function verificationProcessSingleChain({
   presentationReq: PresentationRequest
   presentation: Presentation
   verified: boolean
-  verifiedClaim: object
+  verifiedClaim: Record<string, unknown>
 }> {
   // verifier sends nonce and context to claimer + requests disclosed attributes
   const {
