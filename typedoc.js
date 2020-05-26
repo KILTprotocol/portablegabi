@@ -4,5 +4,6 @@ module.exports = {
   excludeExternals: true,
   excludeNotExported: true,
   excludePrivate: true,
+  tsconfig: 'tsconfig.json',
   readme: 'none',
 }
