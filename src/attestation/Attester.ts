@@ -171,7 +171,7 @@ export default class Attester implements IAttester {
    *
    * @param p The parameter object.
    * @param p.accumulator The current [[Accumulator]].
-   * @param p.witnesses The revocation [[Witness]]es belonging to the [[Attestation]] which is about to be revoked.
+   * @param p.witnesses The revocation [[Witness]]es belonging to the [[Attestation]]s which are about to be revoked.
    * @returns An updated version of the [[Accumulator]].
    */
   public async revokeAttestation({
