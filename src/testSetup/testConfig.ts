@@ -1,3 +1,7 @@
+/**
+ * @ignore
+ * @packageDocumentation
+ */
 import { AttesterPublicKey, AttesterPrivateKey } from '../types/Attestation'
 
 // general test variables

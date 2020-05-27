@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @ignore
+ */
 import api from './BlockchainApi'
 import Blockchain from '../Blockchain'
 import { ApiPromise } from '@polkadot/api'
