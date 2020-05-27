@@ -32,7 +32,8 @@ import Credential from './Credential'
  * @throws [[ClaimError.notAnObject]] If the [[Attestation]] object includes a non-object type claim.
  * @throws [[ClaimError.duringParsing]] If an error occurs during JSON deserialization.
  */
-function checkValidClaimStructure(claim: object): void | Error {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function checkValidClaimStructure(claim: Record<string, any>): void | Error {
   if (!Object.keys(claim).length) {
     throw ClaimError.claimMissing
   }
@@ -54,7 +55,7 @@ export default class Claimer implements IClaimer {
    * @param options An optional object containing options for the key generation.
    * @param options.password The password which is used to generate the key.
    * @param options.keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
-   * @returns A new claimer.
+   * @returns A new [[Claimer]].
    */
   public static async buildFromMnemonic(
     mnemonic: string,
@@ -78,7 +79,7 @@ export default class Claimer implements IClaimer {
    *
    * @param seed The seed which is used to generate the key.
    * @param keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
-   * @returns A new claimer.
+   * @returns A new [[Claimer]].
    */
   public static async buildFromSeed(
     seed: Uint8Array,
@@ -126,13 +127,11 @@ export default class Claimer implements IClaimer {
     startAttestationMsg,
     attesterPubKey,
   }: {
-    claim: object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    claim: Record<string, any>
     startAttestationMsg: InitiateAttestationRequest
     attesterPubKey: AttesterPublicKey
-  }): Promise<{
-    message: AttestationRequest
-    session: ClaimerAttestationSession
-  }> {
+  }): ReturnType<IClaimer['requestAttestation']> {
     // check for invalid claim structure
     checkValidClaimStructure(claim)
     const { message, session } = await goWasmExec<IGabiMsgSession>(
@@ -164,7 +163,7 @@ export default class Claimer implements IClaimer {
   }: {
     claimerSession: ClaimerAttestationSession
     attestation: Attestation
-  }): Promise<Credential> {
+  }): ReturnType<IClaimer['buildCredential']> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.buildCredential, [
         this.secret,
@@ -192,7 +191,7 @@ export default class Claimer implements IClaimer {
     credential: Credential
     presentationReq: PresentationRequest
     attesterPubKey: AttesterPublicKey
-  }): Promise<Presentation> {
+  }): ReturnType<IClaimer['buildPresentation']> {
     return new Presentation(
       await goWasmExec<string>(WasmHooks.buildPresentation, [
         this.secret,
@@ -221,7 +220,7 @@ export default class Claimer implements IClaimer {
     credentials: Credential[]
     combinedPresentationReq: CombinedPresentationRequest
     attesterPubKeys: AttesterPublicKey[]
-  }): Promise<CombinedPresentation> {
+  }): ReturnType<IClaimer['buildCombinedPresentation']> {
     // make a json array out of already json serialised values
     // we don't want a json array of strings
     return new CombinedPresentation(

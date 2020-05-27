@@ -145,9 +145,8 @@ export async function verifyPresentation({
  * @param p The parameter object.
  * @param p.proof The result of combining the [[Credential]]s, the [[PresentationRequest]]s and the [[Attester]]s public keys in [[buildCombinedPresentation]].
  * @param p.verifierSession The Verifiers session generated in [[requestCombinedPresentation]].
- * @param p.attesterPubKey The public keys of all [[Attester]]s of the [[Credential]]s.
- * @param p.latestAccumulator The [[Accumulator]]s used to create or update the [[Credential]]s.
- *
+ * @param p.attesterPubKeys The public keys of all [[Attester]]s of the [[Credential]]s.
+ * @param p.latestAccumulators The [[Accumulator]]s used to create or update the [[Credential]]s.
  * @returns Whether the combined presentation could be verified.
  */
 export async function verifyCombinedPresentation({

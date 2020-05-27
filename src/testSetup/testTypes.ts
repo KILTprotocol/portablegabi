@@ -2,6 +2,7 @@
  * @ignore
  * @packageDocumentation
  */
+/* eslint-disable camelcase */
 type SpyKeys = 'exit' | 'error' | 'log'
 export type Spy<T extends SpyKeys | ''> = {
   [key in Exclude<SpyKeys, T>]: jest.SpyInstance

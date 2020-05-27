@@ -15,6 +15,7 @@
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
   },
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2018,
     "sourceType": "module"
@@ -35,14 +36,13 @@
         "allowExpressions": true
       }
     ],
-    "@typescript-eslint/interface-name-prefix": ["error", "always"],
     "@typescript-eslint/array-type": [
       "error",
       {
         "default": "array-simple"
       }
     ],
-    "@typescript-eslint/ban-ts-ignore": "warn",
+    "@typescript-eslint/ban-ts-ignore": "off",
     "jsdoc/require-description": "error",
     "jsdoc/require-returns": "error",
     "jsdoc/require-param-description": "error",

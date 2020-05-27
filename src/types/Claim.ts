@@ -1,18 +1,59 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable camelcase */
 /* eslint-disable max-classes-per-file */
 
 import WasmData from './Wasm'
-import { IIssueAttestation } from './Attestation'
+import {
+  IIssueAttestation,
+  InitiateAttestationRequest,
+  AttesterPublicKey,
+  Attestation,
+} from './Attestation'
+import Credential from '../claim/Credential'
+import {
+  PresentationRequest,
+  CombinedPresentationRequest,
+} from './Verification'
 
-/* eslint-disable @typescript-eslint/ban-ts-ignore */
 export default interface IClaimer {
-  requestAttestation: Function
-  buildCredential: Function
-  buildPresentation: Function
-  buildCombinedPresentation: Function
-}
-
-export interface IClaimerChain {
-  updateCredentialChain: Function
+  requestAttestation: ({
+    claim,
+    startAttestationMsg,
+    attesterPubKey,
+  }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    claim: Record<string, any>
+    startAttestationMsg: InitiateAttestationRequest
+    attesterPubKey: AttesterPublicKey
+  }) => Promise<{
+    message: AttestationRequest
+    session: ClaimerAttestationSession
+  }>
+  buildCredential: ({
+    claimerSession,
+    attestation,
+  }: {
+    claimerSession: ClaimerAttestationSession
+    attestation: Attestation
+  }) => Promise<Credential>
+  buildPresentation: ({
+    credential,
+    presentationReq,
+    attesterPubKey,
+  }: {
+    credential: Credential
+    presentationReq: PresentationRequest
+    attesterPubKey: AttesterPublicKey
+  }) => Promise<Presentation>
+  buildCombinedPresentation: ({
+    credentials,
+    combinedPresentationReq,
+    attesterPubKeys,
+  }: {
+    credentials: Credential[]
+    combinedPresentationReq: CombinedPresentationRequest
+    attesterPubKeys: AttesterPublicKey[]
+  }) => Promise<CombinedPresentation>
 }
 
 export interface IProof {
@@ -94,8 +135,9 @@ export class AttestationRequest extends WasmData {
    * @throws [[ClaimError.claimMissing]] If the claim is missing inside the [[AttestationRequest]].
    * @returns The original claim object which has been attested.
    */
-  public getClaim(): object {
-    let claim: object
+  public getClaim(): Record<string, unknown> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let claim: Record<string, any>
     try {
       claim = this.parse()?.claim
     } catch (e) {
@@ -113,7 +155,7 @@ export class AttestationRequest extends WasmData {
  */
 export class ClaimerAttestationSession extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 /**
@@ -130,7 +172,7 @@ export class Presentation extends WasmData {
  */
 export class CombinedPresentation extends WasmData {
   // @ts-ignore
-  private thisIsOnlyHereToPreventClassMixes: int
+  private thisIsOnlyHereToPreventClassMixes: undefined
 }
 
 export interface ICredential<Claim> {

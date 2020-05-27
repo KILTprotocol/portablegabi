@@ -138,6 +138,7 @@ export default class AttesterChain extends Attester implements IAttesterChain {
    * The transaction must be signed and send, the accumulator will won't be updated otherwise.
    *
    * @param accumulator The new [[Accumulator]] which will be put onto the accumulatorList chain storage.
+   * @returns An object which can be used to submit a transaction in [[Blockchain.signAndSend]].
    */
   // eslint-disable-next-line class-methods-use-this
   public async buildUpdateAccumulatorTX(
@@ -152,8 +153,8 @@ export default class AttesterChain extends Attester implements IAttesterChain {
    * Call [[buildUpdateAccumulatorTX]] to notify verifiers about the revoked credentials.
    *
    * @param p The parameter object.
-   * @param p.witness The [[Witness]] belonging to the [[Attestation]] which is about to be revoked.
    * @param p.accumulator The current [[Accumulator]] which will updated after revocation.
+   * @param p.witnesses The revocation [[Witness]]es belonging to the [[Attestation]] which is about to be revoked.
    * @returns An updated version of the [[Accumulator]].
    */
   public async revokeAttestation({
