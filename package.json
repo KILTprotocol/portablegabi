@@ -1,6 +1,6 @@
 {
   "name": "@kiltprotocol/portablegabi",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Typescript API and WASM wrapper of Go library Gabi enabling anonymous credentials",
   "main": "./build/index.js",
   "typings": "./build/index.d.ts",
