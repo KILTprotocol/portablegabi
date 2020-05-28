@@ -29,21 +29,26 @@ In order to use that, just clone and set up the [`portablegabi-node`](https://gi
 ## Installing
 
 npm
+
 ```
 npm i @kiltprotocol/portablegabi
 ```
 
 yarn
+
 ```
 yarn add @kiltprotocol/portablegabi
 ```
-
 
 ## Building + Testing
 
 If you want to help develop portablegabi, we would be glad to merge your pull request.
 But first, you need to set up a development environment for our project.
 See [our tutorial](https://kiltprotocol.github.io/portablegabi-tutorial/6_development.html) for more information.
+
+## Run in the browser
+
+It is also possible to use the Portablegabi API in the browser, see [here](docs/examples/browser/README.md) for more details.
 
 ## Example
 
@@ -164,7 +169,7 @@ async function exec() {
       attesterPubKey: attester.publicKey,
       accumulator: accumulatorAfterRevocation,
     })
-    .catch(e => {
+    .catch((e) => {
       if (e.message.includes('revoked')) {
         console.log('Credential was revoked and cannot be updated')
       } else throw e

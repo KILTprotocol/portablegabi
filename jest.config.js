@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'ts-jest',
+  rootDir: 'src',
   testEnvironment: '../jest.env.js',
   clearMocks: true,
   coverageThreshold: {

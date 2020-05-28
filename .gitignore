@@ -46,6 +46,11 @@ docs/example.mashnet.ts
 # documentation
 docs/api
 
+# browser example
+docs/examples/browser/bundle.js
+docs/examples/browser/node_modules
+docs/examples/browser/dist
+
 # tooling setup
 .DS_Store
 .env.local

@@ -5,6 +5,12 @@
 /* eslint-disable */
 const path = require('path')
 
+const wasmFetchDir =
+  process && process.env && process.env.WASM_FETCH_DIR
+    ? process.env.WASM_FETCH_DIR
+    : './dist'
+const isBrowser = typeof window !== 'undefined'
+
 if (typeof global !== 'undefined') {
   // global already exists
 } else if (typeof window !== 'undefined') {
@@ -31,7 +37,7 @@ const enosys = () => {
   return err
 }
 
-if (!global.fs) {
+if (!global.fs || (isBrowser && global.fetch)) {
   let outputBuf = ''
   global.fs = {
     constants: {
@@ -637,14 +643,24 @@ class Go {
 
 class WasmError extends Error {}
 
+async function getWasmBuffer(
+  source = path.resolve(__dirname, '../../build/wasm/main.wasm')
+) {
+  if (global.fs && fs.readFileSync) {
+    return fs.readFileSync(source)
+  } else if (isBrowser && global.fetch) {
+    return fetch(`${wasmFetchDir}/main.wasm`).then((response) =>
+      response.arrayBuffer()
+    )
+  }
+  throw new Error(`Unable to create buffer from source file ${source}`)
+}
+
 class GoWasm extends Go {
   static async init() {
     const go = new Go()
     // instantiate WASM
-    await WebAssembly.instantiate(
-      fs.readFileSync(path.resolve(__dirname, '../../build/wasm/main.wasm')),
-      go.importObject
-    )
+    await WebAssembly.instantiate(await getWasmBuffer(), go.importObject)
       .then((result) => {
         process.on('exit', (code) => {
           // Node.js exits if no event handler is pending
