@@ -20,6 +20,10 @@ You are required to have an active [substrate](https://www.parity.io/substrate/)
 
 Note that we are using `Alice` and `Bob` nodes in the examples to retrieve and store accumulators on the chain. Depending on your chain, you might have to swap the URI to nodes with balance in the [example config](exampleConfig.ts#4), otherwise you can only retrieve them.
 
+## Run in the browser
+
+It is also possible to use the Portablegabi API in the browser, see [here](browser/README.md) for more details.
+
 ## Where can I find negative examples?
 
 Please note, that the examples displayed here are mainly positive. For negative ones please have a look at the following tests. Most notably are the ones within `GabiVerifier.spec.ts`

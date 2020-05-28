@@ -1,6 +1,9 @@
 /**
  * This module contains the Verifier class which is used to verify [[Credential]]s.
+ *
+ * @packageDocumentation
  */
+
 import Accumulator from '../attestation/Accumulator'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
@@ -25,7 +28,7 @@ import { Presentation, CombinedPresentation } from '../types/Claim'
  * Initiates a verification session.
  *
  * @param p The parameter object.
- * @param p.requestedAttributes The attributes that need to be disclosed for the [[Verifier]] in order to verify the [[Credential]].
+ * @param p.requestedAttributes The attributes that need to be disclosed for the Verifier in order to verify the [[Credential]].
  * @param p.reqUpdatedAfter The minimum [[Accumulator]] timestamp on which the [[Credential]] needs to be updated.
  * @param p.keyLength The key length of the new key pair. Note that this key will only support credentials and claimer with the same key length.
  * @returns A session and a message object. The message should be sent to the [[Claimer]] and used in [[buildPresentation]]. The session should be kept private and used in [[verifyPresentation]].
@@ -68,7 +71,7 @@ export async function requestPresentation({
 /**
  * Initiates a verification session for a combined proof.
  *
- * @param presentationReqs An array of [[PresentationRequest]]s created by the [[Verifier]].
+ * @param presentationReqs An array of [[PresentationRequest]]s created by the Verifier.
  * @returns A session and a message object. The message should be sent to the [[Claimer]] and used in [[buildPresentation]]. The session should be kept private and used in [[verifyPresentation]].
  */
 export async function requestCombinedPresentation(
@@ -100,7 +103,7 @@ export async function requestCombinedPresentation(
  *
  * @param p The parameter object.
  * @param p.proof The result of combining the [[Credential]], the [[PresentationRequest]] and the [[Attester]]s public key in [[buildPresentation]].
- * @param p.verifierSession The [[Verifier]]s session generated in [[requestPresentation]].
+ * @param p.verifierSession The Verifiers session generated in [[requestPresentation]].
  * @param p.attesterPubKey The public key of the [[Attester]] of the [[Credential]].
  * @param p.latestAccumulator The [[Accumulator]] used to create or update the [[Credential]].
  * @throws If a revocation proof was requested but the necessary [[Accumulator]] was not provided.
@@ -141,10 +144,9 @@ export async function verifyPresentation({
  *
  * @param p The parameter object.
  * @param p.proof The result of combining the [[Credential]]s, the [[PresentationRequest]]s and the [[Attester]]s public keys in [[buildCombinedPresentation]].
- * @param p.verifierSession The [[Verifier]]s session generated in [[requestCombinedPresentation]].
- * @param p.attesterPubKey The public keys of all [[Attester]]s of the [[Credential]]s.
- * @param p.latestAccumulator The [[Accumulator]]s used to create or update the [[Credential]]s.
- *
+ * @param p.verifierSession The Verifiers session generated in [[requestCombinedPresentation]].
+ * @param p.attesterPubKeys The public keys of all [[Attester]]s of the [[Credential]]s.
+ * @param p.latestAccumulators The [[Accumulator]]s used to create or update the [[Credential]]s.
  * @returns Whether the combined presentation could be verified.
  */
 export async function verifyCombinedPresentation({

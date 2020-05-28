@@ -203,7 +203,7 @@ describe('Test claimer functionality', () => {
       await expect(
         claimer.requestAttestation({
           startAttestationMsg: initiateAttestationReq,
-          claim: ('string' as unknown) as object,
+          claim: ('string' as unknown) as Record<string, unknown>,
           attesterPubKey: attester.publicKey,
         })
       ).rejects.toThrowError(ClaimError.notAnObject('string'))
@@ -212,7 +212,7 @@ describe('Test claimer functionality', () => {
       await expect(
         claimer.requestAttestation({
           startAttestationMsg: initiateAttestationReq,
-          claim: [1],
+          claim: [1] as any,
           attesterPubKey: attester.publicKey,
         })
       ).rejects.toThrowError(ClaimError.duringParsing)

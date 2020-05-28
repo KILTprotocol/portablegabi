@@ -1,6 +1,3 @@
-/**
- * This module contains the Attester class which is used to create and revoke [[Attestation]]s.
- */
 import { AttestationRequest } from '../types/Claim'
 import goWasmExec from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
@@ -30,6 +27,7 @@ export type KeyGenOptions = {
  *
  * @param days The amount of days that should be converted.
  * @returns The amount of nanoseconds for the specified amount of days.
+ * @internal
  */
 export function daysToNanoSecs(days: number): number {
   return days * 24 * 60 * 60 * 1000 * 1000 * 1000
@@ -109,10 +107,7 @@ export default class Attester implements IAttester {
    *
    * @returns A session and a message object. The message should be sent over to the [[Claimer]].
    */
-  public async startAttestation(): Promise<{
-    message: InitiateAttestationRequest
-    session: AttesterAttestationSession
-  }> {
+  public async startAttestation(): ReturnType<IAttester['startAttestation']> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.startAttestationSession,
       [this.privateKey.toString(), this.publicKey.toString()]
@@ -128,7 +123,7 @@ export default class Attester implements IAttester {
    *
    * @returns A new [[Accumulator]].
    */
-  public async createAccumulator(): Promise<Accumulator> {
+  public async createAccumulator(): ReturnType<IAttester['createAccumulator']> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.createAccumulator, [
         this.privateKey.toString(),
@@ -141,9 +136,9 @@ export default class Attester implements IAttester {
    * Creates an [[Attestation]] for the claim inside the [[AttestationRequest]].
    *
    * @param p The parameter object.
-   * @param p.attestationSession The attestation session which was generated during [[startAttestation]].
+   * @param p.attestationSession The [[Attestation]] session which was generated during [[startAttestation]].
    * @param p.attestationRequest The [[AttestationRequest]] received from the [[Claimer]].
-   * @param p.update The most recent [[Accumulator]].
+   * @param p.accumulator The most recent [[Accumulator]].
    * @returns The [[Attestation]] object which should be sent to the [[Claimer]] and a [[Witness]] which can be used to revoke the attestation.
    */
   public async issueAttestation({
@@ -154,10 +149,7 @@ export default class Attester implements IAttester {
     attestationSession: AttesterAttestationSession
     attestationRequest: AttestationRequest
     accumulator: Accumulator
-  }): Promise<{
-    attestation: Attestation
-    witness: Witness
-  }> {
+  }): ReturnType<IAttester['issueAttestation']> {
     const { attestation, witness } = await goWasmExec<{
       attestation: string
       witness: string
@@ -178,8 +170,8 @@ export default class Attester implements IAttester {
    * Revokes an [[Attestation]] which corresponds to the provided [[Witness]].
    *
    * @param p The parameter object.
-   * @param p.update The current [[Accumulator]].
-   * @param p.witness The [[Witness]] belonging to the [[Attestation]] which is about to be revoked.
+   * @param p.accumulator The current [[Accumulator]].
+   * @param p.witnesses The revocation [[Witness]]es belonging to the [[Attestation]]s which are about to be revoked.
    * @returns An updated version of the [[Accumulator]].
    */
   public async revokeAttestation({
@@ -188,7 +180,7 @@ export default class Attester implements IAttester {
   }: {
     accumulator: Accumulator
     witnesses: Witness[]
-  }): Promise<Accumulator> {
+  }): ReturnType<IAttester['revokeAttestation']> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.revokeAttestation, [
         this.privateKey.toString(),

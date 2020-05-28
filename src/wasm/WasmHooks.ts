@@ -1,3 +1,7 @@
+/**
+ * @ignore
+ * @packageDocumentation
+ */
 enum WasmHooks {
   // misc
   closeWasm = 'closeWasm',

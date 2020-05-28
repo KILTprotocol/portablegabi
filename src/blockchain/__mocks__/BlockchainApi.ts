@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @ignore
+ */
 import Accumulator from '../../attestation/Accumulator'
 import { Codec } from '@polkadot/types/types'
 import { stringToHex } from '@polkadot/util'

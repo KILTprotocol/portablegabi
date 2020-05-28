@@ -2,12 +2,23 @@ import { hexToString } from '@polkadot/util'
 import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
 import { Codec } from '@polkadot/types/types'
+import { SubmittableExtrinsic } from '@polkadot/api/types'
 import BlockchainError from './BlockchainError'
 import { IBlockchainApi, IPortablegabiApi, PgabiModName } from '../types/Chain'
 import Accumulator from '../attestation/Accumulator'
 
 /**
- * The Blockchain class provides an interface to the for querying and creating transactions on chain.
+ * The Blockchain class provides an interface for querying and creating transactions on chain.
+ *
+ * Example:
+ *
+ * ```js
+ * import portablegabi from '@kiltprotocol/portablegabi'
+ * // depending on the blockchain, the module where the accumulator is store might be called differently.
+ * // The name can be configured using the 'pgabiModName' option.
+ * const bc = await portablegabi.connect({ pgabiModName: 'portablegabi' })
+ * const acc = await bc.getAccumulatorCount(addr)
+ * ```
  */
 export default class Blockchain implements IBlockchainApi {
   public api: ApiPromise & IPortablegabiApi<PgabiModName>
@@ -45,7 +56,7 @@ export default class Blockchain implements IBlockchainApi {
    * Check for existing [[Accumulator]] count and return max index for query.
    *
    * @param address The chain address of the [[Attester]].
-   * @throws {BlockchainError.maxIndexZero} If the address does not have an [[Accumulator]] stored yet.
+   * @throws [[BlockchainError.maxIndexZero]] If the address does not have an [[Accumulator]] stored yet.
    * @returns The accumulator count minus one.
    */
   private async getMaxIndex(address: string): Promise<number> {
@@ -61,7 +72,7 @@ export default class Blockchain implements IBlockchainApi {
    *
    * @param address The chain address of the [[Attester]].
    * @param index The index of the [[Accumulator]].
-   * @throws {BlockchainError.indexOutOfRange} If the requested index is less than zero or greater than the maximum index.
+   * @throws [[BlockchainError.indexOutOfRange]] If the requested index is less than zero or greater than the maximum index.
    */
   private async checkIndex(address: string, index: number): Promise<void> {
     const maxIndex = await this.getMaxIndex(address)
@@ -76,7 +87,7 @@ export default class Blockchain implements IBlockchainApi {
    * @param address The chain address of the [[Attester]].
    * @param codec The raw [[Accumulator]].
    * @param index The index of the [[Accumulator]].
-   * @throws {BlockchainError.missingAccIndex} If there is no [[Accumulator]] at the specified index.
+   * @throws [[BlockchainError.missingAccIndex]] If there is no [[Accumulator]] at the specified index.
    * @returns An [[Accumulator]].
    */
   private static async codecToAccumulator(
@@ -115,7 +126,7 @@ export default class Blockchain implements IBlockchainApi {
   }
 
   /**
-   * Fetches multiple [[Accumulators]] at once.
+   * Fetches multiple [[Accumulator]]s at once.
    *
    * @param address The chain address of the [[Attester]].
    * @param startIndex The index of the first [[Accumulator]] to fetch.
@@ -164,50 +175,62 @@ export default class Blockchain implements IBlockchainApi {
   /**
    * Pushes a new [[Accumulator]] on chain.
    *
-   * @param address The chain address of the [[Attester]].
    * @param accumulator The new [[Accumulator]].
+   * @returns Returns an object that can be used to submit a transaction.
    */
-  public async updateAccumulator(
-    address: KeyringPair,
+  public buildUpdateAccumulatorTX(
     accumulator: Accumulator
+  ): SubmittableExtrinsic<'promise'> {
+    return this.api.tx[this.chainmod].updateAccumulator(accumulator.toString())
+  }
+
+  /**
+   * Signs and sends a transaction to a blockchain node.
+   *
+   * @param tx The transaction that should get submitted.
+   * @param keypair The keypair used for signing the transaction.
+   * @returns The returned promise will resolve if the transaction was included in a finalized block.
+   * If the transaction fails, the promise will be rejected.
+   */
+  // If we have the object -> we have a connection -> we can submit
+  // makes sense to require an object for this method even tho we don't use this
+  // eslint-disable-next-line class-methods-use-this
+  public async signAndSend(
+    tx: SubmittableExtrinsic<'promise'>,
+    keypair: KeyringPair
   ): Promise<void> {
-    const update = this.api.tx[this.chainmod].updateAccumulator(
-      accumulator.toString()
-    )
     return new Promise((resolve, reject) => {
       // store the handle to remove subscription.
       let unsubscribe: (() => void) | null = null
 
       // sign and send transaction
-      update
-        .signAndSend(address, (r) => {
-          // if block containing the transaction was finalized, check if transaction was successful
-          if (r.status.isFinalized) {
-            if (unsubscribe !== null) unsubscribe()
+      tx.signAndSend(keypair, (r) => {
+        // if block containing the transaction was finalized, check if transaction was successful
+        if (r.status.isFinalized) {
+          if (unsubscribe !== null) unsubscribe()
 
-            const sysEvents = r.events.filter(
-              ({ event: { section } }) => section === 'system'
-            )
+          const sysEvents = r.events.filter(
+            ({ event: { section } }) => section === 'system'
+          )
 
-            // filter for error events
-            const errEvents = sysEvents.filter(
-              ({ event: { method } }) => method === 'ExtrinsicFailed'
-            )
+          // filter for error events
+          const errEvents = sysEvents.filter(
+            ({ event: { method } }) => method === 'ExtrinsicFailed'
+          )
 
-            // filter for success events
-            const okEvents = sysEvents.filter(
-              ({ event: { method } }) => method === 'ExtrinsicSuccess'
-            )
+          // filter for success events
+          const okEvents = sysEvents.filter(
+            ({ event: { method } }) => method === 'ExtrinsicSuccess'
+          )
 
-            // if there is no error and no success event, we fail
-            if (errEvents.length > 0) reject(errEvents)
-            else if (okEvents.length > 0) resolve()
-            else reject()
-          }
-        })
-        .then((u) => {
-          unsubscribe = u
-        })
+          // if there is no error and no success event, we fail
+          if (errEvents.length > 0) reject(errEvents)
+          else if (okEvents.length > 0) resolve()
+          else reject()
+        }
+      }).then((u) => {
+        unsubscribe = u
+      })
     })
   }
 }

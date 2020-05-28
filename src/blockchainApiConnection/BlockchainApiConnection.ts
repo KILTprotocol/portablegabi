@@ -4,7 +4,7 @@
  *
  * Other modules can access the [[Blockchain]] as such: `const blockchain = await connect()`.
  *
- * @module BlockchainApiConnection
+ * @packageDocumentation
  */
 import { ApiPromise, WsProvider } from '@polkadot/api'
 import { ApiOptions } from '@polkadot/api/types'
@@ -26,6 +26,7 @@ const DEFAULT_PARAMS: IPortableGabiApiOptions = {
   pgabiModName: DEFAULT_MOD_NAME,
 }
 
+/** @internal */
 let connectionCache: Promise<Blockchain> | null = null
 
 /**
@@ -35,6 +36,7 @@ let connectionCache: Promise<Blockchain> | null = null
  * @param p.host The host to connect with.
  * @param p.types Type mappings.
  * @param p.pgabiModName The module name which exposes the portablegabi API.
+ * @returns A [[Blockchain]] API instance on which we can query data or submit transactions.
  */
 export async function buildConnection({
   host = DEFAULT_WS_ADDRESS,
@@ -59,6 +61,7 @@ export async function buildConnection({
  * @param p.host The host to connect with.
  * @param p.types Type mappings.
  * @param p.pgabiModName The module name which exposes the portablegabi API.
+ * @returns A [[Blockchain]] API instance on which we can query data or submit transactions.
  */
 export async function getCached({
   host = DEFAULT_WS_ADDRESS,
@@ -78,6 +81,7 @@ export async function getCached({
  * @param p.host The host to connect with.
  * @param p.types Type mappings.
  * @param p.pgabiModName The module name which exposes the portablegabi API.
+ * @returns A [[Blockchain]] API instance on which we can query data or submit transactions.
  */
 export async function connect({
   host = DEFAULT_WS_ADDRESS,
@@ -89,6 +93,8 @@ export async function connect({
 
 /**
  * Remove the cached connection.
+ *
+ * @internal
  */
 export function clearCache(): void {
   connectionCache = null

@@ -28,11 +28,12 @@ import Credential from './Credential'
  * Checks that the provided claim is a valid object.
  *
  * @param claim The object which should be a valid claim.
- * @throws {ClaimError.claimMissing} If the claim is missing inside the [[AttestationRequest]].
- * @throws {ClaimError.notAnObject} If the [[Attestation]] object includes a non-object type claim.
- * @throws {ClaimError.duringParsing} If an error occurs during JSON deserialization.
+ * @throws [[ClaimError.claimMissing]] If the claim is missing inside the [[AttestationRequest]].
+ * @throws [[ClaimError.notAnObject]] If the [[Attestation]] object includes a non-object type claim.
+ * @throws [[ClaimError.duringParsing]] If an error occurs during JSON deserialization.
  */
-function checkValidClaimStructure(claim: object): void | Error {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function checkValidClaimStructure(claim: Record<string, any>): void | Error {
   if (!Object.keys(claim).length) {
     throw ClaimError.claimMissing
   }
@@ -54,7 +55,7 @@ export default class Claimer implements IClaimer {
    * @param options An optional object containing options for the key generation.
    * @param options.password The password which is used to generate the key.
    * @param options.keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
-   * @returns A new claimer.
+   * @returns A new [[Claimer]].
    */
   public static async buildFromMnemonic(
     mnemonic: string,
@@ -78,7 +79,7 @@ export default class Claimer implements IClaimer {
    *
    * @param seed The seed which is used to generate the key.
    * @param keyLength The key length of the new secret. Note that this secret will only support credentials and attester with the same key length.
-   * @returns A new claimer.
+   * @returns A new [[Claimer]].
    */
   public static async buildFromSeed(
     seed: Uint8Array,
@@ -117,21 +118,20 @@ export default class Claimer implements IClaimer {
    * @param p The parameter object.
    * @param p.claim The claim which should get attested.
    * @param p.startAttestationMsg The [[InitiateAttestationRequest]] provided by the attester.
-   * @param p.attesterPubKey The [[PublicKey]] of the attester.
-   * @returns An [[AttestationRequest]] and a [[ClaimerAttestationSession]] which together with an [[AttestationResponse]] can be used to create a [[Credential]].
+   * @param p.attesterPubKey The [[AttesterPublicKey]].
+   * @returns An [[AttestationRequest]] and a [[ClaimerAttestationSession]] which together with an [[Attestation]]
+   * can be used to create a [[Credential]].
    */
   public async requestAttestation({
     claim,
     startAttestationMsg,
     attesterPubKey,
   }: {
-    claim: object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    claim: Record<string, any>
     startAttestationMsg: InitiateAttestationRequest
     attesterPubKey: AttesterPublicKey
-  }): Promise<{
-    message: AttestationRequest
-    session: ClaimerAttestationSession
-  }> {
+  }): ReturnType<IClaimer['requestAttestation']> {
     // check for invalid claim structure
     checkValidClaimStructure(claim)
     const { message, session } = await goWasmExec<IGabiMsgSession>(
@@ -163,7 +163,7 @@ export default class Claimer implements IClaimer {
   }: {
     claimerSession: ClaimerAttestationSession
     attestation: Attestation
-  }): Promise<Credential> {
+  }): ReturnType<IClaimer['buildCredential']> {
     return new Credential(
       await goWasmExec<string>(WasmHooks.buildCredential, [
         this.secret,
@@ -178,9 +178,9 @@ export default class Claimer implements IClaimer {
    *
    * @param p The parameter object.
    * @param p.credential The [[Credential]] which contains all the requested attributes.
-   * @param p.presentationReq The [[PresentationRequest]] received from the [[Verifier]].
+   * @param p.presentationReq The [[PresentationRequest]] received from the Verifier.
    * @param p.attesterPubKey The public key of the [[Attester]] who signed the [[Credential]].
-   * @returns A [[Presentation]] that can be used to disclose attributes with a [[Verifier]].
+   * @returns A [[Presentation]] that can be used to disclose attributes with a Verifier.
    *    Must only be used once!
    */
   public async buildPresentation({
@@ -191,7 +191,7 @@ export default class Claimer implements IClaimer {
     credential: Credential
     presentationReq: PresentationRequest
     attesterPubKey: AttesterPublicKey
-  }): Promise<Presentation> {
+  }): ReturnType<IClaimer['buildPresentation']> {
     return new Presentation(
       await goWasmExec<string>(WasmHooks.buildPresentation, [
         this.secret,
@@ -207,9 +207,9 @@ export default class Claimer implements IClaimer {
    *
    * @param p The parameter object.
    * @param p.credentials An array of [[Credential]]s which is used to provide the requested attributes.
-   * @param p.combinedPresentationReq The array of [[PresentationRequest]]s received from the [[Verifier]].
-   * @param p.attesterPubKeys An array of [[PublicKey]]s which corresponds to the array of [[Credential]]s.
-   * @returns A [[CombinedPresentation]] that can be used to disclose attributes with a [[Verifier]].
+   * @param p.combinedPresentationReq The array of [[PresentationRequest]]s received from the Verifier.
+   * @param p.attesterPubKeys An array of [[AttesterPublicKey]]s which corresponds to the array of [[Credential]]s.
+   * @returns A [[CombinedPresentation]] that can be used to disclose attributes with a Verifier.
    *    Must only be used once!
    */
   public async buildCombinedPresentation({
@@ -220,7 +220,7 @@ export default class Claimer implements IClaimer {
     credentials: Credential[]
     combinedPresentationReq: CombinedPresentationRequest
     attesterPubKeys: AttesterPublicKey[]
-  }): Promise<CombinedPresentation> {
+  }): ReturnType<IClaimer['buildCombinedPresentation']> {
     // make a json array out of already json serialised values
     // we don't want a json array of strings
     return new CombinedPresentation(

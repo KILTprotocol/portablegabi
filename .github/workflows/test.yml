@@ -1,7 +1,7 @@
 name: Test
 on: [push]
 jobs:
-  testgo:
+  test_go:
     name: Go Tests
     runs-on: ubuntu-latest
     steps:
@@ -39,10 +39,10 @@ jobs:
           name: wasm
           path: ../../../go/src/github.com/${{ github.repository }}/build/wasm/main.wasm
 
-  testts:
+  test_jest:
     runs-on: ubuntu-latest
     name: TS Tests
-    needs: testgo
+    needs: test_go
 
     strategy:
       matrix:
@@ -74,10 +74,10 @@ jobs:
         env:
           CI: true
 
-  testintegration:
+  test_integration:
     runs-on: ubuntu-latest
     name: integration tests
-    needs: testgo
+    needs: test_go
 
     steps:
       - name: Check out code
@@ -106,10 +106,10 @@ jobs:
         env:
           CI: true
 
-  testexamples:
+  test_examples:
     runs-on: ubuntu-latest
     name: example tests
-    needs: testgo
+    needs: test_go
 
     steps:
       - name: Check out code
@@ -139,5 +139,37 @@ jobs:
           yarn ts-node docs/examples/exampleCombined.chain.ts
           yarn ts-node docs/examples/readme.ts
           docker stop $(docker ps -f ancestor=kiltprotocol/portablegabi-node -q)
+        env:
+          CI: true
+
+  test_tutorial:
+    runs-on: ubuntu-latest
+    name: test tutorial code
+    needs: test_go
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v1
+
+      - name: Download wasm for Go Tests
+        uses: actions/download-artifact@v1
+        with:
+          name: wasm
+
+      - name: Use Node.js 10.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+
+      - name: yarn install and test
+        run: |
+          mkdir -p build
+          ls
+          mv wasm build/wasm
+          yarn install --frozen-lockfile
+          yarn ts-node docs/examples/tutorial/tutorial.ts
+          docker run -d --rm -p 9944:9944 kiltprotocol/portablegabi-node --dev --ws-port 9944 --ws-external
+          sleep 5s
+          yarn ts-node docs/examples/tutorial/sections/4_chain.ts
         env:
           CI: true

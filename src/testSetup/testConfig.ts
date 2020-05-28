@@ -1,3 +1,7 @@
+/**
+ * @ignore
+ * @packageDocumentation
+ */
 import { AttesterPublicKey, AttesterPrivateKey } from '../types/Attestation'
 
 // general test variables
@@ -13,8 +17,8 @@ export const privKey2 = new AttesterPrivateKey(
 export const pubKey2 = new AttesterPublicKey(
   '{"XMLName":{"Space":"","Local":""},"Counter":0,"ExpiryDate":1610717317,"N":"uvEDNe1KFkV3b1Op7HuOdnVDsNMj6amft1I9011DQx2NPdDnevFmE6Xly/cG2muJ6RR4IUOicKA9qxrb2l83RvsNgwtbrwdeWBiH794s/Jq4D9GicXARhU3nsC2oHQewGv4/Q5J0yjHjJ8G50VGw2aRfmPL91XLKpp/MwjJVF/U=","Z":"BOdJs8S8Sxs6lRRwzVux4XA+Q91fkaK6o8TH2+pNhGxkxg3OzHGKjT8wpd8qPJXORvyjUQV4krzf8rc+jNQJIdQB19vtrASdNb/ezpxSq9JymNJ/6mkIaVo7tt4C0/G1oSlqkzs0Jfcx7jrv8k1jhLIXbMMkjMiKpU4fN/ZkpWE=","S":"qwUXLSQLiy+r5i7qS9bhxEsmjFZ9AF1z3U0x8/g73MDefGe7KXps/U0TjKrqr/Pkr++Rzuq/EWMW8mB8QlGbdmMK+YShoyLcg8bspk0eKIuzAn3PMLWlNW2XaxveQIinxKGQFCTJrQSSg5T8fJqMWZgnheuKcJVt17WKMaY50UM=","G":"QZWQU/7gRkeVViLeS7gEWPp/m4OKAZbJGDsTXqUTrHzRO0RJGP1rI0bqjlnsslF+gd7NXxVQ3mscKOrQa8RR9VY25jaI15j7DUapI3pFqLS3k3ZFpKKDcEfT9LnGJQK080qh8AHgCZPF6Jr3do36opP9YwfBGs0zgswqSe2Le3g=","H":"TptaYd9JwnPfxqH5LtKOKoRJVQjlxOzXtHNVfVmpT/jA52DZIfH4+IRuJlEgNrHcfSMsQnzQu/fQOWUk1MtyJLykc/80e5jW+6s6kuJTLgmwkSXvyKpBSvLtKIfpMVHfgCJO6dfhHVimO/cSJ1OKtvaG3Gr344UwGni3HwM4tJ4=","T":"OGD5wSRX9PHHWyRVl8Biu+a/mpx2x3hmtZpSYft6t5Y6zeJ53QEtrLW5xFlRYXKdE4+ZE0fa4mC/eeXJdlWNcI0dQB9Xw01ouJwb80ZJpy5Oz84DU35sThE+A9rU6nZFaabTp5vrwldQoZu1zuKrkvnCpucjgc2jFpJzV+PAs+g=","R":["pmYou6W/j5hWElum8rHO84jJXOgOZKkv+xtOQh4H0MNR8xUi3Iw1mRxzXlEbOOPspynfQFElHiD+odx4zzbhOOHeii8ufKSsnuOp6l1HgD2vieG1MY8PcabsEpb2cGaOsyJeZQoj6FZ6QKKFWluRXR4GLHUZ1A/keMFLI5fzHcQ=","RmzpAQrZGUvEX02HLKoM4KZMS/NhrZ4b0KHo7FHHwvYrXfBUtl7LY+IHxlSzgO+9Upw+cq1hwJFuiczrE2J0aLLd2bFG2Wh+37AOZiJUyuyOhS4EdVUvw/kzR5K3qJRhbi/ljuU0cNkfHW+SKO9YtJvcQtSQqBKuM3qd5B+QU44=","oqXOafScX1nWRRygw4uFaI5fgiO5gsyzb4DWjLSuycqP1IHY67FpXRR2YSXKv+Wzw6NacVtZ+caDwZUcb+x8SfKEOKqrGGM389MBj2uHj8uk0GDjIJogVHRpoy7mPsqjpV64iZSSYawd3CszQrZY6QvvibcVem+Hg7Hqwlfp0qw=","Ikj/07Ip14Ay0QZZfLx8Mpq1UQeZcC+MhmwEEOfFeBKOGyEciDHjUUzgJZ8ZAyF7/VCWLm3+glYZ1KIb6JQMNaAPaGAg22p0okeYi/69bGhbeDV4oZy+27LBMt74XJqxU8gaXVzG7b2Lwv0jEtbDEJjpMUVsZzPCe9yLWu77zW8=","RyRhhf7bjfY6mFO0H7o6ZeqsNUxpow4YSsi0ZG7M6ako0fytCLIXgNZy8K9Is2J9QKcwHFhkWulo3p6uil5uaJHWc6emQSXEYEMu9zugMIWmnbh28snL4CnJ9WQHXrm9LaZHfLWiwMwMv6fOE9+dsYA1Y0eUhOpxD40Rjh6qnis=","sjofIpRpJe1OegtCYU+ADPZmxseEyqN7snBywM5dGtnvPw3ShY+WTBejO1Jr+i+iL9mWq8Jw/ABj9RAmW/Xc901ED8QtQQh1WO69urDJTBywpDPx4D24sUPpVKAOLexNuf+sbIs74Omu/dX6K+/+UZoJwojVOOPyvRt3cdKyajI=","jXJelo+k9onbRmvGqVsiRfgjCmuFRmx2KdFGg4vLHMrbUmU/Jom1ox4toIsvrUrLy+5QHcIZ2t9EBsHj3ltpXFY40CdDoIgJ9KndKCojo+u6Wur7b1tCR3DfAlYiorjz0UjNbotWFhFDVPZfFh02lT8jagQ9DEv9/2+CMOpjVKQ=","PkUzNfJfz0G3rpLZPy0Icr6tmpH2ZY/clZU7GTDFHlwn4TQxxQWnyJknfY/9jk3fEwOjJARrjJO2qKN83UlcAForxIy19/TIrGNjvSCA9vJbNV5P3L3O/KswD0NOLE8MjV6p6e0QWkDeET864y3F/kHwTkFiQ3VVQ+2BP9Sofxc=","l7kOzCTLNBNn9phUbYcwUclJlcIUHqoNCRyY1j1ZsyKUNDKyLvI0ZsOE1JlnUbRAtbp1+EwrId6/DC0q7jBmy+XrETKqWQLqfWDxJd8bsYrQfu0avNvz78Qv+ZmkuDhrQNJ1MKSNBvrMvxuOQEEXHCpKD/HZUFoPCmUWqqeYVHw=","i2XT4cmtlQo+00MruNcIWfvb2IkG7sEAUya3nbFE1UFLlX4I00xt/cOAdaHyduv9Rqy81QjG6aX3I+HHwxUzEoH99pOKzYh5qWIFjy+PcQxjBkMLPYVeSoPIhP3ljw2s2dzWblkW7VToYsxTvbUwVvAxC1HILgX+AKyhtg4LkQE="],"EpochLength":432000,"Params":{"LePrime":120,"Lh":256,"Lm":256,"Ln":1024,"Lstatzk":80,"Le":597,"LeCommit":456,"LmCommit":592,"LRA":1104,"LsCommit":593,"Lv":1700,"LvCommit":2036,"LvPrime":1104,"LvPrimeCommit":1440},"Issuer":"","ECDSA":"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAED7eiYNhoE9gzmAYz9wYJruB2d+WUqGdU07KilWOdB3dGvi9VfTpSqKTzI7WTGb8uMPz2aROqAmwm70zu8wLBSw=="}'
 )
-export const claim = {
-  cType: '0x39ffc33202410721743e19082986e650b4e847b85bea7eab77...',
+export const claim: Record<string, any> = {
+  cType: '0x39ffc33202410721743e19082986e650b4e847b85bea7eab77',
   contents: {
     id: 9007199254740993,
     picture: {
@@ -33,7 +37,7 @@ export const numOfClaimKeys = 5
 
 // used in combined requests
 export const claimCombined = JSON.stringify({
-  cType: '0x39ffc33202410721743e19082986e650b4e847b85bea7eab77...',
+  cType: '0x39ffc33202410721743e19082986e650b4e847b85bea7eab77',
   contents: {
     ident: 9007199254740993,
     image: {

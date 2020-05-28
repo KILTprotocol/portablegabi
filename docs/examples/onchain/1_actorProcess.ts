@@ -60,7 +60,8 @@ export async function actorProcessChain({
         `Missing balance for address "${attester.address}" with URI/mnemonic ${attesterURI}`
       )
     }
-    await attester.updateAccumulator(accumulator)
+    const tx = await attester.buildUpdateAccumulatorTX(accumulator)
+    await blockchain.signAndSend(tx, attester.keyringPair)
   }
 
   return { claimer, attester, accumulator }

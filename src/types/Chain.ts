@@ -19,11 +19,13 @@ export type PgabiModName = 'portablegabi' | 'portablegabiPallet' | string
  */
 export const DEFAULT_KEY_TYPE = 'sr25519'
 
+/** @internal */
 export type AugmentedQuery<
   ApiType extends ApiTypes,
   F extends AnyFunction
 > = MethodResult<ApiType, F> & StorageEntryBase<ApiType, F>
 
+/** @internal */
 export interface IPortablegabiApi<T extends PgabiModName> {
   query: {
     [K in T]: {
@@ -36,7 +38,7 @@ export interface IPortablegabiApi<T extends PgabiModName> {
   }
   tx: {
     [K in T]: {
-      updateAccumulator: (
+      buildUpdateAccumulatorTX: (
         accumulatorValue: string
       ) => SubmittableExtrinsic<'promise'>
     }
@@ -53,8 +55,12 @@ export interface IBlockchainApi {
     _endIndex?: number
   ) => Promise<Accumulator[]>
   getLatestAccumulator: (address: string) => Promise<Accumulator>
-  updateAccumulator: (
-    address: KeyringPair,
+  buildUpdateAccumulatorTX: (
     accumulator: Accumulator
-  ) => Promise<void>
+  ) => SubmittableExtrinsic<'promise'>
+
+  signAndSend(
+    tx: SubmittableExtrinsic<'promise'>,
+    keypair: KeyringPair
+  ): Promise<void>
 }

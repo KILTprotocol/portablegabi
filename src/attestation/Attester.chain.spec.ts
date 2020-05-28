@@ -9,6 +9,7 @@ import { attestationSetup } from '../testSetup/testSetup'
 import api from '../blockchain/__mocks__/BlockchainApi'
 import { AttesterPublicKey, AttesterPrivateKey } from '../types/Attestation'
 import Claimer from '../claim/Claimer'
+import BlockchainMock from '../blockchain/__mocks__/Blockchain'
 
 jest.mock('../blockchainApiConnection/BlockchainApiConnection')
 
@@ -103,7 +104,10 @@ describe('Test Attester on chain', () => {
   })
   it('Should updateAccumulator', async () => {
     const accUpdate = new Accumulator('updatedAccumulator')
-    await expect(attester.updateAccumulator(accUpdate)).resolves.toBeUndefined()
+    const tx = await attester.buildUpdateAccumulatorTX(accUpdate)
+    await expect(
+      BlockchainMock.signAndSend(tx, attester.keyringPair)
+    ).resolves.toBeUndefined()
     await expect(
       chain.getLatestAccumulator(attester.address)
     ).resolves.toStrictEqual(accUpdate)
@@ -114,9 +118,14 @@ describe('Test Attester on chain', () => {
       attester,
       accumulator,
     })
+    const newAcc = await attester.revokeAttestation({
+      witnesses: [witnessRev],
+      accumulator,
+    })
+    const tx = await attester.buildUpdateAccumulatorTX(newAcc)
     await expect(
-      attester.revokeAttestation({ witnesses: [witnessRev], accumulator })
-    ).resolves.toBeTruthy()
+      BlockchainMock.signAndSend(tx, attester.keyringPair)
+    ).resolves.toBeUndefined()
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(0)
     expect(api.query.portablegabi.accumulatorList).toHaveBeenCalledTimes(0)
     expect(api.tx.portablegabi.updateAccumulator).toHaveBeenCalledTimes(1)
@@ -131,9 +140,13 @@ describe('Test Attester on chain', () => {
       attester,
       accumulator,
     })
+    const newAcc = await attester.revokeAttestation({
+      witnesses: [witnessRev],
+    })
+    const tx = await attester.buildUpdateAccumulatorTX(newAcc)
     await expect(
-      attester.revokeAttestation({ witnesses: [witnessRev] })
-    ).resolves.toBeTruthy()
+      BlockchainMock.signAndSend(tx, attester.keyringPair)
+    ).resolves.toBeUndefined()
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledTimes(2)
     expect(api.query.portablegabi.accumulatorCount).toHaveBeenCalledWith(
       attester.address

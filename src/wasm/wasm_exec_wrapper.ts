@@ -1,3 +1,7 @@
+/**
+ * @ignore
+ * @packageDocumentation
+ */
 import WasmHooks from './WasmHooks'
 import { IGoWasm } from '../types/Wasm'
 
@@ -5,12 +9,14 @@ import { IGoWasm } from '../types/Wasm'
 const goWasm = require('./wasm_exec')
 
 const GoInstance: Promise<IGoWasm> = goWasm.GoWasm.init()
+
 let isClosed = false
 
 /**
  * Loads the Go wasm instance.
  *
  * @returns A promise of the Go wasm instance.
+ * @internal
  */
 export const goWasmInit = (): Promise<IGoWasm> => Promise.resolve(GoInstance)
 
@@ -20,6 +26,7 @@ export const goWasmInit = (): Promise<IGoWasm> => Promise.resolve(GoInstance)
  * @param goHook The name of the function which should be called.
  * @param args The arguments for the function call put into an array.
  * @returns A promise of the Go wasms function call.
+ * @internal
  */
 const goWasmExec = <T>(
   goHook: WasmHooks,
@@ -38,6 +45,8 @@ const goWasmExec = <T>(
 // eslint-disable-next-line jsdoc/require-returns
 /**
  * Closes the Go wasm channel.
+ *
+ * @internal
  */
 export const goWasmClose = async (): Promise<void> => {
   isClosed = true

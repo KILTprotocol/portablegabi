@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import WasmHooks from '../wasm/WasmHooks'
 
+/** @internal */
 export interface IGoWasm {
   execWasmFn: (
     fn: WasmHooks,
@@ -17,32 +18,32 @@ export interface IGoWasm {
   _nextCallbackTimeoutID: number
   importObject: {
     go: {
-      'runtime.wasmExit': Function
-      'runtime.wasmWrite': Function
-      'runtime.walltime': Function
-      'runtime.scheduleTimeoutEvent': Function
-      'runtime.clearTimeoutEvent': Function
-      'runtime.getRandomData': Function
-      'syscall/js.stringVal': Function
-      'syscall/js.valueGet': Function
-      'syscall/js.valueSet': Function
-      'syscall/js.valueIndex': Function
-      'syscall/js.valueSetIndex': Function
-      'syscall/js.valueCall': Function
-      'syscall/js.valueInvoke': Function
-      'syscall/js.valueNew': Function
-      'syscall/js.valueLength': Function
-      'syscall/js.valuePrepareString': Function
-      'syscall/js.valueLoadString': Function
-      'syscall/js.valueInstanceOf': Function
-      'syscall/js.copyBytesToGo': Function
-      'syscall/js.copyBytesToJS': Function
+      'runtime.wasmExit': () => void
+      'runtime.wasmWrite': () => void
+      'runtime.walltime': () => void
+      'runtime.scheduleTimeoutEvent': () => void
+      'runtime.clearTimeoutEvent': () => void
+      'runtime.getRandomData': () => void
+      'syscall/js.stringVal': () => void
+      'syscall/js.valueGet': () => void
+      'syscall/js.valueSet': () => void
+      'syscall/js.valueIndex': () => void
+      'syscall/js.valueSetIndex': () => void
+      'syscall/js.valueCall': () => void
+      'syscall/js.valueInvoke': () => void
+      'syscall/js.valueNew': () => void
+      'syscall/js.valueLength': () => void
+      'syscall/js.valuePrepareString': () => void
+      'syscall/js.valueLoadString': () => void
+      'syscall/js.valueInstanceOf': () => void
+      'syscall/js.copyBytesToGo': () => void
+      'syscall/js.copyBytesToJS': () => void
       debug: (value: any) => void
     }
   }
-  run: Function
-  _resume: Function
-  _makeFuncWrapper: Function
+  run: () => void
+  _resume: () => void
+  _makeFuncWrapper: () => void
 }
 
 /**
