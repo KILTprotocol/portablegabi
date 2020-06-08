@@ -2,12 +2,12 @@ import { KeyringPair } from '@polkadot/keyring/types'
 import { Keyring } from '@polkadot/api'
 import {
   mnemonicGenerate,
-  mnemonicToSeed,
+  mnemonicToMiniSecret,
   cryptoWaitReady,
 } from '@polkadot/util-crypto'
 import { KeypairType } from '@polkadot/util-crypto/types'
-import { u8aToHex } from '@polkadot/util'
 import { SubmittableExtrinsic } from '@polkadot/api/types'
+import { u8aToHex } from '@polkadot/util'
 import Attester, { KeyGenOptions } from './Attester'
 import {
   Witness,
@@ -89,9 +89,10 @@ export default class AttesterChain extends Attester implements IAttesterChain {
       return this.buildFromURI(publicKey, privateKey, mnemonic, type)
     }
     const keyringPair = new Keyring({ type }).addFromUri(
-      u8aToHex(mnemonicToSeed(mnemonic))
+      u8aToHex(mnemonicToMiniSecret(mnemonic))
     )
     return new AttesterChain(publicKey, privateKey, keyringPair)
+    return this.buildFromURI(publicKey, privateKey, mnemonic, type)
   }
 
   /**

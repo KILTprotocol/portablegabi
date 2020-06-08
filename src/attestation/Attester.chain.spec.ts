@@ -1,4 +1,4 @@
-import { mnemonicToSeed, mnemonicToMiniSecret } from '@polkadot/util-crypto'
+import { mnemonicToMiniSecret } from '@polkadot/util-crypto'
 import { Keyring } from '@polkadot/api'
 import AttesterChain from './Attester.chain'
 import { actorSetupChain } from '../testSetup/testSetup.chain'
@@ -32,7 +32,7 @@ describe('Test Attester on chain', () => {
   it('Should generate correct keypair for signature type sr25519', async () => {
     const mnemonic = AttesterChain.generateMnemonic()
     const miniSecretSeed = mnemonicToMiniSecret(mnemonic)
-    const seed = mnemonicToSeed(mnemonic)
+    const seed = mnemonicToMiniSecret(mnemonic)
     const { address: attesterAddress } = await AttesterChain.buildFromMnemonic(
       new AttesterPublicKey('pb'),
       new AttesterPrivateKey('pk'),
@@ -57,14 +57,14 @@ describe('Test Attester on chain', () => {
     }).addFromMnemonic(mnemonic)
     expect(attesterAddress).toBe(fromMiniSecret)
     expect(attesterAddress).toBe(fromMnemonic)
-    expect(attesterAddress).not.toBe(fromSeed)
+    expect(attesterAddress).toBe(fromSeed)
     expect(attesterAddress).toBe(attesterAddressFromURI)
   }, 10000)
   // NOTE: if this test fails after updating @polkadot packages, we should adjust Attester.chain.ts
   // see issue https://github.com/polkadot-js/common/blob/d889c71056158df72b34b994506d062c2e731cc0/packages/keyring/src/keyring.ts#L174
   it('Should generate correct keypair for signature type ed25519', async () => {
     const mnemonic = AttesterChain.generateMnemonic()
-    const seed = mnemonicToSeed(mnemonic)
+    const seed = mnemonicToMiniSecret(mnemonic)
     const { address: attesterAddress } = await AttesterChain.buildFromMnemonic(
       new AttesterPublicKey('pb'),
       new AttesterPrivateKey('pk'),
@@ -87,8 +87,8 @@ describe('Test Attester on chain', () => {
       type: 'ed25519',
     }).addFromMnemonic(mnemonic)
     expect(attesterAddress).toBe(fromSeed)
-    expect(attesterAddress).not.toBe(fromMnemonic)
-    expect(attesterAddress).not.toBe(attesterAddressFromURI)
+    expect(attesterAddress).toBe(fromMnemonic)
+    expect(attesterAddress).toBe(attesterAddressFromURI)
     expect(attesterAddressFromURI).toBe(fromMnemonic)
   }, 10000)
   it('Should generate new mnemonic with every call', () => {
