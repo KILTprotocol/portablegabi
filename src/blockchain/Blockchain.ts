@@ -16,7 +16,7 @@ import Accumulator from '../attestation/Accumulator'
  * import portablegabi from '@kiltprotocol/portablegabi'
  * // depending on the blockchain, the module where the accumulator is store might be called differently.
  * // The name can be configured using the 'pgabiModName' option.
- * const bc = await portablegabi.connect({ pgabiModName: 'portablegabi' })
+ * const bc = await portablegabi.connect({ pgabiModName: 'portablegabiPallet' })
  * const acc = await bc.getAccumulatorCount(addr)
  * ```
  */
