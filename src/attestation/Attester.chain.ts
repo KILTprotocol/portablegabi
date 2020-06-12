@@ -92,7 +92,6 @@ export default class AttesterChain extends Attester implements IAttesterChain {
       u8aToHex(mnemonicToMiniSecret(mnemonic))
     )
     return new AttesterChain(publicKey, privateKey, keyringPair)
-    return this.buildFromURI(publicKey, privateKey, mnemonic, type)
   }
 
   /**
