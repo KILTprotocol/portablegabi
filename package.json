@@ -1,6 +1,6 @@
 {
   "name": "@kiltprotocol/portablegabi",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Typescript API and WASM wrapper of Go library Gabi enabling anonymous credentials",
   "main": "./build/index.js",
   "typings": "./build/index.d.ts",
@@ -58,11 +58,11 @@
     "url": "git+https://github.com/KILTprotocol/portablegabi.git"
   },
   "dependencies": {
-    "@polkadot/api": "^1.18.1",
-    "@polkadot/keyring": "^2.13.1",
-    "@polkadot/rpc-provider": "^1.18.1",
-    "@polkadot/types": "^1.18.1",
-    "@polkadot/util": "^2.13.1",
-    "@polkadot/util-crypto": "^2.13.1"
+    "@polkadot/api": "^1.19.1",
+    "@polkadot/keyring": "^2.14.1",
+    "@polkadot/rpc-provider": "^1.19.1",
+    "@polkadot/types": "^1.19.1",
+    "@polkadot/util": "^2.14.1",
+    "@polkadot/util-crypto": "^2.14.1"
   }
 }
