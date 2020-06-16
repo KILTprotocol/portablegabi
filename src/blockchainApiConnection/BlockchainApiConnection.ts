@@ -19,7 +19,10 @@ export interface IPortableGabiApiOptions extends ApiOptions {
 
 const DEFAULT_WS_ADDRESS = 'ws://127.0.0.1:9944'
 const DEFAULT_MOD_NAME: PgabiModName = 'portablegabi'
-const DEFAULT_TYPES: RegistryTypes = {}
+const DEFAULT_TYPES: RegistryTypes = {
+  Address: 'AccountId',
+  LookupSource: 'AccountId',
+}
 const DEFAULT_PARAMS: IPortableGabiApiOptions = {
   host: DEFAULT_WS_ADDRESS,
   types: DEFAULT_TYPES,

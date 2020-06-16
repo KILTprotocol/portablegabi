@@ -72,7 +72,7 @@ describe('Test claimer creation', () => {
     )
     expect(claimerWithoutPass).toHaveProperty(
       'secret',
-      '{"MasterSecret":"9o2iTwz6wx0FtPJ7BqQCVrF/vvVxX0GFr5kPBQ6R9XM="}'
+      '{"MasterSecret":"q6Ei+TL3Tdd6YSGQol8J2fqWMnhPiBr81OhuUdRC3bU="}'
     )
     expect(claimerWithoutPass).not.toStrictEqual(claimer)
     const claimerWithPass = await Claimer.buildFromMnemonic(
@@ -81,7 +81,7 @@ describe('Test claimer creation', () => {
     )
     expect(claimerWithPass).toHaveProperty(
       'secret',
-      '{"MasterSecret":"2VhYuA7pIoHpPFzzerBUULPDRjT2vqthdNIhlByFcgg="}'
+      '{"MasterSecret":"kAQp95GiILur3Nne1KGengwhhioS9ycwRiW5xDThano="}'
     )
     expect(claimerWithPass).not.toStrictEqual(claimer)
     expect(claimerWithPass).not.toStrictEqual(claimerWithoutPass)

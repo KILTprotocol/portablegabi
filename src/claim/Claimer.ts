@@ -1,6 +1,6 @@
-import toSeed from '@polkadot/util-crypto/mnemonic/toSeed'
 import { u8aToHex } from '@polkadot/util'
 import validate from '@polkadot/util-crypto/mnemonic/validate'
+import { mnemonicToMiniSecret } from '@polkadot/util-crypto'
 import IClaimer, {
   AttestationRequest,
   ClaimerAttestationSession,
@@ -70,7 +70,7 @@ export default class Claimer implements IClaimer {
     if (!validate(mnemonic)) {
       throw new Error('Invalid mnemonic')
     }
-    const seed = toSeed(mnemonic, password)
+    const seed = mnemonicToMiniSecret(mnemonic, password)
     return this.buildFromSeed(seed, keyLength)
   }
 

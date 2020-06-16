@@ -38,7 +38,7 @@ export async function actorProcessChain({
     new AttesterPublicKey(attesterPubKey),
     new AttesterPrivateKey(attesterPrivKey),
     attesterURI,
-    'ed25519'
+    'sr25519'
   )
 
   // get accumulator from chain
@@ -52,9 +52,9 @@ export async function actorProcessChain({
     accumulator = await attester.createAccumulator()
 
     // check for missing balance before updating accumulator
-    const balance = await blockchain.api.query.balances.freeBalance(
-      attester.address
-    )
+    const {
+      data: { free: balance },
+    } = await blockchain.api.query.system.account(attester.address)
     if (balance.isEmpty) {
       throw new Error(
         `Missing balance for address "${attester.address}" with URI/mnemonic ${attesterURI}`

@@ -17,13 +17,13 @@ let alice: Attester
 let bob: Attester
 
 beforeAll(async () => {
-  alice = await Attester.buildFromURI(pubKey, privKey, '//Alice', 'ed25519')
-  bob = await Attester.buildFromURI(pubKey2, privKey2, '//Bob', 'ed25519')
+  alice = await Attester.buildFromURI(pubKey, privKey, '//Alice', 'sr25519')
+  bob = await Attester.buildFromURI(pubKey2, privKey2, '//Bob', 'sr25519')
 })
 
 describe('When I have a fresh chain with a Portablegabi pallet...', () => {
   it('it connects', async () => {
-    chain = await getCached({ pgabiModName: 'portablegabi' })
+    chain = await getCached({ pgabiModName: 'portablegabiPallet' })
     expect(chain.api.isReady).toBeTruthy()
   })
 
@@ -40,7 +40,7 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
       ])
       expect(count).toEqual<number>(baseline + 1)
       expect(accChain).toEqual<Accumulator>(accumulator)
-    }, 15_000)
+    }, 20_000)
 
     it('is possible for someone else to store an accumulator at the same time', async () => {
       const baseline = await chain.getAccumulatorCount(bob.address)
@@ -144,7 +144,7 @@ describe('When I have a fresh chain with a Portablegabi pallet...', () => {
   })
 
   it('it disconnects', async () => {
-    chain = await getCached({ pgabiModName: 'portablegabi' })
+    chain = await getCached({ pgabiModName: 'portablegabiPallet' })
     await chain.api.disconnect()
     expect(chain.api.isReady).resolves.toStrictEqual({})
   })
