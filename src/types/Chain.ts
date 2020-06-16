@@ -1,10 +1,5 @@
-import { Codec, AnyFunction } from '@polkadot/types/types'
-import {
-  SubmittableExtrinsic,
-  MethodResult,
-  StorageEntryBase,
-  ApiTypes,
-} from '@polkadot/api/types'
+import { Codec } from '@polkadot/types/types'
+import { SubmittableExtrinsic, AugmentedQuery } from '@polkadot/api/types'
 import { ApiPromise } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
 import Accumulator from '../attestation/Accumulator'
@@ -18,12 +13,6 @@ export type PgabiModName = 'portablegabi' | 'portablegabiPallet' | string
  * The default key type for the attester identities.
  */
 export const DEFAULT_KEY_TYPE = 'sr25519'
-
-/** @internal */
-export type AugmentedQuery<
-  ApiType extends ApiTypes,
-  F extends AnyFunction
-> = MethodResult<ApiType, F> & StorageEntryBase<ApiType, F>
 
 /** @internal */
 export interface IPortablegabiApi<T extends PgabiModName> {
