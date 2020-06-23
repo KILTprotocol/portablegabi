@@ -480,7 +480,7 @@
     memoizee "^0.4.14"
     rxjs "^6.5.5"
 
-"@polkadot/api@1.20.1", "@polkadot/api@^1.10.1":
+"@polkadot/api@1.20.1", "@polkadot/api@^1.20.1":
   version "1.20.1"
   resolved "https://registry.yarnpkg.com/@polkadot/api/-/api-1.20.1.tgz#0700f5ffb1a0d768642cba3db863c631a71e4ce5"
   integrity sha512-NvUpAOo4zur2wqR01monHfhA4gU+jevlMVquZrq2F+yLKPrqXFVofZ/lxIX3BW7A/X4H8T05G3a7ZRGSD/IjmQ==
@@ -533,7 +533,7 @@
     memoizee "^0.4.14"
     rxjs "^6.5.5"
 
-"@polkadot/rpc-provider@1.20.1", "@polkadot/rpc-provider@^1.10.1":
+"@polkadot/rpc-provider@1.20.1", "@polkadot/rpc-provider@^1.20.1":
   version "1.20.1"
   resolved "https://registry.yarnpkg.com/@polkadot/rpc-provider/-/rpc-provider-1.20.1.tgz#5019bcfee266921d4c4b9d090fe8971a2496be99"
   integrity sha512-OTenT4DX9/P63Hwsm2cccSRtHT2gY4MMACqXOUpAwLuPqeTcI07jpHbRbRuWYkRtPWCHwTORfyxzp6B6onkQSw==
@@ -558,7 +558,7 @@
     "@polkadot/util" "^2.15.1"
     bn.js "^5.1.2"
 
-"@polkadot/types@1.20.1", "@polkadot/types@^1.10.1":
+"@polkadot/types@1.20.1", "@polkadot/types@^1.20.1":
   version "1.20.1"
   resolved "https://registry.yarnpkg.com/@polkadot/types/-/types-1.20.1.tgz#f2b5d3be3038b5efd7545dad5889dbc9f8bc0166"
   integrity sha512-AHsfTZ4ejUDISMVMtyuRU8/r+cpo/dy/emvbD0ZKMZ4F7igqFV9aADzHVPDGO93Qm0jHJlT8pOCN+OoDGm6MAg==
