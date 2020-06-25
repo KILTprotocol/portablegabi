@@ -4,6 +4,7 @@ import { SubmittableExtrinsic } from '@polkadot/api/types'
 import Accumulator from '../attestation/Accumulator'
 import WasmData from './Wasm'
 import { AttestationRequest } from './Claim'
+import { wasmStringify } from '../wasm/wasm_exec_wrapper'
 
 export type KeyLength = 1024 | 2048 | 4096
 export const DEFAULT_MAX_ATTRIBUTES = 70
@@ -88,7 +89,7 @@ export class Witness extends WasmData {
  */
 export class Attestation extends WasmData {
   public parse(): IIssueAttestation {
-    return JSON.parse(this.toString())
+    return JSON.parse(wasmStringify(this))
   }
 }
 

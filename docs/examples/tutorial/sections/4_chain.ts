@@ -39,8 +39,8 @@ async function exec(): Promise<void> {
   console.log('\t Waiting for next block to have the accumulator on the chain')
   console.log(
     'Latest accumulator === accPreRevo? Expected true, received',
-    (await chain.getLatestAccumulator(attester.address)).valueOf() ===
-      accPreRevo.valueOf()
+    (await chain.getLatestAccumulator(attester.address)).toString() ===
+      accPreRevo.toString()
   )
 
   /** (2) Attestation phase */
@@ -110,8 +110,8 @@ async function exec(): Promise<void> {
   )
   console.log(
     'Latest accumulator === accPostRevo? Expected true, received',
-    (await chain.getLatestAccumulator(attester.address)).valueOf() ===
-      accPostRevo.valueOf()
+    (await chain.getLatestAccumulator(attester.address)).toString() ===
+      accPostRevo.toString()
   )
 
   /** (4) Verification phase */

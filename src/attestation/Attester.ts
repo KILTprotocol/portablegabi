@@ -1,5 +1,5 @@
 import { AttestationRequest } from '../types/Claim'
-import goWasmExec from '../wasm/wasm_exec_wrapper'
+import goWasmExec, { wasmStringify } from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
 import Accumulator from './Accumulator'
 import IAttester, {
@@ -110,7 +110,7 @@ export default class Attester implements IAttester {
   public async startAttestation(): ReturnType<IAttester['startAttestation']> {
     const { message, session } = await goWasmExec<IGabiMsgSession>(
       WasmHooks.startAttestationSession,
-      [this.privateKey.toString(), this.publicKey.toString()]
+      [wasmStringify(this.privateKey), wasmStringify(this.publicKey)]
     )
     return {
       message: new InitiateAttestationRequest(message),
@@ -126,8 +126,8 @@ export default class Attester implements IAttester {
   public async createAccumulator(): ReturnType<IAttester['createAccumulator']> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.createAccumulator, [
-        this.privateKey.toString(),
-        this.publicKey.toString(),
+        wasmStringify(this.privateKey),
+        wasmStringify(this.publicKey),
       ])
     )
   }
@@ -154,11 +154,11 @@ export default class Attester implements IAttester {
       attestation: string
       witness: string
     }>(WasmHooks.issueAttestation, [
-      this.privateKey.toString(),
-      this.publicKey.toString(),
-      attestationSession.toString(),
-      attestationRequest.toString(),
-      accumulator.toString(),
+      wasmStringify(this.privateKey),
+      wasmStringify(this.publicKey),
+      wasmStringify(attestationSession),
+      wasmStringify(attestationRequest),
+      wasmStringify(accumulator),
     ])
     return {
       attestation: new Attestation(attestation),
@@ -183,10 +183,11 @@ export default class Attester implements IAttester {
   }): ReturnType<IAttester['revokeAttestation']> {
     return new Accumulator(
       await goWasmExec<string>(WasmHooks.revokeAttestation, [
-        this.privateKey.toString(),
-        this.publicKey.toString(),
-        accumulator.toString(),
-        JSON.stringify((witnesses || []).map((witness) => witness.parse())),
+        wasmStringify(this.privateKey),
+        wasmStringify(this.publicKey),
+        wasmStringify(accumulator),
+        `[${(witnesses || []).join(',')}]`,
+        // JSON.stringify((witnesses || []).map((witness) => witness.parse())),
       ])
     )
   }

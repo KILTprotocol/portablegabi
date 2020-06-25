@@ -1,5 +1,5 @@
 import { AttesterPublicKey } from '../types/Attestation'
-import goWasmExec from '../wasm/wasm_exec_wrapper'
+import goWasmExec, { wasmStringify } from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
 import WasmData from '../types/Wasm'
 
@@ -16,7 +16,7 @@ export default class Accumulator extends WasmData {
   public async getDate(attesterPublicKey: AttesterPublicKey): Promise<Date> {
     const timestamp = await goWasmExec<string>(
       WasmHooks.getAccumulatorTimestamp,
-      [attesterPublicKey.toString(), this.toString()]
+      [wasmStringify(attesterPublicKey), this.toString()]
     )
     return new Date(JSON.parse(timestamp))
   }
