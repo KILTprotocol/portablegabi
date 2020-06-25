@@ -1,7 +1,8 @@
-import goWasmExec, { goWasmClose } from './wasm_exec_wrapper'
+import goWasmExec, { goWasmClose, wasmStringify } from './wasm_exec_wrapper'
 import WasmHooks from './WasmHooks'
 import { Spy } from '../testSetup/testTypes'
 import { WasmError } from './wasm_exec'
+import WasmData from '../types/Wasm'
 
 describe('Test WASM wrapper', () => {
   let spy: Spy<''>
@@ -53,3 +54,20 @@ it('Should exit on process when closing WASM with non empty event queue', async 
   await expect(goWasmClose()).resolves.toBe(1)
   expect(spy.exit).toHaveBeenCalledWith(0)
 }, 10_000)
+it('Should stringify any argument for wasm usage', () => {
+  const obj = { x: '1' }
+  const str = JSON.stringify(obj)
+  const wasmData = new WasmData(str)
+  // the case we want
+  expect(wasmStringify(wasmData)).toBe(str)
+  // should return the the serialized object
+  expect(wasmStringify(str)).toBe(str)
+  // should return the serialized object
+  expect(wasmStringify(obj)).toBe(str)
+  // this happens when deserializing a serialized instance of WasmData
+  expect(wasmStringify({ wasmData: str })).toBe(str)
+  // edge case of above
+  expect(wasmStringify({ wasmData: obj })).toBe(
+    JSON.stringify({ wasmData: obj })
+  )
+})
