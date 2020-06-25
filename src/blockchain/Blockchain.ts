@@ -6,6 +6,7 @@ import { SubmittableExtrinsic } from '@polkadot/api/types'
 import BlockchainError from './BlockchainError'
 import { IBlockchainApi, IPortablegabiApi, PgabiModName } from '../types/Chain'
 import Accumulator from '../attestation/Accumulator'
+import { wasmStringify } from '../wasm/wasm_exec_wrapper'
 
 /**
  * The Blockchain class provides an interface for querying and creating transactions on chain.
@@ -181,7 +182,9 @@ export default class Blockchain implements IBlockchainApi {
   public buildUpdateAccumulatorTX(
     accumulator: Accumulator
   ): SubmittableExtrinsic<'promise'> {
-    return this.api.tx[this.chainmod].updateAccumulator(accumulator.toString())
+    return this.api.tx[this.chainmod].updateAccumulator(
+      wasmStringify(accumulator)
+    )
   }
 
   /**

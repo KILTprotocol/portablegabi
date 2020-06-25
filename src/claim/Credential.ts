@@ -1,4 +1,4 @@
-import goWasmExec from '../wasm/wasm_exec_wrapper'
+import goWasmExec, { wasmStringify } from '../wasm/wasm_exec_wrapper'
 import WasmHooks from '../wasm/WasmHooks'
 import Accumulator from '../attestation/Accumulator'
 import { AttesterPublicKey } from '../types/Attestation'
@@ -30,8 +30,8 @@ export default class Credential extends WasmData {
     return new Credential(
       await goWasmExec<string>(WasmHooks.updateCredential, [
         this.toString(),
-        accumulator.toString(),
-        attesterPubKey.toString(),
+        wasmStringify(accumulator),
+        wasmStringify(attesterPubKey),
       ])
     )
   }
@@ -56,7 +56,7 @@ export default class Credential extends WasmData {
       await goWasmExec<string>(WasmHooks.updateAllCredential, [
         this.toString(),
         `[${accumulators.join(',')}]`,
-        attesterPubKey.toString(),
+        wasmStringify(attesterPubKey),
       ])
     )
   }
@@ -134,6 +134,6 @@ export default class Credential extends WasmData {
   }
 
   public parse<T>(): ICredential<T> {
-    return JSON.parse(this.toString())
+    return JSON.parse(wasmStringify(this))
   }
 }

@@ -2,18 +2,19 @@
 /* eslint-disable camelcase */
 /* eslint-disable max-classes-per-file */
 
-import WasmData from './Wasm'
+import Credential from '../claim/Credential'
+import { wasmStringify } from '../wasm/wasm_exec_wrapper'
 import {
+  Attestation,
+  AttesterPublicKey,
   IIssueAttestation,
   InitiateAttestationRequest,
-  AttesterPublicKey,
-  Attestation,
 } from './Attestation'
-import Credential from '../claim/Credential'
 import {
-  PresentationRequest,
   CombinedPresentationRequest,
+  PresentationRequest,
 } from './Verification'
+import WasmData from './Wasm'
 
 export default interface IClaimer {
   requestAttestation: ({
@@ -163,7 +164,7 @@ export class ClaimerAttestationSession extends WasmData {
  */
 export class Presentation extends WasmData {
   public parse(): IProof {
-    return JSON.parse(this.toString())
+    return JSON.parse(wasmStringify(this))
   }
 }
 

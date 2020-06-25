@@ -50,10 +50,10 @@ export interface IGoWasm {
  * A wrapper for data received from WASM callbacks.
  */
 export default class WasmData {
-  private data: string
+  private wasmData: string
 
-  public constructor(data: string) {
-    this.data = data
+  public constructor(wasmData: string) {
+    this.wasmData = wasmData
   }
 
   /**
@@ -62,7 +62,7 @@ export default class WasmData {
    * @returns An object of the serialized data string.
    */
   public parse(): { [key: string]: any } {
-    return JSON.parse(this.data)
+    return JSON.parse(this.wasmData)
   }
 
   /**
@@ -71,6 +71,6 @@ export default class WasmData {
    * @returns A string of the WASM data which can be serialized.
    */
   public toString(): string {
-    return this.data
+    return this.wasmData
   }
 }

@@ -21,7 +21,7 @@ import {
   CombinedPresentationRequest,
   PresentationRequest,
 } from '../types/Verification'
-import goWasmExec from '../wasm/wasm_exec_wrapper'
+import goWasmExec, { wasmStringify } from '../wasm/wasm_exec_wrapper'
 import Credential from './Credential'
 
 /**
@@ -139,8 +139,8 @@ export default class Claimer implements IClaimer {
       [
         this.secret,
         JSON.stringify(claim),
-        startAttestationMsg.toString(),
-        attesterPubKey.toString(),
+        wasmStringify(startAttestationMsg),
+        wasmStringify(attesterPubKey),
       ]
     )
     return {
@@ -167,8 +167,8 @@ export default class Claimer implements IClaimer {
     return new Credential(
       await goWasmExec<string>(WasmHooks.buildCredential, [
         this.secret,
-        claimerSession.toString(),
-        attestation.toString(),
+        wasmStringify(claimerSession),
+        wasmStringify(attestation),
       ])
     )
   }
@@ -195,9 +195,9 @@ export default class Claimer implements IClaimer {
     return new Presentation(
       await goWasmExec<string>(WasmHooks.buildPresentation, [
         this.secret,
-        credential.toString(),
-        presentationReq.toString(),
-        attesterPubKey.toString(),
+        wasmStringify(credential),
+        wasmStringify(presentationReq),
+        wasmStringify(attesterPubKey),
       ])
     )
   }
@@ -227,7 +227,7 @@ export default class Claimer implements IClaimer {
       await goWasmExec<string>(WasmHooks.buildCombinedPresentation, [
         this.secret,
         `[${credentials.join(',')}]`,
-        combinedPresentationReq.toString(),
+        wasmStringify(combinedPresentationReq),
         `[${attesterPubKeys.join(',')}]`,
       ])
     )
