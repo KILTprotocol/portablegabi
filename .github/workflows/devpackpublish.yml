@@ -1,0 +1,77 @@
+name: Publish package to github packages
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    name: Go Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.14
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+
+      - shell: bash
+        run: |
+          export GOPATH=$HOME/go
+          export GOBIN=$(go env GOPATH)/bin
+          export PATH=$PATH:$GOPATH
+          export PATH=$PATH:$GOBIN
+          mkdir -p $GOPATH/pkg
+          mkdir -p $GOBIN
+          mkdir -p $GOPATH/src/github.com/$GITHUB_REPOSITORY
+          mv ./* $GOPATH/src/github.com/$GITHUB_REPOSITORY
+          cd $GOPATH/src/github.com/$GITHUB_REPOSITORY/go-wasm
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              dep ensure
+          fi
+          go test -v ./...
+          env GOOS=js GOARCH=wasm go build -o ../build/wasm/main.wasm main.go
+          realpath ../build/wasm/main.wasm
+
+      - name: Upload WASM
+        uses: actions/upload-artifact@v1
+        with:
+          name: wasm
+          path: ../../../go/src/github.com/${{ github.repository }}/build/wasm/main.wasm
+
+  publish-ghp:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 10
+          registry-url: https://npm.pkg.github.com
+
+      - name: Download wasm for Go Tests
+        uses: actions/download-artifact@v1
+        with:
+          name: wasm
+
+      - name: yarn install, build, test
+        run: |
+          mkdir -p build
+          ls
+          mv wasm build/wasm
+          yarn install --frozen-lockfile
+          yarn lint
+          yarn build:typescript
+          yarn testf
+
+        env:
+          CI: true
+
+      - run: yarn version --no-git-tag-version --prerelease --preid $(git rev-parse --short HEAD)
+      - run: yarn publish --tag dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
