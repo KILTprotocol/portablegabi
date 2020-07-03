@@ -23,11 +23,11 @@ if (typeof global !== 'undefined') {
   )
 }
 
-if (!global.require && typeof require !== 'undefined') {
+if (!isBrowser && !global.require && typeof require !== 'undefined') {
   global.require = require
 }
 
-if (!global.fs && global.require) {
+if (!isBrowser && !global.fs && global.require) {
   global.fs = require('fs')
 }
 
