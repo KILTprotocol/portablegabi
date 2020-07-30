@@ -5,6 +5,8 @@
   "main": "./build/index.js",
   "typings": "./build/index.d.ts",
   "scripts": {
+    "chain:start": "docker run -d -p 9944:9944 kiltprotocol/portablegabi-node:latest",
+    "chain:stop": "docker stop $(docker ps -f ancestor=kiltprotocol/portablegabi-node -q)",
     "_comment": "NODE_ENV=custom is set because otherwise tests won't compile (see https://github.com/polkadot-js/common/issues/321)",
     "test": "yarn build && export NODE_ENV=custom; jest --group=-integration --coverage",
     "test:ci": "yarn test --ci",
@@ -12,6 +14,11 @@
     "testf -c": "yarn test quick",
     "testWatch": "jest --watch --coverage --group=-integration",
     "test:integration": "export NODE_ENV=custom;jest --bail --runInBand --group=integration",
+    "test:integration:detached": "yarn chain:start && yarn test:integration && yarn chain:stop",
+    "test:examples_offchain": "yarn ts-node docs/examples/exampleSingle.ts && yarn ts-node docs/examples/exampleCombined.ts",
+    "test:examples_onchain": "yarn ts-node docs/examples/exampleSingle.chain.ts && yarn ts-node docs/examples/exampleCombined.chain.ts",
+    "test:examples_onchain:detached": "yarn chain:start && yarn test:examples_onchain && yarn chain:stop",
+    "test:tutorial": "yarn ts-node docs/examples/tutorial/tutorial.ts",
     "lint": "eslint 'src/**'",
     "lint:fix": "yarn lint --fix",
     "style": "prettier -l src/**/*.ts",
@@ -32,15 +39,15 @@
   },
   "homepage": "https://github.com/KILTprotocol/portablegabi#readme",
   "devDependencies": {
-    "@types/jest": "^26.0.4",
-    "@types/node": "^14.0.20",
-    "@typescript-eslint/eslint-plugin": "^3.6.0",
-    "@typescript-eslint/parser": "^3.6.0",
-    "eslint": "^7.4.0",
+    "@types/jest": "^26.0.7",
+    "@types/node": "^14.0.27",
+    "@typescript-eslint/eslint-plugin": "^3.7.1",
+    "@typescript-eslint/parser": "^3.7.1",
+    "eslint": "^7.5.0",
     "eslint-config-airbnb-base": "14.2.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jsdoc": "^29.1.2",
+    "eslint-plugin-jsdoc": "^30.0.3",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-tsc": "^1.2.0",
     "jest": "^26.1.0",
@@ -48,21 +55,21 @@
     "jest-runner": "^26.1.0",
     "jest-runner-groups": "^2.0.1",
     "prettier": "^2.0.5",
-    "ts-jest": "^26.1.1",
+    "ts-jest": "^26.1.4",
     "ts-node": "^8.10.1",
     "typedoc": "^0.17.8",
-    "typescript": "^3.9.6"
+    "typescript": "^3.9.7"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KILTprotocol/portablegabi.git"
   },
   "dependencies": {
-    "@polkadot/api": "^1.23.1",
-    "@polkadot/keyring": "^2.17.1",
-    "@polkadot/rpc-provider": "^1.23.1",
-    "@polkadot/types": "^1.23.1",
-    "@polkadot/util": "^2.17.1",
-    "@polkadot/util-crypto": "^2.17.1"
+    "@polkadot/api": "^1.26.1",
+    "@polkadot/keyring": "^3.0.1",
+    "@polkadot/rpc-provider": "^1.26.1",
+    "@polkadot/types": "^1.26.1",
+    "@polkadot/util": "^3.0.1",
+    "@polkadot/util-crypto": "^3.0.1"
   }
 }
