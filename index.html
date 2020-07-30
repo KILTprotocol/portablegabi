@@ -3,8 +3,8 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>@kiltprotocol/portablegabi - v0.3.8</title>
-	<meta name="description" content="Documentation for @kiltprotocol/portablegabi - v0.3.8">
+	<title>@kiltprotocol/portablegabi - v0.3.9</title>
+	<meta name="description" content="Documentation for @kiltprotocol/portablegabi - v0.3.9">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="assets/css/main.css">
 </head>
@@ -22,7 +22,7 @@
 						<li class="state loading">Preparing search index...</li>
 						<li class="state failure">The search index is not available</li>
 					</ul>
-					<a href="index.html" class="title">@kiltprotocol/portablegabi - v0.3.8</a>
+					<a href="index.html" class="title">@kiltprotocol/portablegabi - v0.3.9</a>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -52,7 +52,7 @@
 					<a href="globals.html">Globals</a>
 				</li>
 			</ul>
-			<h1>@kiltprotocol/portablegabi - v0.3.8</h1>
+			<h1>@kiltprotocol/portablegabi - v0.3.9</h1>
 		</div>
 	</div>
 </header>
@@ -104,17 +104,17 @@
 					<h2>Example</h2>
 				</a>
 				<p>Please see the <a href="docs/examples/">example files</a> for a showcase of on- and off-chain usage with single or combined credentials.</p>
-				<pre><code class="language-typescript"><span class="hljs-keyword">const</span> portablegabi = <span class="hljs-built_in">require</span>(<span class="hljs-string">'@kiltprotocol/portablegabi'</span>)
+				<pre><code class="language-typescript"><span class="hljs-keyword">const</span> portablegabi = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;@kiltprotocol/portablegabi&#x27;</span>)
 <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">exec</span>(<span class="hljs-params"></span>) </span>{
   <span class="hljs-comment">/* (1) Claimer Setup */</span>
 
   <span class="hljs-comment">// (1.1) Example claim</span>
   <span class="hljs-keyword">const</span> claim = {
     contents: {
-      name: <span class="hljs-string">'Jasper'</span>,
-      age: <span class="hljs-string">'42'</span>,
-      city: <span class="hljs-string">'Berlin'</span>,
-      id: <span class="hljs-string">'ed638ndke92902n29'</span>,
+      name: <span class="hljs-string">&#x27;Jasper&#x27;</span>,
+      age: <span class="hljs-string">&#x27;42&#x27;</span>,
+      city: <span class="hljs-string">&#x27;Berlin&#x27;</span>,
+      id: <span class="hljs-string">&#x27;ed638ndke92902n29&#x27;</span>,
     },
   }
 
@@ -128,8 +128,8 @@
 
   <span class="hljs-comment">// (2.1.b) Alternatively, use a pre-compiled key pair from /docs/examples/exampleReadme.js</span>
   <span class="hljs-comment">// const attester = new portablegabi.Attester(pubKey, privKey);</span>
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Public key:\n\t'</span>, attester.privateKey.toString())
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Private key:\n\t'</span>, attester.privateKey.toString())
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Public key:\n\t&#x27;</span>, attester.privateKey.toString())
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Private key:\n\t&#x27;</span>, attester.privateKey.toString())
 
   <span class="hljs-comment">// (2.1) Create accumulator (for revocation)</span>
   <span class="hljs-keyword">const</span> accumulator = <span class="hljs-keyword">await</span> attester.createAccumulator()
@@ -151,26 +151,26 @@
     claim,
     attesterPubKey: attester.publicKey,
   })
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Claimer requests attestation:\n\t'</span>, attestationRequest)
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Claimer requests attestation:\n\t&#x27;</span>, attestationRequest)
 
   <span class="hljs-comment">// (3.3) Attester issues requested attestation and generates a witness which can be used to revoke the attestation</span>
   <span class="hljs-comment">// the attester might want to inspect the attributes he is about to sign</span>
   <span class="hljs-keyword">const</span> checkClaim = attestationRequest.getClaim()
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Attester checks claim :\n\t'</span>, checkClaim)
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Attester checks claim :\n\t&#x27;</span>, checkClaim)
 
   <span class="hljs-keyword">const</span> { attestation, witness } = <span class="hljs-keyword">await</span> attester.issueAttestation({
     attestationSession,
     attestationRequest,
     accumulator,
   })
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Attester issues attestion:\n\t'</span>, attestation)
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Attester issues attestion:\n\t&#x27;</span>, attestation)
 
-  <span class="hljs-comment">// (3.4) Claimer builds credential from attester's signature</span>
+  <span class="hljs-comment">// (3.4) Claimer builds credential from attester&#x27;s signature</span>
   <span class="hljs-keyword">const</span> credential = <span class="hljs-keyword">await</span> claimer.buildCredential({
     claimerSession,
     attestation,
   })
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Claimer builds credential:\n\t'</span>, credential)
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Claimer builds credential:\n\t&#x27;</span>, credential)
 
   <span class="hljs-comment">/* (4) Verification */</span>
 
@@ -179,10 +179,10 @@
     session: verifierSession,
     message: presentationReq,
   } = <span class="hljs-keyword">await</span> portablegabi.Verifier.requestPresentation({
-    requestedAttributes: [<span class="hljs-string">'contents.age'</span>, <span class="hljs-string">'contents.city'</span>],
+    requestedAttributes: [<span class="hljs-string">&#x27;contents.age&#x27;</span>, <span class="hljs-string">&#x27;contents.city&#x27;</span>],
     reqUpdatedAfter: <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(), <span class="hljs-comment">// request that the nonrevocation proof contains an accumulator which was created after this date or that the accumulator is the newest available</span>
   })
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Verifier starts verification session:\n\t'</span>, presentationReq)
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Verifier starts verification session:\n\t&#x27;</span>, presentationReq)
 
   <span class="hljs-comment">// (4.2) Claimer reveals attributes</span>
   <span class="hljs-keyword">const</span> proof = <span class="hljs-keyword">await</span> claimer.buildPresentation({
@@ -190,7 +190,7 @@
     presentationReq,
     attesterPubKey: attester.publicKey,
   })
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Claimer builds zk-proof on requested attributes:\n\t'</span>, proof)
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Claimer builds zk-proof on requested attributes:\n\t&#x27;</span>, proof)
 
   <span class="hljs-comment">// (4.3) Verifier verifies attributes</span>
   <span class="hljs-keyword">const</span> {
@@ -202,7 +202,7 @@
     attesterPubKey: attester.publicKey,
     latestAccumulator: accumulator, <span class="hljs-comment">// the newest available accumulator</span>
   })
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Verifier verifiers proof:\n\t'</span>, verified, verifiedClaim)
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Verifier verifiers proof:\n\t&#x27;</span>, verified, verifiedClaim)
 
   <span class="hljs-comment">/* (5) Revocation */</span>
 
@@ -219,8 +219,8 @@
       accumulator: accumulatorAfterRevocation,
     })
     .catch(<span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
-      <span class="hljs-keyword">if</span> (e.message.includes(<span class="hljs-string">'revoked'</span>)) {
-        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Credential was revoked and cannot be updated'</span>)
+      <span class="hljs-keyword">if</span> (e.message.includes(<span class="hljs-string">&#x27;revoked&#x27;</span>)) {
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;Credential was revoked and cannot be updated&#x27;</span>)
       } <span class="hljs-keyword">else</span> <span class="hljs-keyword">throw</span> e
     })
 }
@@ -235,7 +235,7 @@ exec()</code></pre>
 				<a href="#go-version-below-1141" id="go-version-below-1141" style="color: inherit; text-decoration: none;">
 					<h2>Go version below 1.14.1</h2>
 				</a>
-				<pre><code class="language-bash">  [LinkError: WebAssembly Instantiation: Import <span class="hljs-comment">#3 module="go" function="runtime.nanotime" error: function import requires a callable]</span>
+				<pre><code class="language-bash">  [LinkError: WebAssembly Instantiation: Import <span class="hljs-comment">#3 module=&quot;go&quot; function=&quot;runtime.nanotime&quot; error: function import requires a callable]</span>
   (node:6909) UnhandledPromiseRejectionWarning: Error: Function genKey missing <span class="hljs-keyword">in</span> WASM</code></pre>
 				<p>Please check your Go version, it should be at least <code>1.14.1</code>. If this is the case for you, and you still encounter this problem without having modified our code, <a href="https://github.com/KILTprotocol/portablegabi/issues/new">please open a ticket</a>.</p>
 				<a href="#limitations" id="limitations" style="color: inherit; text-decoration: none;">
