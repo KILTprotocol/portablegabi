@@ -65,11 +65,11 @@
     "url": "git+https://github.com/KILTprotocol/portablegabi.git"
   },
   "dependencies": {
-    "@polkadot/api": "^1.26.1",
-    "@polkadot/keyring": "^3.0.1",
-    "@polkadot/rpc-provider": "^1.26.1",
-    "@polkadot/types": "^1.26.1",
-    "@polkadot/util": "^3.0.1",
-    "@polkadot/util-crypto": "^3.0.1"
+    "@polkadot/api": "^2.0.1",
+    "@polkadot/keyring": "^3.5.1",
+    "@polkadot/rpc-provider": "^2.0.1",
+    "@polkadot/types": "^2.0.1",
+    "@polkadot/util": "^3.5.1",
+    "@polkadot/util-crypto": "^3.5.1"
   }
 }
