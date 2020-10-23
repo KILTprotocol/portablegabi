@@ -131,13 +131,11 @@ jobs:
           ls
           mv wasm build/wasm
           yarn install --frozen-lockfile
-          yarn ts-node docs/examples/exampleSingle.ts
-          yarn ts-node docs/examples/exampleCombined.ts
+          yarn ts-node docs/examples/readme.ts
+          yarn test:examples_offchain
           docker run -d --rm -p 9944:9944 kiltprotocol/portablegabi-node
           sleep 5s
-          yarn ts-node docs/examples/exampleSingle.chain.ts
-          yarn ts-node docs/examples/exampleCombined.chain.ts
-          yarn ts-node docs/examples/readme.ts
+          yarn test:examples_onchain
           docker stop $(docker ps -f ancestor=kiltprotocol/portablegabi-node -q)
         env:
           CI: true
@@ -167,9 +165,10 @@ jobs:
           ls
           mv wasm build/wasm
           yarn install --frozen-lockfile
-          yarn ts-node docs/examples/tutorial/tutorial.ts
+          yarn test:tutorial
           docker run -d --rm -p 9944:9944 kiltprotocol/portablegabi-node
           sleep 5s
           yarn ts-node docs/examples/tutorial/sections/4_chain.ts
+          docker stop $(docker ps -f ancestor=kiltprotocol/portablegabi-node -q)
         env:
           CI: true

@@ -8,7 +8,7 @@ import WasmData, { IGoWasm } from '../types/Wasm'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const goWasm = require('./wasm_exec')
 
-const GoInstance: Promise<IGoWasm> = goWasm.GoWasm.init()
+let GoInstance: IGoWasm | undefined
 
 let isClosed = false
 
@@ -18,7 +18,12 @@ let isClosed = false
  * @returns A promise of the Go wasm instance.
  * @internal
  */
-export const goWasmInit = (): Promise<IGoWasm> => Promise.resolve(GoInstance)
+export const goWasmInit = async (): Promise<IGoWasm> => {
+  if (!GoInstance) {
+    GoInstance = await goWasm.GoWasm.init()
+  }
+  return GoInstance as IGoWasm
+}
 
 /**
  * Calls a function from the Go wasm.
@@ -32,7 +37,7 @@ const goWasmExec = <T>(
   goHook: WasmHooks,
   args?: Array<string | number | boolean>
 ): Promise<T> =>
-  Promise.resolve(GoInstance)
+  goWasmInit()
     .then((wasm) => wasm.execWasmFn(goHook, args))
     .catch((e) => {
       // catches unresolved wasm calls despite calling goWasmClose
@@ -50,8 +55,8 @@ const goWasmExec = <T>(
  */
 export const goWasmClose = async (): Promise<void> => {
   isClosed = true
-  const wasm = await GoInstance
-  wasm.close()
+  const wasm = GoInstance
+  if (wasm) wasm.close()
   // closes Go channel
   return goWasmExec<void>(WasmHooks.closeWasm)
 }
